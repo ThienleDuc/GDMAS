@@ -1,0 +1,17 @@
+{
+  "$id": "https://gdmas.local/schemas/earthquake.json",
+  "type": "object",
+  "description": "Hợp đồng dữ liệu một bản ghi địa chấn đơn lẻ",
+  "properties": {
+    "id": { "type": "string", "example": "us7000m8v8" },
+    "time": { "type": "string", "format": "date-time" },
+    "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+    "longitude": { "type": "number", "minimum": -180, "maximum": 180 },
+    "depth": { "type": "number", "description": "Độ sâu chấn tiêu (km)" },
+    "magnitude": { "type": "number", "description": "Độ lớn Richter" },
+    "place": { "type": "string" },
+    "status": { "type": "string", "enum": ["reviewed", "automatic"] }
+  },
+  "required": ["id", "time", "latitude", "longitude", "depth", "magnitude", "place"]
+}
+

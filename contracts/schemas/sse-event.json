@@ -1,0 +1,15 @@
+{
+  "$id": "https://gdmas.local/schemas/sse-event.json",
+  "type": "object",
+  "description": "Hợp đồng gói tin đẩy qua Server-Sent Events",
+  "properties": {
+    "event": {
+      "type": "string",
+      "enum": ["earthquake_detected", "heartbeat", "alert"]
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "data": { "type": "object" }
+  },
+  "required": ["event", "timestamp", "data"]
+}
+
