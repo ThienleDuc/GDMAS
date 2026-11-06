@@ -192,8 +192,8 @@ Theo định nghĩa hoàn thành (Definition of Done):
 ---
 
 ## 8. Tài liệu Liên quan
-- Danh mục Test Cases chi tiết: [test-cases.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/testing/test-cases.md)
-- Quy trình làm việc nhóm & DoD: [team-workflow.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/development/team-workflow.md)
-- Tiêu chuẩn Coding: [coding-conventions.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/development/coding-conventions.md)
-- Sổ tay vận hành hệ thống: [workflow.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/workflow.md)
+- Danh mục Test Cases chi tiết: [test-cases.md](file:///D:/KHDLKPDL/GDMAS/docs/testing/test-cases.md)
+- Quy trình làm việc nhóm & DoD: [team-workflow.md](file:///D:/KHDLKPDL/GDMAS/docs/development/team-workflow.md)
+- Tiêu chuẩn Coding: [coding-conventions.md](file:///D:/KHDLKPDL/GDMAS/docs/development/coding-conventions.md)
+- Sổ tay vận hành hệ thống: [workflow.md](file:///D:/KHDLKPDL/GDMAS/docs/workflow.md)
 

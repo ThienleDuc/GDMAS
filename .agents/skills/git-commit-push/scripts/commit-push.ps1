@@ -35,8 +35,7 @@ $stagedEnv = $status | Select-String "^\s*[AM]\s*.*\.env$"
 if ($stagedEnv) {
     Write-Host "⚠️ Phát hiện tệp .env trong Staged! Đang tự động gỡ bỏ..." -ForegroundColor Yellow
     git restore --staged .env 2>$null
-    git restore --staged GDMAS/.env 2>$null
-    git restore --staged GDMAS/apps/web/.env 2>$null
+    git restore --staged apps/web/.env 2>$null
     Write-Host "✅ Đã gỡ .env khỏi Stage an toàn." -ForegroundColor Green
 }
 
@@ -112,7 +111,7 @@ Write-Host "--> Commit Message: $Message" -ForegroundColor Gray
 # 5. Stage các tệp thay đổi an toàn
 Write-Host "--> Đang stage các tệp thay đổi..." -ForegroundColor Yellow
 git add -u
-git add docs/ apps/ .agents/ contracts/ scripts/ README.md GDMAS/ 2>$null
+git add docs/ apps/ .agents/ contracts/ scripts/ README.md .gitignore 2>$null
 
 # 6. Thực hiện Commit
 Write-Host "--> Đang thực hiện commit..." -ForegroundColor Yellow

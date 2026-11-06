@@ -156,6 +156,6 @@ Skill hỗ trợ **chế độ tự động hoàn toàn (Auto Mode)**: Tự đ�
 
 ## 📖 Tài Liệu Tham Khảo (References)
 - Bảng quy chuẩn Conventional Commits & Branch naming: [conventions.md](./references/conventions.md)
-- Sổ tay phân nhánh chi tiết: [branch-conventions.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/development/branch-conventions.md)
-- Cheatsheet lệnh Git: [git/commands.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/guides/git/commands.md)
+- Sổ tay phân nhánh chi tiết: [branch-conventions.md](file:///D:/KHDLKPDL/GDMAS/docs/development/branch-conventions.md)
+- Cheatsheet lệnh Git: [git/commands.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/git/commands.md)
 

@@ -19,8 +19,7 @@ fi
 if echo "$STATUS" | grep -E "^\s*[AM]\s*.*\.env$" > /dev/null; then
     echo "⚠️ Phát hiện tệp .env trong Staged! Đang tự động gỡ bỏ..."
     git restore --staged .env 2>/dev/null || true
-    git restore --staged GDMAS/.env 2>/dev/null || true
-    git restore --staged GDMAS/apps/web/.env 2>/dev/null || true
+    git restore --staged apps/web/.env 2>/dev/null || true
     echo "✅ Đã gỡ .env khỏi Stage an toàn."
 fi
 
@@ -78,7 +77,7 @@ echo "--> Commit Message: $COMMIT_MSG"
 # 5. Stage các tệp thay đổi
 echo "--> Đang stage các tệp thay đổi..."
 git add -u
-git add docs/ apps/ .agents/ contracts/ scripts/ README.md GDMAS/ 2>/dev/null || true
+git add docs/ apps/ .agents/ contracts/ scripts/ README.md .gitignore 2>/dev/null || true
 
 # 6. Commit
 echo "--> Đang thực hiện commit..."

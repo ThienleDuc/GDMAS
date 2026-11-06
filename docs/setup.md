@@ -430,8 +430,8 @@ Nếu toàn bộ kiểm tra hiển thị màu xanh và báo cáo đạt độ ph
 ---
 
 ## 7. Tài liệu Liên quan
-- Sổ tay vận hành 7 Terminals: [workflow.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/workflow.md)
-- Quản lý lệnh Python với UV: [uv-commands.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/guides/python/uv-commands.md)
-- Quản lý lệnh PostgreSQL: [postgres-commands.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/guides/database/postgres-commands.md)
-- Quản lý lệnh Frontend PNPM: [npm-commands.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/guides/frontend/npm-commands.md)
-- Đặc tả API: [API.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/api/API.md)
+- Sổ tay vận hành 7 Terminals: [workflow.md](file:///D:/KHDLKPDL/GDMAS/docs/workflow.md)
+- Quản lý lệnh Python với UV: [uv-commands.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/python/uv-commands.md)
+- Quản lý lệnh PostgreSQL: [postgres-commands.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/database/postgres-commands.md)
+- Quản lý lệnh Frontend PNPM: [npm-commands.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/frontend/npm-commands.md)
+- Đặc tả API: [API.md](file:///D:/KHDLKPDL/GDMAS/docs/api/API.md)

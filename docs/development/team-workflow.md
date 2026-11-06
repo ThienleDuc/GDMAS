@@ -48,7 +48,7 @@ Quy trình chuẩn gồm 6 bước khép kín:
 ```
 
 ### Bước 1: Tiếp nhận Task & Tạo nhánh mới
-- Đọc kỹ yêu cầu và đối chiếu với tài liệu kiến trúc [SAD.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/architecture/SAD.md) và [API.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/api/API.md).
+- Đọc kỹ yêu cầu và đối chiếu với tài liệu kiến trúc [SAD.md](file:///D:/KHDLKPDL/GDMAS/docs/architecture/SAD.md) và [API.md](file:///D:/KHDLKPDL/GDMAS/docs/api/API.md).
 - Kéo mã nguồn mới nhất từ `origin/develop` và tạo nhánh theo quy chuẩn:
   ```bash
   git switch develop
@@ -192,7 +192,7 @@ Liên quan đến: Pattern 2 (Trend Analysis) trong `yeucaubatbuoc.md`.
   2. Hôm nay sẽ làm gì?
   3. Đang gặp khó khăn hoặc cần ai hỗ trợ?
 - **Giải quyết xung đột kỹ thuật:**
-  1. Khi có bất đồng về cấu trúc API hoặc bảng cơ sở dữ liệu, ưu tiên đối chiếu tài liệu [API.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/api/API.md) và [ERD.md](file:///D:/KHDLKPDL/GDMAS/GDMAS/docs/architecture/ERD.md).
+  1. Khi có bất đồng về cấu trúc API hoặc bảng cơ sở dữ liệu, ưu tiên đối chiếu tài liệu [API.md](file:///D:/KHDLKPDL/GDMAS/docs/api/API.md) và [ERD.md](file:///D:/KHDLKPDL/GDMAS/docs/architecture/ERD.md).
   2. Tech Lead giữ quyền quyết định cuối cùng dựa trên tiêu chí: *Đơn giản, hoạt động được, không phá vỡ nguyên tắc độc lập của các service*.
   3. Mọi thống nhất kỹ thuật mới phải được cập nhật lại vào tài liệu tương ứng trong thư mục `docs/`.
 

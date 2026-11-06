@@ -1,19 +1,22 @@
-# Mẫu Bản Ghi Thay Đổi & Commit (Commit Template)
+# [BẢN GHI COMMIT ĐANG CHỜ - PENDING COMMIT RECORD]
 
-- **Timestamp:** {{TIMESTAMP}}
-- **Branch:** {{BRANCH}}
-- **Type:** {{TYPE}}
-- **Scope:** {{SCOPE}}
+- **Thời gian tạo:** {{TIMESTAMP}}
+- **Nhánh hiện tại (Branch):** {{BRANCH}}
+- **Phân loại (Type):** {{TYPE}}
+- **Phạm vi (Scope):** {{SCOPE}}
 
-## Conventional Commit Header
+## 1. Tiêu Đề Commit Chuẩn Hóa (Conventional Commit Header)
 ```text
 {{TYPE}}({{SCOPE}}): {{SUBJECT}}
 ```
 
-## Detailed Commit Body
+## 2. Nội Dung Mô Tả Chi Tiết (Commit Body Tiếng Việt)
 ```text
 {{BODY}}
 ```
 
-## Changed Files Summary
+## 3. Danh Sách Tệp Tác Động So Với Mã Nguồn Gốc
 {{FILES_TABLE}}
+
+---
+*Bản ghi này được sinh tự động bởi kỹ năng generate-commit và chỉ lưu trữ cục bộ tại .agents/notes/.*
