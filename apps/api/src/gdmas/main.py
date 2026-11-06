@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from gdmas.core.config import settings
+from gdmas.api.router import api_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -17,6 +18,9 @@ if settings.CORS_ORIGINS:
         allow_headers=["*"],
     )
 
+# Đăng ký router chính của API v1
+app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
 
 @app.get("/")
 def root():
@@ -26,4 +30,3 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "healthy"}
-
