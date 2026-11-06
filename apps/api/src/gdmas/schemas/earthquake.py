@@ -38,17 +38,32 @@ class EarthquakeListResponse(BaseModel):
     metadata: EarthquakeMetadata
 
 
+class HourlyTimeSeriesPoint(BaseModel):
+    time: str
+    count: int
+    avg_mag: float
+
+
 class EarthquakeStatistics(BaseModel):
     total_events: int
     strong_events_count: int  # M >= 5.0
     moderate_events_count: int  # 4.0 <= M < 5.0
+    minor_events_count: int = 0  # M < 4.0
     recent_24h_count: int
     avg_magnitude: float
     max_magnitude: float
     latest_event_time: Optional[datetime] = None
+    time_series_preview: Optional[List[HourlyTimeSeriesPoint]] = None
 
 
 class StatisticsResponse(BaseModel):
     success: bool = True
     data: EarthquakeStatistics
 
+
+class SyncResponse(BaseModel):
+    success: bool = True
+    message: str
+    synced_count: int
+    source: str = "USGS"
+    timestamp: datetime

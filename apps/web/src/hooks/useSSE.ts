@@ -1,25 +1,59 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { SSEEventPayload } from "../contracts";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export function useSSE(endpoint: string = "/api/v1/stream/earthquakes") {
   const [data, setData] = useState<SSEEventPayload | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [lastEventTime, setLastEventTime] = useState<Date | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    const eventSource = new EventSource(endpoint);
+    // Chuẩn hóa URL kết nối tới máy chủ Backend API
+    const targetUrl = endpoint.startsWith("http")
+      ? endpoint
+      : `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+
+    const eventSource = new EventSource(targetUrl);
+    eventSourceRef.current = eventSource;
+
+    const handlePayload = (rawString: string) => {
+      try {
+        const parsed = JSON.parse(rawString);
+        setData(parsed);
+        setLastEventTime(new Date());
+      } catch (err) {
+        console.error("Lỗi khi parse SSE event data:", err);
+      }
+    };
 
     eventSource.onopen = () => {
       setIsConnected(true);
     };
 
+    // 1. Lắng nghe event mặc định "message"
     eventSource.onmessage = (event) => {
-      try {
-        const parsed = JSON.parse(event.data);
-        setData(parsed);
-      } catch (err) {
-        console.error("Failed to parse SSE event data:", err);
-      }
+      handlePayload(event.data);
     };
+
+    // 2. Lắng nghe event "heartbeat"
+    eventSource.addEventListener("heartbeat", (event: MessageEvent) => {
+      setIsConnected(true);
+      handlePayload(event.data);
+    });
+
+    // 3. Lắng nghe event "earthquake_detected"
+    eventSource.addEventListener("earthquake_detected", (event: MessageEvent) => {
+      setIsConnected(true);
+      handlePayload(event.data);
+    });
+
+    // 4. Lắng nghe event "alert"
+    eventSource.addEventListener("alert", (event: MessageEvent) => {
+      setIsConnected(true);
+      handlePayload(event.data);
+    });
 
     eventSource.onerror = () => {
       setIsConnected(false);
@@ -27,10 +61,10 @@ export function useSSE(endpoint: string = "/api/v1/stream/earthquakes") {
 
     return () => {
       eventSource.close();
+      eventSourceRef.current = null;
       setIsConnected(false);
     };
   }, [endpoint]);
 
-  return { data, isConnected };
+  return { data, isConnected, lastEventTime };
 }
-
