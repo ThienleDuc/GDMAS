@@ -7,6 +7,18 @@ param (
     [switch]$UpdateMemory,
 
     [Parameter(Mandatory=$false)]
+    [string]$Type,
+
+    [Parameter(Mandatory=$false)]
+    [string]$Scope,
+
+    [Parameter(Mandatory=$false)]
+    [string]$Desc,
+
+    [Parameter(Mandatory=$false)]
+    [string[]]$Bullets,
+
+    [Parameter(Mandatory=$false)]
     [string]$OutputFile = ".agents/notes/changes/source-guard-report.md",
 
     [Parameter(Mandatory=$false)]
@@ -20,7 +32,7 @@ Write-Host "       GDMAS SOURCE CODE INTEGRITY GUARD (OCP)          " -Foregroun
 Write-Host "========================================================" -ForegroundColor Cyan
 
 # 1. Quét trạng thái git status
-$statusOutput = git status --porcelain -uall
+$statusOutput = git status --porcelain -uall 2>$null
 $lines = @()
 if ($statusOutput) {
     $lines = $statusOutput -split "`r?`n" | Where-Object { $_ -match "\S" }
@@ -31,7 +43,7 @@ $modifiedFiles = @()
 $addedFiles = @()
 $untrackedFiles = @()
 
-# Danh mục tệp lõi cần bảo vệ đặc biệt (cấm sửa đổi hoặc cần kiểm duyệt nghiêm ngặt)
+# Danh mục tệp lõi kiến trúc cần bảo vệ đặc biệt (cấm sửa đổi hoặc kiểm duyệt nghiêm ngặt)
 $coreProtectedPatterns = @(
     "apps/api/src/gdmas/main.py",
     "apps/api/src/gdmas/db/connection.py",
@@ -97,7 +109,7 @@ if ($protectedModifications.Count -gt 0) {
             $hasViolations = $true
             $violations += ("VI PHẠM TỆP LÕI: Tệp bảo vệ '{0}' bị chỉnh sửa trong chế độ Strict." -f $f)
         } else {
-            $warnings += ("CẢNH BÁO TỆP LÕI: Tệp '{0}' là tệp kiến trúc nhạy cảm đang bị chỉnh sửa. Hãy đảm bảo bạn chỉ bổ sung router/config mới mà không làm thay đổi logic cũ." -f $f)
+            $warnings += ("CẢNH BÁO TỆP LÕI: Tệp '{0}' là tệp kiến trúc nhạy cảm đang bị chỉnh sửa. Hãy đảm bảo chỉ bổ sung router/config mới mà không làm thay đổi logic cũ." -f $f)
         }
     }
 }
@@ -107,7 +119,7 @@ if ($deletions -gt 0 -and $deletions -gt $insertions) {
     $warnings += ("CẢNH BÁO TỶ LỆ DÒNG: Số dòng bị xóa ({0}) lớn hơn số dòng thêm mới ({1}). Hãy ưu tiên phương pháp bổ sung thêm mới thay vì ghi đè mã nguồn." -f $deletions, $insertions)
 }
 
-# 4. Xuất kết quả thẩm định
+# 4. Xuất kết quả thẩm định ra màn hình
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "             KẾT QUẢ THẨM ĐỊNH MÃ NGUỒN                 " -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
@@ -131,7 +143,7 @@ if ($hasViolations) {
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# 5. Ghi báo cáo thẩm định vào thư mục .agents/notes/changes/ (Lưu cục bộ)
+# 5. Ghi báo cáo thẩm định vào OutputFile (.agents/notes/changes/source-guard-report.md)
 $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss (UTCzzz)")
 $reportLines = @(
     "# [BIÊN BẢN KIỂM SOÁT BẢO VỆ MÃ NGUỒN - SOURCE GUARD REPORT]",
@@ -183,70 +195,256 @@ if ($targetDir -and -not (Test-Path $targetDir)) {
 $utf8BOM = New-Object System.Text.UTF8Encoding $true
 [System.IO.File]::WriteAllText($OutputFile, $reportContent, $utf8BOM)
 
-# 6. Tự động cập nhật tệp Context Memory nếu có cờ -UpdateMemory
+# 6. Tự động cập nhật Context Memory (-UpdateMemory) hoàn toàn động (Generic Dynamic Engine)
 if ($UpdateMemory) {
-    $branch = (git branch --show-current).Trim()
-    $memLines = @(
-        "# [GDMAS CONTEXT MEMORY SNAPSHOT]",
-        "",
-        "- **Phiên bản:** 1.0 (Tinh gọn cho Cửa Sổ Ngữ Cảnh)",
-        ("- **Cập nhật lần cuối:** {0}" -f $timestamp),
-        "- **Dự án:** Global Disaster Monitoring & Analysis System (GDMAS)",
-        "",
-        "---",
-        "",
-        "## 1. Bản Đồ Kiến Trúc Lõi & 7 Terminals",
-        "Hệ thống Microservices/Modular chạy độc lập trên 7 cửa sổ terminal:",
-        "- **T1 - Database:** PostgreSQL 16 Alpine (`docker compose up postgres`) - Múi giờ UTC (`TIMESTAMPTZ`), WGS84.",
-        "- **T2 - Ingestion:** Worker nạp dữ liệu USGS 5 phút/lần (`python -m gdmas.services.ingestion.runner`).",
-        "- **T3 - Analysis:** Phân tích Time-Series 5 phút/lần (`python -m gdmas.services.analysis.runner`).",
-        "- **T4 - Clustering:** Gom cụm DBSCAN/KMeans 1 ngày/lần (`python -m gdmas.services.clustering.runner`).",
-        "- **T5 - Prediction:** Dự báo & phân loại ($t+1$) 5 phút/lần (`python -m gdmas.services.prediction.runner`).",
-        "- **T6 - API:** FastAPI REST & SSE tại port 8000 (`uv run uvicorn gdmas.main:app --port 8000`).",
-        "- **T7 - Web Client:** React + Vite + Tailwind tại port 3000 (`pnpm dev --port 3000`).",
-        "",
-        "---",
-        "",
-        "## 2. Yêu Cầu 6 Patterns Chuỗi Thời Gian (Bắt buộc)",
-        "1. **Biểu diễn thời gian:** 3 biểu đồ (Line chart, Scatter plot, Histogram) theo Ngày / Tuần / Tháng.",
-        "2. **Trend Analysis:** Đường xu hướng sau khi Re-sampling Tháng/Tuần.",
-        "3. **Seasonality:** Chu kỳ mùa vụ (Seasonal line) sau khi Re-sampling Tháng/Tuần.",
-        "4. **Tương quan:** Heatmap / Correlation Matrix đa biến định lượng.",
-        "5. **Dự báo định lượng ($t+1$):** Giá trị dự báo số lượng sự kiện ngày kế tiếp kèm khoảng tin cậy.",
-        "6. **Phân loại ($t+1$):** Nhãn phân loại mức độ hoạt động địa chấn ngày kế tiếp.",
-        "",
-        "---",
-        "",
-        "## 3. Nguyên Tắc Bất Biến (Open-Closed Principle - RULE-03)",
-        "- **CẤM:** Không xóa file hiện hữu, không đổi tên file, không sửa đổi signature hàm cũ, không nhúng worker ngầm vào `main.py`.",
-        "- **ĐƯỢC PHÉP:** Bổ sung file `runner.py` mới, router mới, schema/model mới, component mới trong `components/charts/`, test mới.",
-        "",
-        "---",
-        "",
-        "## 4. Chỉ Mục Kỹ Năng On-Demand (.agents/skills)",
-        "> [!IMPORTANT]",
-        "> **Quy tắc On-Demand:** Agent KHÔNG đọc chi tiết các kỹ năng dưới đây trừ khi được người dùng chỉ định hoặc tác vụ yêu cầu đích danh.",
-        "",
-        "| Tên Kỹ Năng | Khi Nào Cần Tải / Kích Hoạt | Thư Mục |",
-        "| :--- | :--- | :--- |",
-        "| **`source-guard`** | Khi cần thẩm định an toàn mã nguồn, kiểm tra xóa/sửa file lõi | `.agents/skills/source-guard/` |",
-        "| **`generate-commit`**| Khi người dùng yêu cầu soạn hoặc sinh Conventional Commit tiếng Việt | `.agents/skills/generate-commit/` |",
-        "| **`git-commit-push`** | Khi người dùng yêu cầu tự động stage, commit và push lên remote | `.agents/skills/git-commit-push/` |",
-        "| **`propose-branch`** | Khi bắt đầu tính năng mới hoặc yêu cầu đề xuất tên branch theo task | `.agents/skills/propose-branch/` |",
-        "| **`git-branch-push`** | Khi người dùng yêu cầu chuyển, tạo nhánh mới và đẩy lên GitHub | `.agents/skills/git-branch-push/` |",
-        "",
-        "---",
-        "",
-        "## 5. Trạng Thái Không Gian Làm Việc Hiện Thời (Active State)",
-        ("- **Nhánh Git hiện tại:** ``{0}``" -f $branch),
-        ("- **Tệp đang thay đổi:** {0} tệp ({1} thêm mới, {2} chỉnh sửa, {3} xóa)" -f $lines.Count, ($addedFiles.Count + $untrackedFiles.Count), $modifiedFiles.Count, $deletedFiles.Count),
-        ("- **Đánh giá an toàn mã nguồn:** {0}" -f $(if ($hasViolations) { "❌ Cần khôi phục tệp vi phạm" } else { "✅ An toàn (Open-Closed)" }))
-    )
+    $branch = (git branch --show-current 2>$null).Trim()
+    if (-not $branch) { $branch = "main" }
+
+    # 6.1. Suy luận Type, Scope, Desc động từ tham số hoặc cây thư mục
+    $activeType = $Type
+    $activeScope = $Scope
+    $activeDesc = $Desc
+    $activeBulletsList = New-Object System.Collections.Generic.List[string]
+
+    if ($Bullets -and $Bullets.Count -gt 0) {
+        foreach ($b in $Bullets) { $activeBulletsList.Add($b) }
+    }
+
+    $allChangedFiles = @($addedFiles + $untrackedFiles + $modifiedFiles)
+    $fileListStr = ($allChangedFiles -join " ")
+
+    # Nếu chưa truyền tham số, tự động phân tích động theo cấu trúc kiến trúc GDMAS
+    if (-not $activeType -or -not $activeScope -or -not $activeDesc) {
+        if ($branch -match "^([a-z]+)/([a-z0-9_-]+)-(.*)$") {
+            if (-not $activeType) { $activeType = $Matches[1] }
+            if (-not $activeScope) { $activeScope = $Matches[2] }
+        }
+
+        if ($fileListStr -match "apps/web/src/components/charts") {
+            if (-not $activeType) { $activeType = "feat" }
+            if (-not $activeScope) { $activeScope = "web" }
+            if (-not $activeDesc) { $activeDesc = "trực quan hóa biểu đồ chuỗi thời gian địa chấn" }
+        } elseif ($fileListStr -match "apps/web/src/layouts") {
+            if (-not $activeType) { $activeType = "feat" }
+            if (-not $activeScope) { $activeScope = "web" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật cấu trúc layout giao diện frontend" }
+        } elseif ($fileListStr -match "apps/web") {
+            if (-not $activeType) { $activeType = "feat" }
+            if (-not $activeScope) { $activeScope = "web" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật giao diện người dùng và tương tác frontend" }
+        } elseif ($fileListStr -match "apps/api/src/gdmas/services/ingestion") {
+            if (-not $activeType) { $activeType = "feat" }
+            if (-not $activeScope) { $activeScope = "ingestion" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật tiến trình nạp dữ liệu USGS" }
+        } elseif ($fileListStr -match "apps/api/src/gdmas/services/analysis") {
+            if (-not $activeType) { $activeType = "feat" }
+            if (-not $activeScope) { $activeScope = "analysis" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật thuật toán phân tích chuỗi thời gian" }
+        } elseif ($fileListStr -match "apps/api/src/gdmas/services/clustering") {
+            if (-not $activeType) { $activeType = "feat" }
+            if (-not $activeScope) { $activeScope = "clustering" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật thuật toán gom cụm không gian" }
+        } elseif ($fileListStr -match "apps/api/src/gdmas/services/prediction") {
+            if (-not $activeType) { $activeType = "feat" }
+            if (-not $activeScope) { $activeScope = "prediction" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật mô hình dự báo địa chấn" }
+        } elseif ($fileListStr -match "apps/api/src/gdmas/realtime") {
+            if (-not $activeType) { $activeType = "feat" }
+            if (-not $activeScope) { $activeScope = "realtime" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật dịch vụ streaming dữ liệu SSE" }
+        } elseif ($fileListStr -match "apps/api/src/gdmas/db" -or $fileListStr -match "alembic") {
+            if (-not $activeType) { $activeType = "feat" }
+            if (-not $activeScope) { $activeScope = "db" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật cấu trúc cơ sở dữ liệu và migrations" }
+        } elseif ($fileListStr -match "apps/api") {
+            if (-not $activeType) { $activeType = "feat" }
+            if (-not $activeScope) { $activeScope = "api" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật dịch vụ backend và các endpoint xử lý dữ liệu" }
+        } elseif ($fileListStr -match "contracts/") {
+            if (-not $activeType) { $activeType = "chore" }
+            if (-not $activeScope) { $activeScope = "contracts" }
+            if (-not $activeDesc) { $activeDesc = "chuẩn hóa hợp đồng dữ liệu dùng chung API-Web" }
+        } elseif ($fileListStr -match "docs/setup") {
+            if (-not $activeType) { $activeType = "docs" }
+            if (-not $activeScope) { $activeScope = "setup" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật hướng dẫn cài đặt và cấu hình môi trường" }
+        } elseif ($fileListStr -match "docs/architecture") {
+            if (-not $activeType) { $activeType = "docs" }
+            if (-not $activeScope) { $activeScope = "architecture" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật tài liệu kiến trúc hệ thống và luồng dữ liệu" }
+        } elseif ($fileListStr -match "docs/") {
+            if (-not $activeType) { $activeType = "docs" }
+            if (-not $activeScope) { $activeScope = "core" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật hệ thống tài liệu kỹ thuật dự án" }
+        } elseif ($fileListStr -match "\.agents") {
+            if (-not $activeType) { $activeType = "chore" }
+            if (-not $activeScope) { $activeScope = "agents" }
+            if (-not $activeDesc) { $activeDesc = "chuẩn hóa và tối ưu hóa các kỹ năng AI agent" }
+        } elseif ($fileListStr -match "scripts/") {
+            if (-not $activeType) { $activeType = "chore" }
+            if (-not $activeScope) { $activeScope = "scripts" }
+            if (-not $activeDesc) { $activeDesc = "cập nhật kịch bản kiểm thử và tự động hóa" }
+        } else {
+            # Khi working tree sạch, đọc thông tin từ commit gần nhất của nhánh
+            $latestLog = (git log -1 --pretty=format:"%s" 2>$null)
+            if ($latestLog -match "^([a-z]+)\(([^)]+)\):\s*(.+)$") {
+                if (-not $activeType) { $activeType = $Matches[1] }
+                if (-not $activeScope) { $activeScope = $Matches[2] }
+                if (-not $activeDesc) { $activeDesc = $Matches[3] }
+            } else {
+                if (-not $activeType) { $activeType = "chore" }
+                if (-not $activeScope) { $activeScope = "project" }
+                if (-not $activeDesc) { $activeDesc = "cập nhật tài nguyên và cấu hình dự án" }
+            }
+        }
+    }
+
+    # Sinh bullets tóm tắt động từ danh sách tệp nếu chưa có
+    if ($activeBulletsList.Count -eq 0) {
+        if ($allChangedFiles.Count -gt 0) {
+            $sampleFiles = $allChangedFiles | Select-Object -First 4
+            foreach ($sf in $sampleFiles) {
+                $activeBulletsList.Add("Cập nhật/bổ sung tệp: " + $sf)
+            }
+            if ($allChangedFiles.Count -gt 4) {
+                $activeBulletsList.Add(("Và {0} tệp khác liên quan..." -f ($allChangedFiles.Count - 4)))
+            }
+        } else {
+            $activeBulletsList.Add("Trạng thái làm việc gần nhất trên nhánh " + $branch + ": " + $activeDesc)
+        }
+    }
+
+    # 6.2. Đọc và bảo toàn toàn bộ lịch sử các nhánh đã có trong Section 6
+    $preservedBranches = New-Object 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[string]]'
+    if (Test-Path $MemoryFile) {
+        $rawLines = [System.IO.File]::ReadAllLines($MemoryFile, [System.Text.Encoding]::UTF8)
+        $inHistory = $false
+        $currentBranchKey = ""
+        foreach ($rLine in $rawLines) {
+            if ($rLine -match "^## 6\.") {
+                $inHistory = $true
+                continue
+            }
+            if ($inHistory) {
+                if ($rLine -match "^### 🔖 \[Nhánh:\s*([^\]]+)\]") {
+                    $currentBranchKey = $Matches[1].Trim()
+                    if (-not $preservedBranches.ContainsKey($currentBranchKey)) {
+                        $preservedBranches[$currentBranchKey] = New-Object System.Collections.Generic.List[string]
+                    }
+                    $preservedBranches[$currentBranchKey].Add($rLine)
+                } elseif ($currentBranchKey -and $rLine -match "\S") {
+                    $preservedBranches[$currentBranchKey].Add($rLine)
+                }
+            }
+        }
+    }
+
+    # 6.3. Cập nhật bản ghi Section 6 cho nhánh hiện tại
+    $latestHash = (git rev-parse --short HEAD 2>$null).Trim()
+    $statusText = if ($lines.Count -gt 0) { "Đang phát triển (Có " + $lines.Count + " tệp thay đổi)" } else { "Đã đồng bộ sạch sẽ (Commit: " + $latestHash + ")" }
+
+    $currentBranchHistory = New-Object System.Collections.Generic.List[string]
+    $currentBranchHistory.Add("### 🔖 [Nhánh: " + $branch + "] - Cập nhật: " + $timestamp)
+    $currentBranchHistory.Add("- **Trạng thái:** " + $statusText)
+    $currentBranchHistory.Add("- **Đánh dấu phân loại:** ``" + $activeType + "(" + $activeScope + ")``")
+    $currentBranchHistory.Add("- **Tiêu đề thay đổi chính:** " + $activeDesc)
+    foreach ($b in $activeBulletsList) {
+        $currentBranchHistory.Add("  * " + $b)
+    }
+    $currentBranchHistory.Add("")
+
+    # Nhánh hiện tại luôn được đưa vào danh mục
+    $preservedBranches[$branch] = $currentBranchHistory
+
+    # 6.4. Xây dựng tài liệu Context Memory hoàn chỉnh (Bảo toàn chuẩn 1-4, cập nhật 5 & 6)
+    $doc = New-Object System.Collections.Generic.List[string]
+    $doc.Add("# [GDMAS CONTEXT MEMORY SNAPSHOT]")
+    $doc.Add("")
+    $doc.Add("- **Phiên bản:** 2.0 (Bộ Nhớ Ngữ Cảnh Tích Lũy Đa Nhánh - Token Saver)")
+    $doc.Add("- **Cập nhật lần cuối:** " + $timestamp)
+    $doc.Add("- **Dự án:** Global Disaster Monitoring & Analysis System (GDMAS)")
+    $doc.Add("")
+    $doc.Add("---")
+    $doc.Add("")
+    $doc.Add("## 1. Bản Đồ Kiến Trúc Lõi & 7 Terminals")
+    $doc.Add("Hệ thống Microservices/Modular chạy độc lập trên 7 cửa sổ terminal:")
+    $doc.Add("- **T1 - Database:** PostgreSQL 16 Alpine (`docker compose up postgres`) - Múi giờ UTC (`TIMESTAMPTZ`), WGS84.")
+    $doc.Add("- **T2 - Ingestion:** Worker nạp dữ liệu USGS 5 phút/lần (`python -m gdmas.services.ingestion.runner`).")
+    $doc.Add("- **T3 - Analysis:** Phân tích Time-Series 5 phút/lần (`python -m gdmas.services.analysis.runner`).")
+    $doc.Add("- **T4 - Clustering:** Gom cụm DBSCAN/KMeans 1 ngày/lần (`python -m gdmas.services.clustering.runner`).")
+    $doc.Add("- **T5 - Prediction:** Dự báo & phân loại (`t+1`) 5 phút/lần (`python -m gdmas.services.prediction.runner`).")
+    $doc.Add("- **T6 - API:** FastAPI REST & SSE tại port 8000 (`uv run uvicorn gdmas.main:app --port 8000`).")
+    $doc.Add("- **T7 - Web Client:** React + Vite + Tailwind tại port 3000 (`pnpm dev --port 3000`).")
+    $doc.Add("")
+    $doc.Add("---")
+    $doc.Add("")
+    $doc.Add("## 2. Yêu Cầu 6 Patterns Chuỗi Thời Gian (Bắt buộc)")
+    $doc.Add("1. **Biểu diễn thời gian:** 3 biểu đồ (Line chart, Scatter plot, Histogram) theo Ngày / Tuần / Tháng.")
+    $doc.Add("2. **Trend Analysis:** Đường xu hướng sau khi Re-sampling Tháng/Tuần.")
+    $doc.Add("3. **Seasonality:** Chu kỳ mùa vụ (Seasonal line) sau khi Re-sampling Tháng/Tuần.")
+    $doc.Add("4. **Tương quan:** Heatmap / Correlation Matrix đa biến định lượng.")
+    $doc.Add("5. **Dự báo định lượng (`t+1`):** Giá trị dự báo số lượng sự kiện ngày kế tiếp kèm khoảng tin cậy.")
+    $doc.Add("6. **Phân loại (`t+1`):** Nhãn phân loại mức độ hoạt động địa chấn ngày kế tiếp.")
+    $doc.Add("")
+    $doc.Add("---")
+    $doc.Add("")
+    $doc.Add("## 3. Nguyên Tắc Bất Biến (Open-Closed Principle - RULE-03)")
+    $doc.Add("- **CẤM:** Không xóa file hiện hữu, không đổi tên file, không sửa đổi signature hàm cũ, không nhúng worker ngầm vào `main.py`.")
+    $doc.Add("- **ĐƯỢC PHÉP:** Bổ sung file `runner.py` mới, router mới, schema/model mới, component mới trong `components/charts/`, test mới.")
+    $doc.Add("")
+    $doc.Add("---")
+    $doc.Add("")
+    $doc.Add("## 4. Chỉ Mục Kỹ Năng On-Demand (.agents/skills)")
+    $doc.Add("> [!IMPORTANT]")
+    $doc.Add("> **Quy tắc On-Demand & Tiết kiệm Token:** Các kỹ năng `generate-commit` và `git-commit-push` ƯU TIÊN ĐỌC TRỰC TIẾP Mục 5 & Mục 6 dưới đây thay vì chạy quét lại toàn bộ `git status` và `git diff`.")
+    $doc.Add("")
+    $doc.Add("| Tên Kỹ Năng | Khi Nào Cần Tải / Kích Hoạt | Thư Mục |")
+    $doc.Add("| :--- | :--- | :--- |")
+    $doc.Add("| **`source-guard`** | Thẩm định an toàn mã nguồn, cập nhật bộ nhớ tích lũy đa nhánh | `.agents/skills/source-guard/` |")
+    $doc.Add("| **`generate-commit`**| Đọc nhanh Context Memory để sinh Conventional Commit tiếng Việt | `.agents/skills/generate-commit/` |")
+    $doc.Add("| **`git-commit-push`** | Đọc nhanh Context Memory để commit và push đúng nhánh | `.agents/skills/git-commit-push/` |")
+    $doc.Add("| **`propose-branch`** | Đề xuất tên branch theo task description và lưu bản ghi nhánh | `.agents/skills/propose-branch/` |")
+    $doc.Add("| **`git-branch-push`** | Chuyển, tạo nhánh mới và đẩy lên GitHub | `.agents/skills/git-branch-push/` |")
+    $doc.Add("")
+    $doc.Add("---")
+    $doc.Add("")
+    $doc.Add("## 5. Trạng Thái Hoạt Động Hiện Thời (Active Branch Snapshot)")
+    $doc.Add("- **Nhánh hoạt động (Active Branch):** ``" + $branch + "``")
+    $statusMsg = if ($lines.Count -gt 0) { "⚠️ Có " + $lines.Count + " tệp đang thay đổi" } else { "✅ Clean (Đã đồng bộ)" }
+    $doc.Add("- **Trạng thái Working Tree:** " + $statusMsg)
+    $doc.Add("- **Phân loại đề xuất (Type/Scope):** ``" + $activeType + "(" + $activeScope + ")``")
+    $doc.Add("- **Tiêu đề commit đề xuất (Subject):** " + $activeDesc)
+    $doc.Add("- **Tóm tắt thay đổi gần nhất:**")
+    foreach ($b in $activeBulletsList) {
+        $doc.Add("  * " + $b)
+    }
+    $evalMsg = if ($hasViolations) { "❌ Cần khôi phục tệp vi phạm" } elseif ($warnings.Count -gt 0) { "⚠️ Có cảnh báo" } else { "✅ An toàn (Open-Closed)" }
+    $doc.Add("- **Đánh giá an toàn mã nguồn:** " + $evalMsg)
+    $doc.Add("")
+    $doc.Add("---")
+    $doc.Add("")
+    $doc.Add("## 6. Sổ Nhật Ký Phát Triển & Thay Đổi Theo Nhánh (Cumulative Branch Milestones)")
+
+    # Đưa nhánh hiện tại lên đầu tiên
+    if ($preservedBranches.ContainsKey($branch)) {
+        foreach ($line in $preservedBranches[$branch]) {
+            $doc.Add($line)
+        }
+    }
+
+    # Kế thừa tất cả các nhánh khác trong lịch sử
+    foreach ($bKey in $preservedBranches.Keys) {
+        if ($bKey -ne $branch) {
+            foreach ($line in $preservedBranches[$bKey]) {
+                $doc.Add($line)
+            }
+        }
+    }
 
     $memDir = [System.IO.Path]::GetDirectoryName($MemoryFile)
     if ($memDir -and -not (Test-Path $memDir)) { New-Item -ItemType Directory -Path $memDir -Force | Out-Null }
-    [System.IO.File]::WriteAllText($MemoryFile, ($memLines -join [Environment]::NewLine), $utf8BOM)
-    Write-Host ("[+] Đã tự động cập nhật bộ nhớ ngữ cảnh vào: {0}" -f $MemoryFile) -ForegroundColor Green
+    [System.IO.File]::WriteAllLines($MemoryFile, $doc, $utf8BOM)
+    Write-Host ("[+] Đã cập nhật bộ nhớ tích lũy ngữ cảnh vào: {0}" -f $MemoryFile) -ForegroundColor Green
 }
 
 if ($hasViolations -and $Strict) {

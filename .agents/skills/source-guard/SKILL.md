@@ -12,9 +12,10 @@ description: >-
 Kỹ năng này chịu trách nhiệm **bảo vệ tính toàn vẹn của mã nguồn gốc trong dự án GDMAS**, đồng thời **tối ưu hóa việc sử dụng token của AI Agent** thông qua cơ chế kích hoạt kỹ năng theo nhu cầu (On-Demand) và duy trì bộ nhớ ngữ cảnh tinh gọn (Context Window Memory).
 
 > [!IMPORTANT]
+> - **Nguyên tắc Thiết Kế Bất Biến (Skill Stability):** Kỹ năng được thiết kế động hoàn toàn (Generic & Dynamic), **tuyệt đối không hardcode tên nhánh hoặc nội dung tác vụ tạm thời vào mã nguồn script**. Kỹ năng tự động nhận diện cây thư mục thay đổi và chấp nhận tham số ghi đè linh hoạt.
 > - **Nguyên tắc Open-Closed (RULE-03):** "Không sửa mã nguồn hiện tại – Chỉ bổ sung thêm mới" *(Closed for Modification, Open for Extension)*.
 > - **Tiết kiệm Token (On-Demand Skills):** Agent **tuyệt đối không đọc toàn bộ các skill** trong `.agents/skills/` nếu không có yêu cầu, chỉ nạp kỹ năng khi được chỉ định rõ ràng.
-> - **Bộ nhớ Cửa sổ Ngữ cảnh (Context Memory):** Sử dụng tệp [`.agents/notes/memory/context-memory.md`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md) để nắm toàn bộ bối cảnh dự án trong 60 dòng, không đọc lại toàn bộ tài liệu `docs/`.
+> - **Bộ nhớ Cửa sổ Ngữ cảnh (Context Memory):** Sử dụng tệp [`.agents/notes/memory/context-memory.md`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md) để nắm toàn bộ bối cảnh dự án, không đọc lại toàn bộ tài liệu `docs/`.
 
 ---
 
@@ -35,46 +36,25 @@ flowchart TD
     H -- Có vi phạm --> I[❌ CẢNH BÁO: Hủy bỏ xóa/sửa file lõi]
     H -- Chỉ thêm mới --> J[✅ HỢP LỆ: Cho phép commit & push]
     
-    J --> K[Cập nhật context-memory.md & tạo commit]
+    J --> K[Cập nhật context-memory.md tự động]
 ```
 
 ---
 
-## 🧠 1. Cơ Chế Bộ Nhớ Cửa Sổ Ngữ Cảnh (Context Window Memory)
+## 🧠 1. Cơ Chế Bộ Nhớ Cửa Sổ Ngữ Cảnh Tích Lũy (Cumulative Context Memory)
 
-Nhằm giải quyết vấn đề **Agent bị cạn kiệt context window hoặc phải tốn hàng nghìn tokens để đọc lại 30+ tệp tài liệu trong `docs/`**:
+Nhằm giải quyết vấn đề **Agent bị cạn kiệt context window hoặc phải tốn hàng nghìn tokens để đọc lại toàn bộ `git status` và 30+ tệp tài liệu trong `docs/`**:
 - Kỹ năng thiết lập tệp bộ nhớ tinh gọn tại:
   - [`.agents/notes/memory/context-memory.md`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md)
-- **Nội dung gói gọn trong ~60 dòng:**
-  1. *Bản đồ 7 Terminals:* Port, chu kỳ chạy (5p/1d) và lệnh chạy độc lập của 7 khối service.
-  2. *6 Patterns Chuỗi Thời Gian:* Đặc tả bắt buộc cho backend và biểu đồ frontend.
-  3. *Quy tắc bất biến (RULE-03):* Danh mục tệp lõi cấm sửa đổi, cách mở rộng đúng chuẩn.
-  4. *Chỉ mục Kỹ năng On-Demand:* Bảng tra cứu 1 dòng cho mỗi skill.
-  5. *Trạng thái không gian làm việc:* Nhánh hiện thời và tiến độ gần nhất.
-- **Quy tắc cho Agent:** Khi bắt đầu phiên làm việc hoặc sau khi context bị nén, **chỉ cần đọc duy nhất `context-memory.md`** để phục hồi toàn bộ bối cảnh hệ thống.
+- **Cơ chế bảo toàn và tích lũy:**
+  1. *Phần cố định bất biến:* Bản đồ 7 Terminals, 6 Patterns chuỗi thời gian, Nguyên tắc Open-Closed (RULE-03) và Bảng tra cứu On-demand.
+  2. *Mục 5 - Trạng Thái Hoạt Động Hiện Thời (Active Branch Snapshot):* Luôn cập nhật trạng thái của nhánh đang làm việc, đánh dấu rõ ràng tên nhánh (`Active Branch`), phân loại đề xuất (`Type/Scope`), tiêu đề commit tiếng Việt và các gạch đầu dòng tóm tắt.
+  3. *Mục 6 - Sổ Nhật Ký Phát Triển Theo Nhánh (Cumulative Branch Milestones):* Lưu trữ lũy kế lịch sử các lần thay đổi chính trên **mọi nhánh**. Cơ chế tự động quét và lưu giữ toàn bộ các nhánh trong lịch sử mà không ghi đè mất thông tin của nhánh khác.
+- **Tiết kiệm Token tối đa:** Kỹ năng `generate-commit` và `git-commit-push` được thiết kế để **ưu tiên đọc thẳng Mục 5 & Mục 6 của Context Memory** thay vì phải quét lại hàng chục/hàng trăm dòng `git status`, giảm lãng phí token đến 90%.
 
 ---
 
-## 🚫 2. Quy Tắc Tải Kỹ Năng Theo Nhu Cầu (On-Demand Skill Loading)
-
-Để **không tiêu tốn token vô ích** vào việc đọc các hướng dẫn skill không liên quan:
-1. **CẤM đọc đồng loạt:** Agent **tuyệt đối không được chủ động duyệt hoặc đọc các file `SKILL.md`** trong `.agents/skills/` một cách tự động khi mở phiên làm việc.
-2. **Chỉ đọc khi được CHỈ ĐỊNH:** Chỉ mở và đọc nội dung của một kỹ năng cụ thể khi:
-   - Người dùng gọi tên kỹ năng trong câu lệnh (ví dụ: *"hãy chạy source-guard"*, *"dùng propose-branch"*, *"soạn commit qua generate-commit"*).
-   - Tác vụ hiện tại khớp trực tiếp và duy nhất với mục tiêu của kỹ năng đó (ví dụ: người dùng yêu cầu tạo commit -> chỉ nạp `generate-commit`).
-3. **Bảng Tra Cứu Nhanh (Không cần đọc nội dung skill):**
-
-| Tên Kỹ Năng | Khi Nào Mới Được Đọc & Kích Hoạt | Thư Mục Chứa |
-| :--- | :--- | :--- |
-| **`source-guard`** | Khi kiểm tra vi phạm xóa/sửa file lõi, tối ưu ngữ cảnh, làm mới memory | `.agents/skills/source-guard/` |
-| **`generate-commit`**| Khi người dùng yêu cầu sinh thông điệp commit tiếng Việt | `.agents/skills/generate-commit/` |
-| **`git-commit-push`** | Khi người dùng yêu cầu commit và đẩy thẳng lên remote | `.agents/skills/git-commit-push/` |
-| **`git-branch-push`** | Khi người dùng yêu cầu chuyển, tạo nhánh mới và đẩy lên GitHub | `.agents/skills/git-branch-push/` |
-| **`propose-branch`** | Khi bắt đầu tính năng mới hoặc hỏi nên đặt tên branch thế nào | `.agents/skills/propose-branch/` |
-
----
-
-## 🛡️ 3. 4 Quy Tắc Vàng Bảo Vệ Mã Nguồn GDMAS
+## 🛡️ 2. 4 Quy Tắc Vàng Bảo Vệ Mã Nguồn GDMAS
 
 ### 1. Tuyệt đối CẤM XÓA tệp (`git status: D`)
 - Không xóa bất kỳ tệp mã nguồn, tài liệu, test script hay cấu hình nào đã tồn tại trong repository.
@@ -117,11 +97,18 @@ Chỉ cần yêu cầu Agent trong chat:
 
 # 3. Đồng thời quét an toàn VÀ cập nhật lại tệp context-memory.md:
 .\.agents\skills\source-guard\scripts\source-guard.ps1 -UpdateMemory
+
+# 4. Cập nhật kèm ngữ cảnh cụ thể (tùy chọn override nếu muốn):
+.\.agents\skills\source-guard\scripts\source-guard.ps1 -UpdateMemory -Type feat -Scope api -Desc "bổ sung route tìm kiếm động đất"
 ```
 
 ### 3. Chạy kịch bản bằng Bash
 ```bash
+# Quét cơ bản
 bash .agents/skills/source-guard/scripts/source-guard.sh
+
+# Quét strict và cập nhật memory
+bash .agents/skills/source-guard/scripts/source-guard.sh --strict --update-memory
 ```
 
 ---
@@ -129,5 +116,3 @@ bash .agents/skills/source-guard/scripts/source-guard.sh
 ## 📁 Tệp Bộ Nhớ & Nhật Ký Cục Bộ
 - **Bộ nhớ ngữ cảnh tinh gọn:** [`.agents/notes/memory/context-memory.md`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md)
 - **Biên bản thẩm định mã nguồn:** [`.agents/notes/changes/source-guard-report.md`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/changes/source-guard-report.md)
-
-Cả hai tệp đều được bảo vệ trong `.gitignore` để không làm ô nhiễm Git tree từ xa.

@@ -89,6 +89,8 @@ apps/web/dist/
 apps/web/dist-ssr/
 *.tsbuildinfo
 *.local
+*.tsbuildinfo
+**/*.tsbuildinfo
 .vite/
 
 # ------------------------------------------------------------------------------
