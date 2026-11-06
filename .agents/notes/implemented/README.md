@@ -1,4 +1,4 @@
-# Thư Mục Ghi Nhận Tính Năng & Tác Vụ Đã Triển Khai (Implemented)
+﻿# Thư Mục Ghi Nhận Tính Năng & Tác Vụ Đã Triển Khai (Implemented)
 
 Thư mục này dùng để ghi nhận các tính năng, module, đặc tả kiến trúc và cấu hình đã hoàn thành trong hệ thống **GDMAS**.
 

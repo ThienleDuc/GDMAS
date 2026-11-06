@@ -1,4 +1,4 @@
-# Thư Mục Kế Hoạch & Đề Xuất Kế Tiếp (Proposed)
+﻿# Thư Mục Kế Hoạch & Đề Xuất Kế Tiếp (Proposed)
 
 Thư mục này dùng để lưu trữ các đề xuất kiến trúc, tài liệu thiết kế tính năng mới và kế hoạch triển khai tiếp theo cho hệ thống **GDMAS**.
 

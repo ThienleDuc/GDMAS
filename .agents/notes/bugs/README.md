@@ -1,4 +1,4 @@
-# Thư Mục Theo Dõi Lỗi & Rủi Ro Kỹ Thuật (Bugs Log)
+﻿# Thư Mục Theo Dõi Lỗi & Rủi Ro Kỹ Thuật (Bugs Log)
 
 Thư mục này dùng để lưu trữ các tài liệu, báo cáo chi tiết về lỗi, sự cố phát sinh và giải pháp kỹ thuật phòng ngừa trong quá trình phát triển hệ thống **GDMAS**.
 
