@@ -1,0 +1,134 @@
+# ==============================================================================
+# GDMAS - GLOBAL DISASTER MONITORING & ANALYSIS SYSTEM (.gitignore)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. LOCAL COMMIT ARTIFACTS & CHANGE LOGS (Chỉ sinh nội bộ trên máy, không push)
+# ------------------------------------------------------------------------------
+# Bỏ qua các tệp ghi nhận thay đổi và thông điệp commit tạm thời
+.agents/notes/changes/pending-commit.md
+**/.agents/notes/changes/pending-commit.md
+.agents/notes/changes/*.tmp
+.agents/notes/changes/*.log
+**/.agents/notes/changes/*.tmp
+**/.agents/notes/changes/*.log
+
+# Bỏ qua toàn bộ nội dung sinh ra trong changes/, chỉ giữ lại README.md
+.agents/notes/changes/*
+!.agents/notes/changes/README.md
+**/.agents/notes/changes/*
+!**/.agents/notes/changes/README.md
+
+# ------------------------------------------------------------------------------
+# 2. BIẾN MÔI TRƯỜNG & DỮ LIỆU BẢO MẬT (Security & Secrets)
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+!apps/web/.env.example
+!GDMAS/.env.example
+!GDMAS/apps/web/.env.example
+
+# ------------------------------------------------------------------------------
+# 3. PYTHON BACKEND & MÔI TRƯỜNG ẢO (apps/api)
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Testing & Linting Caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+
+# ------------------------------------------------------------------------------
+# 4. NODEJS & FRONTEND WEB CLIENT (apps/web)
+# ------------------------------------------------------------------------------
+node_modules/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Vite / React Build Artifacts
+apps/web/dist/
+apps/web/dist-ssr/
+*.local
+.vite/
+
+# ------------------------------------------------------------------------------
+# 5. DOCKER & DATABASE STORAGE (Persistent Data & Backups)
+# ------------------------------------------------------------------------------
+postgres_data/
+pgdata/
+backups/*.dump
+backups/*.sql
+backups/*.tar.gz
+!backups/.gitkeep
+
+# ------------------------------------------------------------------------------
+# 6. OPERATING SYSTEM & IDE ARTIFACTS
+# ------------------------------------------------------------------------------
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+
+# IDEs
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo

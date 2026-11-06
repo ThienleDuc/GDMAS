@@ -1,0 +1,11 @@
+﻿[project]
+name = "gdmas-api"
+version = "0.1.0"
+description = "Global Disaster Monitoring and Analysis System"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
