@@ -87,6 +87,7 @@ lerna-debug.log*
 # Vite / React Build Artifacts
 apps/web/dist/
 apps/web/dist-ssr/
+*.tsbuildinfo
 *.local
 *.tsbuildinfo
 **/*.tsbuildinfo
