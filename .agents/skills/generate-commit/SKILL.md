@@ -12,58 +12,63 @@ description: >-
 Kỹ năng này chịu trách nhiệm **phân tích sự thay đổi giữa working tree hiện tại so với mã nguồn gốc**, tự động ghi nhật ký vào thư mục `.agents/notes/changes/pending-commit.md` và sinh ra **Conventional Commit message hoàn toàn bằng tiếng Việt** chuẩn hóa theo đúng quy ước của dự án GDMAS.
 
 > [!IMPORTANT]
+> - **Nguyên tắc Bất Biến (Skill Stability):** Kỹ năng được thiết kế theo cơ chế **Phân Định 3 Bậc (3-Tier Resolution Engine)**. Tuyệt đối không hardcode nội dung tác vụ tạm thời vào code. Kỹ năng thích ứng tự động với mọi nhánh và mọi tác vụ mới.
 > - **Tiêu chuẩn ngôn ngữ:** Mọi thông điệp commit bao gồm phần tóm tắt (Subject) và nội dung chi tiết (Body bullets) bắt buộc phải được tạo bằng **tiếng Việt**.
+> - **Tiết kiệm Token (Context-First Workflow):** Kỹ năng **ưu tiên đọc thẳng Mục 5 & Mục 6 của Cửa Sổ Ngữ Cảnh (`.agents/notes/memory/context-memory.md`)** để nạp phân loại `Type`, `Scope` và tóm tắt đã được đánh dấu theo nhánh.
 > - **Lưu trữ cục bộ:** Tệp nhật ký chỉ được lưu trữ cục bộ tại `.agents/notes/changes/pending-commit.md` (được bảo vệ trong `.gitignore`, không đẩy lên remote repository). Không bao giờ tạo thư mục `.agents` lồng nhau.
 
 ---
 
-## 🧭 Quy Trình Hoạt Động (Workflow)
+## 🧭 Cơ Chế Phân Định 3 Bậc (3-Tier Resolution Engine)
 
 ```mermaid
 flowchart TD
-    A[Yêu cầu sinh commit] --> B[Quét trạng thái git status & diff]
-    B --> C[Phân tích danh sách file thay đổi]
-    C --> D[Suy luận Type & Scope theo quy ước GDMAS]
-    D --> E[Sinh Commit Header & Bullet Body bằng TIẾNG VIỆT]
-    E --> F[Ghi vào .agents/notes/changes/pending-commit.md]
-    F --> G[Hiển thị kết quả tiếng Việt cho người dùng / Tự động commit]
+    A[Yêu cầu sinh commit] --> B{Bậc 1: Có truyền tham số trực tiếp?}
+    B -- Có Message/Subject/Type/Scope --> C[Sử dụng trực tiếp thông tin từ tham số]
+    B -- Không --> D{Bậc 2: Có thông tin nhánh trong context-memory.md?}
+    D -- Có khớp nhánh hiện tại --> E[⚡ Nạp Type, Scope & Subject từ Cửa Sổ Ngữ Cảnh]
+    D -- Không khớp / Chưa có --> F[Bậc 3: Quét động cây thư mục git status]
+    F --> G[Ánh xạ Scope theo cấu trúc kiến trúc GDMAS]
+    C & E & G --> H[Sinh Conventional Commit Header & Body TIẾNG VIỆT]
+    H --> I[Ghi nhật ký vào .agents/notes/changes/pending-commit.md]
+    I --> J{Có cờ -Commit hoặc -Push?}
+    J -- Có --> K[Thực hiện Commit / Push tự động]
+    J -- Không --> L[Hiển thị kết quả đề xuất]
 ```
 
 ---
 
-## 📋 Tiêu Chuẩn Phân Loại & Mẫu Commit Tiếng Việt
+## 📋 Tiêu Chuẩn Phân Loại Kiến Trúc GDMAS
 
-| Vùng tệp thay đổi | `type` | `scope` | Ví dụ Commit Header (Tiếng Việt) |
+| Vùng tệp thay đổi | `type` | `scope` | Tiêu đề mặc định (khi không truyền tham số) |
 | :--- | :--- | :--- | :--- |
-| `docs/setup.md` | `docs` | `setup` | `docs(setup): cập nhật cấu hình môi trường local và lệnh cài đặt` |
-| `docs/architecture/*` | `docs` | `architecture` | `docs(architecture): hoàn thiện tài liệu thiết kế SAD và ERD` |
-| `docs/api/*` | `docs` | `api` | `docs(api): đặc tả chi tiết REST API và kênh streaming SSE` |
-| `docs/*` tổng quát | `docs` | `core` | `docs(core): hoàn thiện hệ thống tài liệu kỹ thuật toàn diện` |
-| `apps/api/src/gdmas/services/ingestion` | `feat` / `fix` | `ingestion` | `feat(ingestion): bổ sung cơ chế retry nạp dữ liệu động đất từ USGS` |
-| `apps/api/src/gdmas/services/analysis` | `feat` / `fix` | `analysis` | `feat(analysis): hoàn thành thuật toán phân tích 6 patterns chuỗi thời gian` |
-| `apps/api/src/gdmas/services/clustering` | `feat` / `fix` | `clustering` | `feat(clustering): tối ưu hóa tham số eps và min_samples cho DBSCAN` |
-| `apps/api/src/gdmas/services/prediction` | `feat` / `fix` | `prediction` | `feat(prediction): tích hợp mô hình dự báo rủi ro động đất` |
-| `apps/api/*` tổng quát | `feat` / `fix` | `api` | `feat(api): cập nhật các endpoint và controller dịch vụ backend` |
-| `apps/web/*` | `feat` / `fix` | `web` | `feat(web): vẽ marker địa chấn trên bản đồ Leaflet và tích hợp SSE` |
-| `.agents/skills/*` | `chore` | `agents` | `chore(agents): chuẩn hóa kỹ năng tạo commit tiếng Việt và đề xuất nhánh` |
-| `scripts/*` | `chore` | `scripts` | `chore(scripts): bổ sung script kiểm thử tự động nội bộ` |
+| `apps/web/src/components/charts/*` | `feat` | `web` | `trực quan hóa biểu đồ chuỗi thời gian địa chấn` |
+| `apps/web/src/layouts/*` | `feat` | `web` | `cập nhật cấu trúc layout giao diện frontend` |
+| `apps/web/*` tổng quát | `feat` | `web` | `cập nhật giao diện người dùng và tương tác frontend` |
+| `apps/api/src/gdmas/services/ingestion` | `feat` | `ingestion` | `cập nhật tiến trình nạp dữ liệu USGS` |
+| `apps/api/src/gdmas/services/analysis` | `feat` | `analysis` | `cập nhật thuật toán phân tích chuỗi thời gian` |
+| `apps/api/src/gdmas/services/clustering` | `feat` | `clustering` | `cập nhật thuật toán gom cụm không gian` |
+| `apps/api/src/gdmas/services/prediction` | `feat` | `prediction` | `cập nhật mô hình dự báo địa chấn` |
+| `apps/api/src/gdmas/realtime` | `feat` | `realtime` | `cập nhật dịch vụ streaming dữ liệu SSE` |
+| `apps/api/src/gdmas/db` & `alembic` | `feat` | `db` | `cập nhật cấu trúc cơ sở dữ liệu và migrations` |
+| `apps/api/*` tổng quát | `feat` | `api` | `cập nhật dịch vụ backend và endpoint REST/SSE` |
+| `contracts/*` | `chore` | `contracts` | `chuẩn hóa hợp đồng dữ liệu dùng chung API-Web` |
+| `docs/setup.md` | `docs` | `setup` | `cập nhật hướng dẫn cài đặt và cấu hình môi trường` |
+| `docs/architecture/*` | `docs` | `architecture` | `cập nhật tài liệu kiến trúc hệ thống và luồng dữ liệu` |
+| `docs/*` tổng quát | `docs` | `core` | `cập nhật hệ thống tài liệu kỹ thuật dự án` |
+| `.agents/*` | `chore` | `agents` | `chuẩn hóa và tối ưu hóa các kỹ năng AI agent` |
+| `scripts/*` | `chore` | `scripts` | `cập nhật kịch bản kiểm thử và tự động hóa` |
+| Khác / Gốc dự án | `chore` | `project` | `cập nhật tài nguyên và cấu hình dự án` |
 
 ---
 
 ## 📝 Định Dạng Thông Điệp Chuẩn
 
-Khi sinh commit, kỹ năng phải định dạng:
-
-**Header:**
 ```text
-<type>(<scope>): <mô tả ngắn gọn hành động bằng tiếng Việt, chữ thường, không dấu chấm cuối câu>
-```
+<type>(<scope>): <mô tả hành động bằng tiếng Việt, chữ thường, không dấu chấm cuối câu>
 
-**Body (Các gạch đầu dòng chi tiết bằng tiếng Việt):**
-```text
-- Bổ sung/Cập nhật <chi tiết tính năng, logic thay đổi>
-- Tối ưu hóa/Sửa lỗi <nguyên nhân và cách xử lý>
-- Đồng bộ hóa tài liệu hoặc cấu hình liên quan
+- <Chi tiết thay đổi 1>
+- <Chi tiết thay đổi 2>
 ```
 
 ---
@@ -74,24 +79,30 @@ Khi sinh commit, kỹ năng phải định dạng:
 Chỉ cần yêu cầu trong chat:
 - *"Hãy phân tích thay đổi và sinh commit message bằng tiếng Việt"*
 - *"Ghi lại thay đổi vào notes/changes và tạo commit"*
-
-Agent sẽ đọc diff, cập nhật vào `.agents/notes/changes/pending-commit.md`, và phản hồi thông điệp commit bằng tiếng Việt.
+- *"Tạo commit: thêm bộ lọc bản đồ theo độ sâu"*
 
 ### 2. Chạy kịch bản tự động bằng PowerShell
 ```powershell
-# Chỉ sinh commit tiếng Việt và ghi vào notes/changes:
+# 1. Tự động suy luận động và ghi bản ghi:
 .\.agents\skills\generate-commit\scripts\generate-commit.ps1
 
-# Sinh commit tiếng Việt VÀ tự động commit luôn:
-.\.agents\skills\generate-commit\scripts\generate-commit.ps1 -Commit
+# 2. Truyền thông điệp ngữ nghĩa cụ thể (Agent hoặc Dev truyền trực tiếp):
+.\.agents\skills\generate-commit\scripts\generate-commit.ps1 -Subject "tối ưu hóa tham số eps cho DBSCAN" -Commit
 
-# Sinh commit tiếng Việt, commit VÀ push lên remote:
-.\.agents\skills\generate-commit\scripts\generate-commit.ps1 -Push
+# 3. Truyền trọn bộ Conventional Commit:
+.\.agents\skills\generate-commit\scripts\generate-commit.ps1 -Message "feat(api): bổ sung route xuất file geojson" -Commit -Push
+
+# 4. Ép quét lại working tree (bỏ qua context memory):
+.\.agents\skills\generate-commit\scripts\generate-commit.ps1 -ForceScan
 ```
 
 ### 3. Chạy kịch bản bằng Bash
 ```bash
+# Tự động quét và sinh commit
 bash .agents/skills/generate-commit/scripts/generate-commit.sh
+
+# Truyền subject cụ thể và commit
+bash .agents/skills/generate-commit/scripts/generate-commit.sh --subject "tích hợp biểu đồ heatmap" --commit
 ```
 
 ---
@@ -99,5 +110,3 @@ bash .agents/skills/generate-commit/scripts/generate-commit.sh
 ## 📁 Nhật Ký Thay Đổi Cục Bộ
 Tệp kết quả được lưu tại:
 - [`.agents/notes/changes/pending-commit.md`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/changes/pending-commit.md)
-
-Tệp này ghi nhận đầy đủ lịch sử: thời gian, nhánh, phân loại, tiêu đề commit và danh sách tệp bị tác động.

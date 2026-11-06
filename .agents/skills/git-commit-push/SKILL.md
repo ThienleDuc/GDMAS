@@ -8,154 +8,77 @@ description: >-
 
 # Git Commit & Push Workflow Skill (GDMAS)
 
-Kỹ năng này hướng dẫn và tự động hóa quy trình commit và đẩy nhánh lên remote repository cho dự án **GDMAS**, đảm bảo tuân thủ nghiêm ngặt **Conventional Commits**, kiểm thử nội bộ trước khi commit (**Local Test Suite**), và an toàn dữ liệu (không commit các tệp nhạy cảm).
+Kỹ năng này tự động hóa toàn bộ quy trình từ stage, tạo Conventional Commit tiếng Việt chuẩn hóa đến đẩy nhánh lên remote repository cho dự án **GDMAS**, đảm bảo tuân thủ nghiêm ngặt **Conventional Commits**, an toàn bảo mật (loại trừ `.env` và cache), và bảo vệ nhánh chính (`main`).
+
+> [!IMPORTANT]
+> - **Nguyên tắc Thiết Kế Bất Biến (Skill Stability):** Kỹ năng hoạt động theo cơ chế **Phân Định Đa Nguồn (Multi-Source Resolution)**. Script không bao giờ chứa chuỗi mô tả cứng của tác vụ. Nó nhận diện thông điệp linh hoạt theo thứ tự ưu tiên: Tham số trực tiếp > `pending-commit.md` > `context-memory.md` > Suy luận động từ Working Tree.
+> - **An toàn nhánh `main`:** Tự động phát hiện khi đang ở `main` và tạo nhánh tính năng chuẩn thay vì commit trực tiếp lên `main`.
+> - **An toàn dữ liệu:** Tự động loại trừ các tệp nhạy cảm `.env`, cache `node_modules`, `__pycache__` trước khi commit.
 
 ---
 
-## 🧭 Quy Trình 6 Bước Chuẩn (Standard Workflow)
+## 🧭 Quy Trình Tự Động Hóa Đa Nguồn (Workflow)
 
 ```mermaid
 flowchart TD
-    A[Bắt đầu: Yêu cầu commit/push] --> B[Bước 1: Pre-flight Check & Rà soát File]
-    B --> C{Có tệp nhạy cảm .env không?}
-    C -- Có --> D[Loại trừ ngay khỏi Stage]
-    C -- Không --> E[Bước 2: Chạy kiểm thử nội bộ scripts/test.sh]
-    D --> E
-    E --> F[Bước 3: Stage tệp vào Git Index]
-    F --> G[Bước 4: Tạo Conventional Commit]
-    G --> H[Bước 5: Kéo Rebase từ Remote git pull --rebase]
-    H --> I[Bước 6: Đẩy nhánh lên Remote git push -u]
-    I --> J[Hoàn tất & Cung cấp liên kết PR]
+    A[Bắt đầu: Lệnh commit/push] --> B[Pre-flight: Kiểm tra .env & An toàn Staging]
+    B --> C{Nhánh hiện tại là main?}
+    C -- Đúng --> D[Tự động tạo & chuyển sang nhánh chuẩn hóa <type>/<scope>-updates]
+    C -- Sai --> E[Giữ nguyên nhánh hiện tại]
+    D & E --> F{Xác định Commit Message}
+    F -- Nguồn 1 --> G[Tham số -Message / -Subject]
+    F -- Nguồn 2 --> H[Tệp pending-commit.md]
+    F -- Nguồn 3 --> I[⚡ Cửa Sổ Ngữ Cảnh context-memory.md]
+    F -- Nguồn 4 --> J[Suy luận động từ cây thư mục Git]
+    G & H & I & J --> K[Stage tệp an toàn git add -u]
+    K --> L[Tạo Conventional Commit Tiếng Việt]
+    L --> M[Kéo rebase đồng bộ git pull --rebase]
+    M --> N[Đẩy nhánh lên Remote git push -u origin]
+    N --> O[Tự động cập nhật Context Memory]
 ```
 
 ---
 
-## 🛠️ Hướng Dẫn Từng Bước (Step-by-Step Instructions)
+## 🛠️ Thứ Tự Phân Định Thông Điệp (Multi-Source Resolution)
 
-### Bước 1: Pre-flight Check & Rà soát Tệp Thay Đổi
-1. Kiểm tra nhánh hiện tại:
-   ```bash
-   git branch --show-current
-   ```
-   > [!IMPORTANT]
-   > Tuyệt đối **không commit trực tiếp lên nhánh `main`**. Nếu đang ở `main`, yêu cầu chuyển sang nhánh tính năng theo cú pháp:
-   > - `git switch -c feature/<scope>-<description>`
-   > - `git switch -c bugfix/<scope>-<description>`
-   > - `git switch -c docs/<description>`
-
-2. Kiểm tra danh sách tệp thay đổi:
-   ```bash
-   git status -s
-   ```
-3. **Cảnh báo an toàn dữ liệu:** Tuyệt đối không stage các tệp:
-   - `.env` (chứa mật khẩu DB và secret key)
-   - `.venv/` hoặc `node_modules/`
-   - Cache (`__pycache__`, `.pytest_cache`, `.vite`)
+1. **Nguồn 1 (Tham số trực tiếp):** Nếu người dùng hoặc AI Agent truyền cờ `-Message` hoặc `-Subject`.
+2. **Nguồn 2 (`pending-commit.md`):** Đọc thông điệp đã được sinh trước đó bởi kỹ năng `generate-commit` (nếu khớp nhánh hiện tại).
+3. **Nguồn 3 (`context-memory.md`):** Đọc phân loại `Type`, `Scope`, `Subject` đã được lưu tại Mục 5 của Cửa Sổ Ngữ Cảnh (nếu khớp nhánh hiện tại).
+4. **Nguồn 4 (Suy luận động):** Tự động phân tích các thư mục thay đổi (`apps/web`, `apps/api`, `docs/`, `.agents/`, v.v.) theo cấu trúc kiến trúc chuẩn của GDMAS để sinh Conventional Commit tiếng Việt hợp lệ mà không cần người dùng nhập liệu.
 
 ---
 
-### Bước 2: Chạy Kiểm Thử Nội Bộ (Local Verification)
-Trước khi commit, bắt buộc kiểm tra mã nguồn không có lỗi cú pháp hoặc vi phạm linting:
+## ⚡ Cách Kích Hoạt & Sử Dụng
 
+### 1. Kích hoạt tự nhiên qua hội thoại
+Chỉ cần yêu cầu Agent trong chat:
+- *"Hãy commit và push các thay đổi hiện tại"*
+- *"Commit và đẩy lên remote với thông điệp: hoàn thành module ingestion"*
+- *"Tự động tạo commit và push cho tôi"*
+
+### 2. Chạy kịch bản bằng PowerShell (Windows)
+```powershell
+# 1. Chế độ hoàn toàn tự động (Auto Mode):
+.\.agents\skills\git-commit-push\scripts\commit-push.ps1 -Auto
+
+# 2. Truyền thông điệp commit tùy chỉnh:
+.\.agents\skills\git-commit-push\scripts\commit-push.ps1 -Message "feat(api): bổ sung bộ lọc địa chấn theo độ sâu"
+
+# 3. Chỉ định nhánh cần tạo khi đang ở main:
+.\.agents\skills\git-commit-push\scripts\commit-push.ps1 -BranchName "feature/web-chart-patterns"
+```
+
+### 3. Chạy kịch bản bằng Bash (Linux / macOS / Git Bash)
 ```bash
-# Chạy bộ test suite nội bộ:
-bash scripts/test.sh
+# Tự động hoàn toàn:
+bash .agents/skills/git-commit-push/scripts/commit-push.sh
 
-# Hoặc kiểm tra nhanh Python linting:
-cd apps/api && uv run ruff check . && cd ../..
+# Truyền thông điệp tùy chỉnh:
+bash .agents/skills/git-commit-push/scripts/commit-push.sh --message "docs(setup): hướng dẫn thiết lập database"
 ```
-
----
-
-### Bước 3: Stage Tệp Thay Đổi (Git Add)
-Stage chính xác các tệp cần commit thay vì dùng lệnh bao quát:
-
-```bash
-# Stage các tệp tài liệu cụ thể:
-git add docs/ setup.md tailieukientructuAI.md
-
-# Hoặc stage toàn bộ thay đổi đã theo dõi (trừ tệp chưa untracked nhạy cảm):
-git add -u
-```
-
-Kiểm tra lại trạng thái staged:
-```bash
-git status
-```
-
----
-
-### Bước 4: Tạo Commit Tuân Thủ Conventional Commits
-Cú pháp thông điệp commit chuẩn:
-```text
-<type>(<scope>): <subject>
-```
-
-- **Types hợp lệ:**
-  - `feat`: Tính năng mới (service runner, API endpoint, UI component)
-  - `fix`: Sửa lỗi logic hoặc bug runtime
-  - `docs`: Cập nhật hoặc bổ sung tài liệu
-  - `style`: Định dạng code (whitespace, format, không đổi logic)
-  - `refactor`: Tái cấu trúc mã nguồn
-  - `test`: Bổ sung hoặc sửa đổi test cases
-  - `chore`: Cập nhật cấu hình, dependency, scripts build
-- **Scopes phổ biến:**
-  - `api`, `web`, `ingestion`, `analysis`, `clustering`, `prediction`, `db`, `docker`, `docs`, `config`
-- **Ví dụ mẫu chuẩn:**
-  ```bash
-  git commit -m "docs(setup): add local configuration requirements and setup commands"
-  git commit -m "feat(ingestion): implement usgs earthquake polling runner"
-  git commit -m "fix(db): handle upsert conflict on duplicate earthquake id"
-  ```
-
----
-
-### Bước 5: Đồng Bộ với Remote (Pull Rebase)
-Trước khi push, kéo các commit mới nhất từ remote nhánh hiện tại (hoặc nhánh cơ sở `develop`) để tránh tạo commit merge thừa:
-
-```bash
-git pull --rebase origin $(git branch --show-current)
-```
-
----
-
-### Bước 6: Đẩy Nhánh Lên Remote (Git Push)
-Đẩy nhánh lên remote repository và thiết lập tracking upstream:
-
-```bash
-git push -u origin $(git branch --show-current)
-```
-
-Nếu là lần đầu push nhánh mới, lệnh trên sẽ tự động tạo nhánh tương ứng trên GitHub.
-
----
-
-## ⚡ Kịch Bản Chạy Nhanh & Chế Độ Tự Động (Auto Mode)
-
-Skill hỗ trợ **chế độ tự động hoàn toàn (Auto Mode)**: Tự động phân tích các tệp thay đổi, tự xác định `type` và `scope`, tự đặt tên nhánh theo đúng quy ước `<type>/<scope>-updates`, tự sinh Conventional Commit message chuẩn xác, chuyển nhánh và push lên Remote:
-
-- **Cách 1: Yêu cầu AI Agent tự động thực hiện:**
-  Người dùng chỉ cần ra lệnh trong chat:
-  > *"Hãy tự động tạo nhánh, sinh commit và push cho tôi"*
-  
-  Agent sẽ tự động phân tích `git status`, tạo nhánh và commit theo đúng chuẩn mà người dùng không cần gõ lệnh git thủ công.
-
-- **Cách 2: Chạy script tự động trên Windows PowerShell:**
-  ```powershell
-  # Tự động phân tích, tự tạo nhánh và tự sinh commit:
-  .\.agents\skills\git-commit-push\scripts\commit-push.ps1 -Auto
-  ```
-
-- **Cách 3: Chạy script tự động trên Bash / Linux / macOS:**
-  ```bash
-  # Tự động hoàn toàn trong 1 lệnh:
-  bash .agents/skills/git-commit-push/scripts/commit-push.sh
-  ```
 
 ---
 
 ## 📖 Tài Liệu Tham Khảo (References)
 - Bảng quy chuẩn Conventional Commits & Branch naming: [conventions.md](./references/conventions.md)
 - Sổ tay phân nhánh chi tiết: [branch-conventions.md](file:///D:/KHDLKPDL/GDMAS/docs/development/branch-conventions.md)
-- Cheatsheet lệnh Git: [git/commands.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/git/commands.md)
-

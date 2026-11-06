@@ -88,6 +88,8 @@ lerna-debug.log*
 apps/web/dist/
 apps/web/dist-ssr/
 *.local
+*.tsbuildinfo
+**/*.tsbuildinfo
 .vite/
 
 # ------------------------------------------------------------------------------
