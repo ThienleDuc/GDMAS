@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param (
     [Parameter(Mandatory=$false)]
     [switch]$Strict,
@@ -233,6 +233,7 @@ if ($UpdateMemory) {
         "| **`generate-commit`**| Khi người dùng yêu cầu soạn hoặc sinh Conventional Commit tiếng Việt | `.agents/skills/generate-commit/` |",
         "| **`git-commit-push`** | Khi người dùng yêu cầu tự động stage, commit và push lên remote | `.agents/skills/git-commit-push/` |",
         "| **`propose-branch`** | Khi bắt đầu tính năng mới hoặc yêu cầu đề xuất tên branch theo task | `.agents/skills/propose-branch/` |",
+        "| **`git-branch-push`** | Khi người dùng yêu cầu chuyển, tạo nhánh mới và đẩy lên GitHub | `.agents/skills/git-branch-push/` |",
         "",
         "---",
         "",

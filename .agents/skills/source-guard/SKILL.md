@@ -69,6 +69,7 @@ Nhằm giải quyết vấn đề **Agent bị cạn kiệt context window hoặ
 | **`source-guard`** | Khi kiểm tra vi phạm xóa/sửa file lõi, tối ưu ngữ cảnh, làm mới memory | `.agents/skills/source-guard/` |
 | **`generate-commit`**| Khi người dùng yêu cầu sinh thông điệp commit tiếng Việt | `.agents/skills/generate-commit/` |
 | **`git-commit-push`** | Khi người dùng yêu cầu commit và đẩy thẳng lên remote | `.agents/skills/git-commit-push/` |
+| **`git-branch-push`** | Khi người dùng yêu cầu chuyển, tạo nhánh mới và đẩy lên GitHub | `.agents/skills/git-branch-push/` |
 | **`propose-branch`** | Khi bắt đầu tính năng mới hoặc hỏi nên đặt tên branch thế nào | `.agents/skills/propose-branch/` |
 
 ---
