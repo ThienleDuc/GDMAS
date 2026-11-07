@@ -3,7 +3,7 @@
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# 1. LOCAL SKILL ARTIFACTS & NOTES (.agents/notes)
+# 1. LOCAL SKILL ARTIFACTS & NOTES (.agents/notes & .claude/notes)
 # ------------------------------------------------------------------------------
 # Bỏ qua các tệp nhật ký tạm và đề xuất sinh bởi kỹ năng (chỉ lưu cục bộ)
 .agents/notes/changes/*
@@ -17,6 +17,18 @@
 !.agents/notes/bugs/**
 !.agents/notes/implemented/**
 !.agents/notes/proposed/**
+
+# Bỏ qua các tệp nhật ký tạm tương ứng trong .claude/notes
+.claude/notes/changes/*
+!.claude/notes/changes/README.md
+.claude/notes/branches/*
+!.claude/notes/branches/README.md
+.claude/notes/memory/*
+!.claude/notes/memory/README.md
+
+!.claude/notes/bugs/**
+!.claude/notes/implemented/**
+!.claude/notes/proposed/**
 
 # ------------------------------------------------------------------------------
 # 2. BIẾN MÔI TRƯỜNG & DỮ LIỆU BẢO MẬT (Security & Secrets)

@@ -223,7 +223,7 @@ Write-Host "--> Commit Message: $finalMessage" -ForegroundColor Gray
 # 5. Stage các tệp thay đổi an toàn
 Write-Host "--> Đang stage các tệp thay đổi an toàn..." -ForegroundColor Yellow
 git add -u
-git add docs/ apps/ contracts/ scripts/ .agents/ README.md .gitignore 2>$null
+git add docs/ apps/ contracts/ scripts/ .agents/ .claude/ README.md .gitignore 2>$null
 
 # 6. Thực hiện Commit
 Write-Host "--> Đang thực hiện commit..." -ForegroundColor Yellow
