@@ -13,6 +13,9 @@ import {
   Layers,
   ChevronRight,
 } from "lucide-react";
+import { useSSE } from "../hooks/useSSE";
+import { IngestionToast, ToastData } from "../components/ui/IngestionToast";
+import { formatEventTime } from "../utils/timezone";
 
 interface NavItem {
   label: string;
@@ -33,7 +36,42 @@ const NAV_ITEMS: NavItem[] = [
 export const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentTimeUtc, setCurrentTimeUtc] = useState("");
+  const [toast, setToast] = useState<ToastData | null>(null);
   const location = useLocation();
+
+  // Kết nối SSE để nhận thông báo cào dữ liệu tự động 5 phút
+  const { data: sseData } = useSSE("/api/v1/stream/earthquakes");
+
+  useEffect(() => {
+    if (!sseData) return;
+
+    if (sseData.event === "ingestion_cycle_completed" || sseData.event === "earthquake_detected") {
+      const payloadData = sseData.data as {
+        title?: string;
+        message?: string;
+        records_processed?: number;
+      };
+
+      const title =
+        payloadData?.title ||
+        (sseData.event === "earthquake_detected"
+          ? "Phát Hiện Sự Kiện Địa Chấn Mới"
+          : "Cập Nhật Dữ Liệu Tự Động (Chu kỳ 5 phút)");
+
+      const message =
+        payloadData?.message ||
+        "Đã hoàn thành chu kỳ cào dữ liệu từ trạm địa chấn USGS.";
+
+      const time = formatEventTime(sseData.timestamp, "UTC+7");
+
+      setToast({
+        title,
+        message,
+        records_processed: payloadData?.records_processed,
+        time,
+      });
+    }
+  }, [sseData]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -169,6 +207,13 @@ export const DashboardLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Toast thông báo cập nhật tự động 5 phút (Tự động tắt sau 5s hoặc bấm X tắt ngay) */}
+      <IngestionToast
+        toast={toast}
+        onClose={() => setToast(null)}
+        durationMs={5000}
+      />
     </div>
   );
 };

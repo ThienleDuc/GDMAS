@@ -177,15 +177,11 @@ export const EarthquakesPage: React.FC = () => {
     loadEarthquakes();
   }, [loadEarthquakes]);
 
-  // Tự động làm mới danh sách động đất khi SSE phát hiện sự kiện mới
+  // Tự động làm mới danh sách động đất khi SSE phát hiện sự kiện mới hoặc chu kỳ 5 phút hoàn tất
   useEffect(() => {
     if (!sseData) return;
-    if (sseData.event === "earthquake_detected") {
-      const msg = (sseData.data as { message?: string })?.message || "Đã nhận sự kiện địa chấn mới qua SSE!";
-      setNewEventsNotice(msg);
+    if (sseData.event === "earthquake_detected" || sseData.event === "ingestion_cycle_completed") {
       loadEarthquakes();
-      const timer = setTimeout(() => setNewEventsNotice(null), 8000);
-      return () => clearTimeout(timer);
     }
   }, [sseData, loadEarthquakes]);
 

@@ -179,15 +179,11 @@ export const DashboardOverviewPage: React.FC = () => {
     loadDashboardData();
   }, [loadDashboardData]);
 
-  // Tự động làm mới dữ liệu khi SSE báo có sự kiện mới
+  // Tự động làm mới dữ liệu khi SSE báo có sự kiện mới hoặc chu kỳ 5 phút hoàn tất
   useEffect(() => {
     if (!sseData) return;
-    if (sseData.event === "earthquake_detected") {
-      const msg = (sseData.data as { message?: string })?.message || "Đã nhận sự kiện địa chấn mới qua SSE!";
-      setSseNotice(msg);
+    if (sseData.event === "earthquake_detected" || sseData.event === "ingestion_cycle_completed") {
       loadDashboardData();
-      const timer = setTimeout(() => setSseNotice(null), 8000);
-      return () => clearTimeout(timer);
     }
   }, [sseData, loadDashboardData]);
 

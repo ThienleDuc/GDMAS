@@ -55,6 +55,12 @@ export function useSSE(endpoint: string = "/api/v1/stream/earthquakes") {
       handlePayload(event.data);
     });
 
+    // 5. Lắng nghe event "ingestion_cycle_completed" (chu kỳ cào USGS 5 phút)
+    eventSource.addEventListener("ingestion_cycle_completed", (event: MessageEvent) => {
+      setIsConnected(true);
+      handlePayload(event.data);
+    });
+
     eventSource.onerror = () => {
       setIsConnected(false);
     };
