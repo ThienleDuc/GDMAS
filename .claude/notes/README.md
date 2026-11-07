@@ -21,6 +21,8 @@ Thư mục `.agents/notes` là **thư mục cấp cao nhất** dùng để lưu 
 ├── changes/                # [Cục bộ] Bỏ qua qua .gitignore: Nhật ký thay đổi & pending-commit.md
 │   ├── README.md           # [Push Git] Hướng dẫn sử dụng
 │   └── pending-commit.md   # [Cục bộ] Bản ghi commit kế tiếp do skill 'generate-commit' tạo ra
+├── planning/               # [Cục bộ] Bỏ qua qua .gitignore: Bộ nhớ ngữ cảnh nén (Context cache) sinh bởi skill 'generate-planning'
+│   └── README.md           # [Push Git] Hướng dẫn sử dụng
 └── branches/               # [Cục bộ] Bỏ qua qua .gitignore: Bản ghi đề xuất tạo nhánh
     ├── README.md           # [Push Git] Hướng dẫn sử dụng
     └── *.md                # [Cục bộ] Các đề xuất nhánh do skill 'propose-branch' tạo ra
