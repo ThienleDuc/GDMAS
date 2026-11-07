@@ -16,6 +16,7 @@ docs/
 ├── quyuocchung.md                     # Quy ước chung, triết lý OCP & 6 Patterns
 ├── tailieukientructuAI.md             # Tài liệu kiến trúc tham chiếu tổng hợp
 ├── yeucaubatbuoc.md                   # Bảng đối chiếu yêu cầu cốt lõi của đồ án
+├── task-assignment.md                 # Bảng phân công công việc 4 Devs & Vai trò AI Agents
 │
 ├── api/
 │   └── API.md                         # Đặc tả toàn diện REST API v1 & SSE stream
@@ -117,6 +118,7 @@ docs/
 - [api/API.md](file:///D:/KHDLKPDL/GDMAS/docs/api/API.md): Đặc tả kỹ thuật đầy đủ cho Database REST API v1: Health, Earthquake Queries, 6 Patterns chuỗi thời gian, Phân cụm không gian và luồng Server-Sent Events (SSE).
 
 ### 4. Quy Ước Phát Triển & Làm Việc Nhóm
+- [task-assignment.md](file:///D:/KHDLKPDL/GDMAS/docs/task-assignment.md): Bảng phân công công việc chi tiết cho 4 thành viên (1 Frontend, 3 Backend), định vị vai trò cho AI Agents và 4 lộ trình kế hoạch triển khai cá nhân độc lập dựa trên 3 trụ cột quy hoạch.
 - [quyuocchung.md](file:///D:/KHDLKPDL/GDMAS/docs/quyuocchung.md): 35 điều khoản quy ước phát triển cốt lõi, nguyên tắc Open-Closed Principle (không sửa mã nguồn cũ - chỉ bổ sung mới).
 - [development/branch-conventions.md](file:///D:/KHDLKPDL/GDMAS/docs/development/branch-conventions.md): Quy ước đặt tên nhánh (`feat/`, `fix/`, `docs/`), vòng đời nhánh và kích hoạt Local Test Suite.
 - [development/coding-conventions.md](file:///D:/KHDLKPDL/GDMAS/docs/development/coding-conventions.md): Tiêu chuẩn viết code Python (Ruff, Mapped Type Hints) và React TypeScript (High Aesthetics, Clean Code).
