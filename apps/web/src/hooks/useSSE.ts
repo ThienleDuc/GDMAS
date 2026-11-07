@@ -61,6 +61,12 @@ export function useSSE(endpoint: string = "/api/v1/stream/earthquakes") {
       handlePayload(event.data);
     });
 
+    // 6. Lắng nghe event "database_cleared" (khi CSDL bị xóa trong kịch bản Demo Bước 2)
+    eventSource.addEventListener("database_cleared", (event: MessageEvent) => {
+      setIsConnected(true);
+      handlePayload(event.data);
+    });
+
     eventSource.onerror = () => {
       setIsConnected(false);
     };

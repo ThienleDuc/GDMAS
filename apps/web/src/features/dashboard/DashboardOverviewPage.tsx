@@ -19,7 +19,6 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
-  Radio,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -179,11 +178,63 @@ export const DashboardOverviewPage: React.FC = () => {
     loadDashboardData();
   }, [loadDashboardData]);
 
-  // Tự động làm mới dữ liệu khi SSE báo có sự kiện mới hoặc chu kỳ 5 phút hoàn tất
+  // Tự động làm mới dữ liệu và hiển thị bảng thông báo khi SSE báo có sự kiện mới, chu kỳ 5 phút hoặc khi CSDL bị xóa trống
   useEffect(() => {
     if (!sseData) return;
+
+    // 1. Khi nhận tín hiệu CSDL vừa bị xóa trống (Demo Bước 2/3) hoặc heartbeat báo 0 sự kiện
+    if (
+      sseData.event === "database_cleared" ||
+      (sseData.event === "heartbeat" && (sseData.data as any)?.total_events === 0 && totalCount > 0)
+    ) {
+      setEvents([]);
+      setTotalCount(0);
+      setTotalPages(1);
+      setStats({
+        total_events: 0,
+        strong_events_count: 0,
+        moderate_events_count: 0,
+        minor_events_count: 0,
+        recent_24h_count: 0,
+        avg_magnitude: 0,
+        max_magnitude: 0,
+        time_series_preview: [],
+      });
+      loadDashboardData();
+      const payloadData = sseData.data as { message?: string; title?: string };
+      setSseNotice(
+        payloadData?.message ||
+          "⚠️ CSDL vừa được xóa trống (Demo Bước 2). Giao diện đã tự động chuyển sang trạng thái rỗng thời gian thực!"
+      );
+      const timer = setTimeout(() => {
+        setSseNotice(null);
+      }, 7000);
+      return () => clearTimeout(timer);
+    }
+
+    // 2. Khi có sự kiện địa chấn mới hoặc chu kỳ cào USGS hoàn tất
     if (sseData.event === "earthquake_detected" || sseData.event === "ingestion_cycle_completed") {
       loadDashboardData();
+
+      const payloadData = sseData.data as {
+        message?: string;
+        title?: string;
+        records_processed?: number;
+      };
+
+      const msg =
+        payloadData?.message ||
+        (sseData.event === "earthquake_detected"
+          ? "Phát hiện sự kiện địa chấn mới vừa nạp vào CSDL qua luồng SSE."
+          : "Đã hoàn thành chu kỳ cào dữ liệu từ trạm địa chấn USGS (5 phút/lần).");
+
+      setSseNotice(msg);
+
+      // Tự động đóng bảng thông báo sau 5 giây nếu người dùng không bấm Đóng
+      const timer = setTimeout(() => {
+        setSseNotice(null);
+      }, 5000);
+      return () => clearTimeout(timer);
     }
   }, [sseData, loadDashboardData]);
 
@@ -298,19 +349,44 @@ export const DashboardOverviewPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Thông báo cập nhật thời gian thực từ SSE */}
+        {/* Bảng thông báo cập nhật thời gian thực từ SSE (5 phút/lần) */}
         {sseNotice && (
-          <div className="mt-4 rounded-xl bg-cyan-500/10 border border-cyan-500/30 p-3 text-xs text-cyan-300 flex items-center justify-between animate-in fade-in duration-300">
-            <div className="flex items-center space-x-2">
-              <Radio className="h-4 w-4 text-cyan-400 animate-pulse shrink-0" />
-              <span>{sseNotice} (Dữ liệu đã tự động cập nhật qua SSE)</span>
+          <div className="mt-4 rounded-xl bg-gradient-to-r from-emerald-500/15 via-cyan-500/15 to-slate-900/80 border border-emerald-500/40 p-3.5 text-xs text-emerald-200 flex items-center justify-between shadow-lg backdrop-blur animate-in fade-in duration-300">
+            <div className="flex items-center space-x-3">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <div>
+                <span className="font-bold text-white mr-1.5">[Cập Nhật Tự Động 5 Phút]:</span>
+                <span>{sseNotice}</span>
+              </div>
             </div>
             <button
               onClick={() => setSseNotice(null)}
-              className="text-cyan-400 hover:text-white font-semibold cursor-pointer underline text-[11px]"
+              className="ml-3 rounded-lg px-2.5 py-1 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer text-[11px] font-medium shrink-0 border border-slate-700"
+              title="Đóng bảng thông báo"
             >
-              Đóng
+              Đóng ngay
             </button>
+          </div>
+        )}
+
+        {/* Banner cảnh báo CSDL trống phục vụ Bước 3 của Buổi Demo */}
+        {!loading && totalCount === 0 && (
+          <div className="mt-4 rounded-xl bg-rose-500/15 border border-rose-500/40 p-4 text-xs text-rose-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xl backdrop-blur animate-in fade-in duration-300">
+            <div className="flex items-center space-x-3">
+              <AlertTriangle className="h-5 w-5 text-rose-400 shrink-0 animate-bounce" />
+              <div>
+                <span className="font-bold text-white uppercase tracking-wider block sm:inline mr-2">[DEMO BƯỚC 3: CSDL ĐÃ ĐƯỢC XÓA TRỐNG]:</span>
+                <span>CSDL hiện có 0 bản ghi. Biểu đồ và danh mục đã được dọn sạch để kiểm thử. Hãy kích hoạt kịch bản phục hồi ở Bước 4!</span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 shrink-0">
+              <span className="font-mono text-[11px] bg-slate-900/90 px-2 py-1 rounded text-rose-300 border border-rose-500/30">
+                .\scripts\demo-init-patterns.ps1
+              </span>
+            </div>
           </div>
         )}
       </div>

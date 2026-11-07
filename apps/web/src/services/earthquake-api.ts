@@ -56,6 +56,24 @@ export interface SyncResponse {
   timestamp: string;
 }
 
+export interface PatternItem {
+  id: string;
+  name: string;
+  type: string;
+  status: "COMPUTED" | "PENDING";
+  metrics: Record<string, any>;
+  period: string;
+}
+
+export interface PatternsResponse {
+  success: boolean;
+  total_patterns: number;
+  patterns: PatternItem[];
+  clustering_summary?: any;
+  message?: string;
+  last_updated?: string;
+}
+
 export interface QueryEarthquakeParams {
   page?: number;
   limit?: number;
@@ -108,5 +126,12 @@ export async function syncUsgsData(): Promise<SyncResponse> {
   return fetchApi<SyncResponse>("/api/v1/earthquakes/sync", {
     method: "POST",
   });
+}
+
+/**
+ * Lấy danh sách và kết quả 6 Patterns phân tích chuỗi thời gian từ CSDL
+ */
+export async function getPatterns(): Promise<PatternsResponse> {
+  return fetchApi<PatternsResponse>("/api/v1/patterns");
 }
 

@@ -15,7 +15,7 @@ export interface EarthquakeContract {
 }
 
 export interface SSEEventPayload<T = unknown> {
-  event: "earthquake_detected" | "heartbeat" | "alert" | "ingestion_cycle_completed";
+  event: "earthquake_detected" | "heartbeat" | "alert" | "ingestion_cycle_completed" | "database_cleared";
   data: T;
   timestamp: string;
 }

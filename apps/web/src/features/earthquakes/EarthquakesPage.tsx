@@ -177,13 +177,25 @@ export const EarthquakesPage: React.FC = () => {
     loadEarthquakes();
   }, [loadEarthquakes]);
 
-  // Tự động làm mới danh sách động đất khi SSE phát hiện sự kiện mới hoặc chu kỳ 5 phút hoàn tất
+  // Tự động làm mới danh sách động đất khi SSE phát hiện sự kiện mới, chu kỳ 5 phút hoặc khi CSDL bị xóa trống
   useEffect(() => {
     if (!sseData) return;
+
+    if (
+      sseData.event === "database_cleared" ||
+      (sseData.event === "heartbeat" && (sseData.data as any)?.total_events === 0 && totalCount > 0)
+    ) {
+      setEvents([]);
+      setTotalCount(0);
+      setTotalPages(1);
+      loadEarthquakes();
+      return;
+    }
+
     if (sseData.event === "earthquake_detected" || sseData.event === "ingestion_cycle_completed") {
       loadEarthquakes();
     }
-  }, [sseData, loadEarthquakes]);
+  }, [sseData, loadEarthquakes, totalCount]);
 
   // Export JSON file
   const handleExportJson = () => {
@@ -303,6 +315,26 @@ export const EarthquakesPage: React.FC = () => {
             >
               Đóng
             </button>
+          </div>
+        )}
+
+        {/* Banner cảnh báo CSDL trống phục vụ Bước 3 của Buổi Demo */}
+        {!loading && totalCount === 0 && (
+          <div className="mt-4 rounded-xl bg-rose-500/15 border border-rose-500/40 p-4 text-xs text-rose-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xl backdrop-blur animate-in fade-in duration-300">
+            <div className="flex items-center space-x-3">
+              <AlertTriangle className="h-5 w-5 text-rose-400 shrink-0 animate-bounce" />
+              <div>
+                <span className="font-bold text-white uppercase tracking-wider block sm:inline mr-2">
+                  [DEMO BƯỚC 3: CSDL ĐÃ ĐƯỢC XÓA TRỐNG]:
+                </span>
+                <span>CSDL hiện có 0 bản ghi sự kiện địa chấn. Danh mục đã dọn sạch để kiểm thử. Hãy kích hoạt kịch bản phục hồi ở Bước 4!</span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 shrink-0">
+              <span className="font-mono text-[11px] bg-slate-900/90 px-2 py-1 rounded text-rose-300 border border-rose-500/30">
+                .\scripts\demo-init-patterns.ps1
+              </span>
+            </div>
           </div>
         )}
       </div>

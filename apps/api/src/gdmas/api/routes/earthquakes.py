@@ -204,23 +204,21 @@ def list_earthquakes(
         query = query.order_by(desc(sort_col) if order == "desc" else asc(sort_col))
 
         total = query.count()
-
-        if total > 0:
-            events = query.offset((page - 1) * limit).limit(limit).all()
-            total_pages = math.ceil(total / limit)
-            return EarthquakeListResponse(
-                success=True,
-                data=events,
-                metadata=EarthquakeMetadata(
-                    total=total,
-                    page=page,
-                    limit=limit,
-                    total_pages=total_pages,
-                    last_updated=datetime.now(timezone.utc),
-                ),
-            )
+        events = query.offset((page - 1) * limit).limit(limit).all() if total > 0 else []
+        total_pages = math.ceil(total / limit) if total > 0 else 0
+        return EarthquakeListResponse(
+            success=True,
+            data=events,
+            metadata=EarthquakeMetadata(
+                total=total,
+                page=page,
+                limit=limit,
+                total_pages=total_pages,
+                last_updated=datetime.now(timezone.utc),
+            ),
+        )
     except Exception:
-        # Nếu chưa kết nối được DB hoặc DB rỗng trong môi trường dev, fallback sang dữ liệu mẫu
+        # Chỉ khi CSDL bị mất kết nối hoàn toàn mới kích hoạt fallback
         pass
 
     # Xử lý fallback trên MOCK_USGS_DATA

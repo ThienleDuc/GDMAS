@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Radio, X, CheckCircle2 } from "lucide-react";
 
 export interface ToastData {
@@ -21,42 +21,43 @@ export const IngestionToast: React.FC<IngestionToastProps> = ({
   durationMs = 5000,
 }) => {
   const [progress, setProgress] = useState<number>(100);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  // Khóa định danh duy nhất của thông báo để tránh bị reset timer khi parent re-render mỗi giây
+  const toastKey = toast ? (toast.id || `${toast.time}-${toast.message}`) : null;
 
   useEffect(() => {
-    if (!toast) return;
+    if (!toastKey) {
+      setProgress(100);
+      return;
+    }
 
     setProgress(100);
-    const intervalTime = 50; // Cập nhật progress mỗi 50ms
-    const decrement = (intervalTime / durationMs) * 100;
+    const startTime = Date.now();
 
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev <= 0) {
-          clearInterval(timer);
-          onClose();
-          return 0;
-        }
-        return Math.max(0, prev - decrement);
-      });
-    }, intervalTime);
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const remainingPct = Math.max(0, 100 - (elapsed / durationMs) * 100);
+      setProgress(remainingPct);
 
-    // Timeout cứng để chắc chắn đóng sau đúng 5 giây
-    const autoCloseTimeout = setTimeout(() => {
-      onClose();
-    }, durationMs);
+      if (elapsed >= durationMs) {
+        clearInterval(interval);
+        onCloseRef.current();
+      }
+    }, 50);
 
     return () => {
-      clearInterval(timer);
-      clearTimeout(autoCloseTimeout);
+      clearInterval(interval);
     };
-  }, [toast, onClose, durationMs]);
+  }, [toastKey, durationMs]);
 
   if (!toast) return null;
 
   const isNewData = (toast.records_processed ?? 0) > 0;
 
   return (
-    <div className="fixed top-5 right-5 z-50 max-w-md w-full animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-auto">
+    <div className="fixed top-5 right-5 z-50 max-w-md w-[calc(100%-2.5rem)] sm:w-full transition-all duration-300 ease-out pointer-events-auto">
       <div className={`relative overflow-hidden rounded-2xl border p-4 shadow-2xl backdrop-blur-xl border-l-4 ${
         isNewData 
           ? "border-emerald-500/50 bg-slate-900/95 border-l-emerald-400 shadow-emerald-500/10" 
@@ -104,7 +105,7 @@ export const IngestionToast: React.FC<IngestionToastProps> = ({
 
           {/* Dấu close để người dùng tắt ngay lập tức */}
           <button
-            onClick={onClose}
+            onClick={() => onCloseRef.current()}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer shrink-0"
             title="Đóng thông báo ngay"
             aria-label="Close notification"

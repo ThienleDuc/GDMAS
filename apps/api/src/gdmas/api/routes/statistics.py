@@ -36,34 +36,34 @@ def get_earthquake_statistics(db: Session = Depends(get_db)):
 
     try:
         total = db.query(func.count(EarthquakeEvent.id)).scalar() or 0
-        if total > 0:
-            strong = db.query(func.count(EarthquakeEvent.id)).filter(EarthquakeEvent.magnitude >= 5.0).scalar() or 0
-            moderate = db.query(func.count(EarthquakeEvent.id)).filter(
-                EarthquakeEvent.magnitude >= 4.0, EarthquakeEvent.magnitude < 5.0
-            ).scalar() or 0
-            minor = db.query(func.count(EarthquakeEvent.id)).filter(EarthquakeEvent.magnitude < 4.0).scalar() or 0
-            recent_24h = db.query(func.count(EarthquakeEvent.id)).filter(
-                EarthquakeEvent.event_time >= one_day_ago
-            ).scalar() or 0
-            avg_mag = db.query(func.avg(EarthquakeEvent.magnitude)).scalar() or 0.0
-            max_mag = db.query(func.max(EarthquakeEvent.magnitude)).scalar() or 0.0
-            latest = db.query(EarthquakeEvent.event_time).order_by(EarthquakeEvent.event_time.desc()).first()
+        strong = db.query(func.count(EarthquakeEvent.id)).filter(EarthquakeEvent.magnitude >= 5.0).scalar() or 0
+        moderate = db.query(func.count(EarthquakeEvent.id)).filter(
+            EarthquakeEvent.magnitude >= 4.0, EarthquakeEvent.magnitude < 5.0
+        ).scalar() or 0
+        minor = db.query(func.count(EarthquakeEvent.id)).filter(EarthquakeEvent.magnitude < 4.0).scalar() or 0
+        recent_24h = db.query(func.count(EarthquakeEvent.id)).filter(
+            EarthquakeEvent.event_time >= one_day_ago
+        ).scalar() or 0
+        avg_mag = db.query(func.avg(EarthquakeEvent.magnitude)).scalar() or 0.0
+        max_mag = db.query(func.max(EarthquakeEvent.magnitude)).scalar() or 0.0
+        latest = db.query(EarthquakeEvent.event_time).order_by(EarthquakeEvent.event_time.desc()).first()
 
-            return StatisticsResponse(
-                success=True,
-                data=EarthquakeStatistics(
-                    total_events=total,
-                    strong_events_count=strong,
-                    moderate_events_count=moderate,
-                    minor_events_count=minor,
-                    recent_24h_count=recent_24h,
-                    avg_magnitude=round(float(avg_mag), 2),
-                    max_magnitude=round(float(max_mag), 1),
-                    latest_event_time=latest[0] if latest else None,
-                    time_series_preview=default_time_series,
-                ),
-            )
+        return StatisticsResponse(
+            success=True,
+            data=EarthquakeStatistics(
+                total_events=total,
+                strong_events_count=strong if total > 0 else 0,
+                moderate_events_count=moderate if total > 0 else 0,
+                minor_events_count=minor if total > 0 else 0,
+                recent_24h_count=recent_24h if total > 0 else 0,
+                avg_magnitude=round(float(avg_mag), 2) if total > 0 else 0.0,
+                max_magnitude=round(float(max_mag), 1) if total > 0 else 0.0,
+                latest_event_time=latest[0] if (latest and total > 0) else None,
+                time_series_preview=default_time_series if total > 0 else [],
+            ),
+        )
     except Exception:
+        # Chỉ fallback khi CSDL bị lỗi kết nối
         pass
 
     # Fallback dữ liệu mẫu KPI

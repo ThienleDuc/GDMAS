@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import {
   Activity,
@@ -39,11 +39,33 @@ export const DashboardLayout: React.FC = () => {
   const [toast, setToast] = useState<ToastData | null>(null);
   const location = useLocation();
 
+  const handleCloseToast = useCallback(() => {
+    setToast(null);
+  }, []);
+
   // Kết nối SSE để nhận thông báo cào dữ liệu tự động 5 phút
   const { data: sseData } = useSSE("/api/v1/stream/earthquakes");
 
   useEffect(() => {
     if (!sseData) return;
+
+    if (sseData.event === "database_cleared") {
+      const payloadData = sseData.data as {
+        title?: string;
+        message?: string;
+      };
+
+      setToast({
+        id: `cleared-${Date.now()}`,
+        title: payloadData?.title || "⚠️ CSDL Đã Bị Xóa Trống (Demo Bước 2)",
+        message:
+          payloadData?.message ||
+          "Phát hiện CSDL đã được xóa trống bằng script demo. Hệ thống đã tự động chuyển giao diện sang trạng thái rỗng.",
+        records_processed: 0,
+        time: formatEventTime(sseData.timestamp, "UTC+7"),
+      });
+      return;
+    }
 
     if (sseData.event === "ingestion_cycle_completed" || sseData.event === "earthquake_detected") {
       const payloadData = sseData.data as {
@@ -65,6 +87,7 @@ export const DashboardLayout: React.FC = () => {
       const time = formatEventTime(sseData.timestamp, "UTC+7");
 
       setToast({
+        id: `${sseData.event}-${sseData.timestamp || Date.now()}`,
         title,
         message,
         records_processed: payloadData?.records_processed,
@@ -211,7 +234,7 @@ export const DashboardLayout: React.FC = () => {
       {/* Toast thông báo cập nhật tự động 5 phút (Tự động tắt sau 5s hoặc bấm X tắt ngay) */}
       <IngestionToast
         toast={toast}
-        onClose={() => setToast(null)}
+        onClose={handleCloseToast}
         durationMs={5000}
       />
     </div>
