@@ -11,6 +11,7 @@ description: >-
 Kỹ năng này hướng dẫn AI Agent **tự động hóa toàn bộ chu trình từ kiểm tra an toàn working tree, stage tệp, tạo Conventional Commit tiếng Việt chuẩn hóa, đồng bộ rebase đến đẩy nhánh lên GitHub remote repository**, đồng thời cập nhật Cửa Sổ Ngữ Cảnh [`.agents/notes/memory/context-memory.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md).
 
 > [!IMPORTANT]
+> - **Chỉ kích hoạt khi có chỉ thị rõ ràng (Explicit Trigger Only):** Kỹ năng này **CHỈ ĐƯỢC CHẠY khi người dùng chủ động yêu cầu** (qua lệnh `/git-commit-push` hoặc yêu cầu bằng lời như *"hãy commit và push"*, *"tạo commit cho tôi"*). AI Agent **tuyệt đối không bao giờ được tự động kích hoạt ngầm** quy trình commit & push sau mỗi lần sửa đổi mã nguồn.
 > - **Thực thi trực tiếp bằng Agent (No External Scripts):** Agent tự chạy các lệnh Git tiêu chuẩn qua công cụ `run_command`, không phụ thuộc vào script `.ps1` hay `.sh` bên ngoài.
 > - **Bảo vệ nhánh chính (`main`):** Tuyệt đối không commit trực tiếp lên `main`. Nếu phát hiện đang ở `main`, Agent tự động chuyển sang nhánh tính năng chuẩn `<type>/<scope>-updates` trước khi commit.
 > - **Bảo mật tuyệt đối (Secrets Safety):** Luôn kiểm tra và gỡ bỏ các tệp nhạy cảm (`.env`, `*.env` ngoại trừ `.env.example`) khỏi Staging trước khi thực hiện commit.

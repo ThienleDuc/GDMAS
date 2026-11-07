@@ -12,6 +12,10 @@ description: >-
 Kỹ năng này trao quyền cho AI Agent trực tiếp **bảo vệ tính toàn vẹn của mã nguồn gốc trong dự án GDMAS**, đồng thời **tối ưu hóa cửa sổ ngữ cảnh (Context Window)** thông qua cơ chế kích hoạt kỹ năng theo nhu cầu (On-Demand) và duy trì bộ nhớ ngữ cảnh tinh gọn tích lũy đa nhánh tại `.agents/notes/memory/context-memory.md`.
 
 > [!IMPORTANT]
+> - **Nguyên Tắc Không Tự Ý Commit & Push (Strict Explicit Commit Policy):** Kỹ năng này (và mọi tác vụ chỉnh sửa mã nguồn nói chung) **tuyệt đối KHÔNG tự động thực hiện `git commit` hay `git push`** sau mỗi lần sửa xong code. Mã nguồn đã chỉnh sửa phải được giữ nguyên trên working tree để người dùng tiếp tục làm việc, thử nghiệm, chạy kiểm thử hoặc gom nhiều thay đổi. AI Agent **chỉ được phép commit và push khi người dùng trực tiếp ra lệnh cụ thể bằng văn bản** (ví dụ: gõ lệnh `/git-commit-push`, `/review-pr`, *"tạo commit và push"*, *"commit code cho tôi"*).
+> - **Phân Định Vai Trò source-guard vs project-review:**
+>   * `source-guard`: Thanh tra working tree **tức thời** (quét xóa file, sửa file lõi kiến trúc, tỷ lệ churn, cập nhật bộ nhớ tích lũy `context-memory.md`).
+>   * `project-review`: Thẩm định **chuyên sâu** (kiểm tra 7 Bất biến kiến trúc I1-I7, đối chiếu proposal, kiểm tra drift tài liệu và lan phạm vi so với kế hoạch `plan.md`).
 > - **Nguyên tắc Thực Thi Độc Lập (Self-Contained Agent Execution):** Agent tự động thực hiện toàn bộ quy trình kiểm định, tính toán churn và cập nhật Context Memory bằng các lệnh Git và công cụ thao tác tệp tin có sẵn, **hoàn toàn không phụ thuộc vào bất kỳ script ngoài (`.ps1`, `.sh`) nào**.
 > - **Nguyên tắc Open-Closed (RULE-03):** *"Không sửa mã nguồn hiện tại – Chỉ bổ sung thêm mới"* (Closed for Modification, Open for Extension).
 > - **Tiết kiệm Token (On-Demand Skills):** Agent chỉ nạp kỹ năng khi được yêu cầu, ưu tiên đọc Mục 5 & Mục 6 của `context-memory.md` để nắm bối cảnh dự án thay vì đọc lại toàn bộ thư mục `docs/` hay quét lại hàng trăm dòng `git status`.
@@ -36,6 +40,8 @@ flowchart TD
     D & F & G --> H[Ghi biên bản .agents/notes/changes/source-guard-report.md]
     H --> I[Cập nhật Section 5 & 6 trong context-memory.md]
     I --> J[Thông báo kết quả thẩm định cho người dùng]
+    J --> K[Giữ nguyên Working Tree - Chờ chỉ thị tiếp theo]
+    K -. Chỉ khi người dùng ra lệnh commit rõ ràng .-> L[Kích hoạt git-commit-push / review-pr]
 ```
 
 ---
@@ -49,7 +55,7 @@ flowchart TD
 
 ### Quy Tắc 2: Bảo Toàn Tệp Lõi Kiến Trúc (Core Protected Files)
 Danh sách các tệp lõi kiến trúc xương sống cần bảo vệ nghiêm ngặt:
-- `apps/api/src/gdmas/main.py`: Điểm khởi chạy FastAPI; **tuyệt đối không nhúng worker ngầm vào file này**.
+- `apps/api/src/gdmas/main.py`: Điểm khởi chạy FastAPI; **tuyệt đối không nhúng worker ngầm vào file này** (Bảo vệ Terminal 6).
 - `apps/api/src/gdmas/db/connection.py` & `base.py`: Kết nối CSDL PostgreSQL tập trung.
 - `contracts/`: Hợp đồng giao tiếp dữ liệu chuẩn giữa Backend và Frontend.
 - `docs/quyuocchung.md`: Hiến chương quy ước kỹ thuật tối cao của dự án GDMAS.
@@ -66,6 +72,14 @@ Mọi chức năng mới phải được tổ chức thành các tệp độc l�
 
 ### Quy Tắc 4: Kiểm Soát Tỷ Lệ Dòng Thay Đổi (Churn Ratio)
 Nếu số dòng bị xóa (`deletions`) vượt trội so với số dòng thêm mới (`insertions`), Agent phải cảnh báo (`WARNING`) và đề xuất giải pháp bổ sung thêm mới thay vì ghi đè mã nguồn.
+
+### Quy Tắc 5: Nguyên Tắc Tích Lũy Working Tree & Tuyệt Đối Không Tự Ý Commit/Push
+- **Không tự động commit & push:** Sau khi sửa code xong một tính năng nhỏ, một tệp hay một hàm, phải giữ nguyên trạng thái working tree. Agent **tuyệt đối không tự ý** chạy `git commit` hay `git push`.
+- **Lý do kỹ thuật cốt lõi:**
+  * Cho phép người dùng kiểm thử trực tiếp trên local (chạy dev server, kiểm tra UI, chạy test) trước khi lưu vào lịch sử Git.
+  * Tránh làm ô nhiễm lịch sử Git bằng hàng loạt micro-commit manh mún ("sửa 1 dòng", "sửa lỗi cú pháp nhỏ", "chỉnh css").
+  * Cho phép gom nhiều thay đổi liên quan chặt chẽ thành một commit có ý nghĩa và giá trị kiến trúc hoàn chỉnh.
+- **Thời điểm commit & push:** CHỈ thực hiện khi nhận được yêu cầu cụ thể từ người dùng (ví dụ: gõ lệnh `/git-commit-push`, `/review-pr` hoặc yêu cầu *"commit và push"*).
 
 ---
 
@@ -137,7 +151,7 @@ Agent đọc và phân tích tệp `.agents/notes/memory/context-memory.md`:
    - Tạo hoặc cập nhật khối thông tin cho nhánh hiện tại:
      ```markdown
      ### 🔖 [Nhánh: <branch_name>] - Cập nhật: <YYYY-MM-DD HH:mm:ss>
-     - **Trạng thái:** <Đang phát triển / Đã đồng bộ sạch sẽ>
+     - **Trạng thái:** <Đang phát triển (Có X tệp thay đổi) / Đã đồng bộ sạch sẽ>
      - **Đánh dấu phân loại:** `<type>(<scope>)`
      - **Tiêu đề thay đổi chính:** <tiêu đề tóm tắt tiếng Việt>
        * <gạch đầu dòng tóm tắt 1>
@@ -152,6 +166,7 @@ Agent trình bày báo cáo tóm tắt rõ ràng:
 - Kết luận an toàn: `✅ ĐẠT CHUẨN`, `⚠️ CẢNH BÁO`, hoặc `❌ VI PHẠM`.
 - Nếu có vi phạm xóa tệp: Hướng dẫn người dùng lệnh khôi phục (`git restore <file>`) hoặc giải thích lý do nếu là xóa có chủ đích.
 - Xác nhận đã cập nhật `.agents/notes/memory/context-memory.md` và `.agents/notes/changes/source-guard-report.md`.
+- **Nhắc nhở quan trọng:** Thông báo rõ rằng **các thay đổi vẫn được giữ nguyên an toàn trên working tree**. Agent **KHÔNG tự động commit hay push**. Khi người dùng đã sẵn sàng và muốn lưu lại mốc làm việc, hãy kích hoạt `/git-commit-push`, `/review-pr` hoặc yêu cầu *"tạo commit và push"*.
 
 ---
 
