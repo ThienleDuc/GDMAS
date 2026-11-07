@@ -48,9 +48,51 @@ docs/
 │   │   ├── postgres-commands.md       # Lệnh psql, backup pg_dump & tối ưu index
 │   │   ├── alembic-commands.md        # Lệnh migration, upgrade, rollback với Alembic
 │   │   └── troubleshooting.md         # Xử lý lock, xung đột port & connection pool
-│   └── frontend/
-│       ├── development.md             # Kiến trúc Frontend, UI thẩm mỹ & 6 Patterns
-│       └── npm-commands.md            # Cheatsheet lệnh PNPM/NPM cho React/Vite
+│   ├── frontend/
+│   │   ├── development.md             # Kiến trúc Frontend, UI thẩm mỹ & 6 Patterns
+│   │   └── npm-commands.md            # Cheatsheet lệnh PNPM/NPM cho React/Vite
+│   └── skills/                        # Sổ tay hướng dẫn 9 kỹ năng AI Agent theo ngữ cảnh
+│       ├── README.md                  # Bản đồ điều hướng, Ma trận 9 kỹ năng
+│       ├── spec-driven-workflow.md    # Ngữ cảnh 1: Tính năng lớn & Thay đổi kiến trúc
+│       ├── fast-track-workflow.md     # Ngữ cảnh 2: Sửa lỗi nhanh & Tác vụ thường nhật
+│       ├── code-integrity-audit.md    # Ngữ cảnh 3: Thẩm định an toàn mã nguồn
+│       └── git-automation.md          # Ngữ cảnh 4: Quản lý nhánh & Commit GitHub
+│
+├── planning/                          # Kế hoạch quy hoạch 3 trụ cột (Features - UI - Testing)
+│   ├── features/                      # 7 Bản đặc tả chức năng tương ứng 7 Terminals
+│   │   ├── README.md                  # Bản đồ 7 chức năng & Ma trận trạng thái
+│   │   ├── TEMPLATE.md                # Khuôn mẫu đặc tả chức năng chuẩn GDMAS
+│   │   ├── 01-database-storage.md     # T1: CSDL PostgreSQL 16 & Alembic Migrations
+│   │   ├── 02-usgs-ingestion.md       # T2: Ingestion Worker nạp USGS 5 phút/lần
+│   │   ├── 03-timeseries-analysis.md  # T3: Phân tích 4 Patterns chuỗi thời gian
+│   │   ├── 04-spatial-clustering.md   # T4: Gom cụm không gian địa chấn DBSCAN
+│   │   ├── 05-seismic-prediction.md   # T5: Mô hình dự báo định lượng & rủi ro (t+1)
+│   │   ├── 06-api-realtime-sse.md     # T6: FastAPI REST & Kênh SSE Realtime
+│   │   └── 07-interactive-web-client.md # T7: Web Dashboard Dark Mode & Bản đồ Leaflet
+│   ├── ui/                            # Kế hoạch & Đặc tả giao diện theo bố cục (2 Tầng)
+│   │   ├── README.md                  # Danh mục & Bản đồ sitemap giao diện (UI Catalog)
+│   │   ├── TEMPLATE.md                # Khuôn mẫu quy hoạch UI 2 tầng (Layout & Views)
+│   │   ├── 00-master-app-shell.md     # Tầng 1: Master App Shell & Design Tokens
+│   │   ├── 01-dashboard-view.md       # Tầng 2: View 01 - Dashboard Điều Hành Tổng Quan
+│   │   ├── 02-earthquakes-view.md     # Tầng 2: View 02 - Danh Sách & Bộ Lọc Đa Chiều
+│   │   ├── 03-analytics-view.md       # Tầng 2: View 03 - 6 Patterns Chuỗi Thời Gian
+│   │   ├── 04-clusters-view.md        # Tầng 2: View 04 - Bản Đồ Cụm Không Gian DBSCAN
+│   │   └── 05-system-view.md          # Tầng 2: View 05 - Giám Sát 7 Terminals & Demo §4
+│   └── testing/                       # Kế hoạch & Đặc tả kiểm thử định hướng chất lượng
+│       ├── README.md                  # Danh mục 12 ca kiểm thử & Ma trận phân hệ
+│       ├── TEMPLATE.md                # Khuôn mẫu đặc tả kiểm thử dùng để sinh code test
+│       ├── 01-test-database-storage.md # TC-DB-01: Kiểm thử CSDL PostgreSQL 16 & Upsert
+│       ├── 02-test-usgs-ingestion.md  # TC-ING-01: Kiểm thử nạp USGS 5 phút & Service Runs
+│       ├── 03-test-timeseries-analysis.md # TC-PAT-01: Kiểm thử 4 Patterns chuỗi thời gian
+│       ├── 04-test-spatial-clustering.md # TC-PAT-04: Kiểm thử phân cụm không gian DBSCAN
+│       ├── 05-test-seismic-prediction.md # TC-PAT-05: Kiểm thử dự báo định lượng & phân loại t+1
+│       ├── 06-test-api-realtime-sse.md # TC-API-01: Kiểm thử REST Envelope & Kênh SSE
+│       ├── 07-test-master-app-shell.md # TC-UI-01: Kiểm thử Master App Shell & Dark Tokens
+│       ├── 08-test-dashboard-view.md  # TC-UI-02: Kiểm thử View 01 - Dashboard 4 KPI Cards
+│       ├── 09-test-earthquakes-view.md # TC-UI-03: Kiểm thử View 02 - Lọc Richter Debounce
+│       ├── 10-test-analytics-view.md  # TC-UI-04: Kiểm thử View 03 - 6 Patterns Zoom Brush
+│       ├── 11-test-clusters-view.md   # TC-UI-05: Kiểm thử View 04 - Leaflet DBSCAN Map
+│       └── 12-test-system-demo-view.md # TC-UI-06/RES-01: Kiểm thử 7 Terminals & Demo §4
 │
 └── testing/
     ├── TESTING.md                     # Chiến lược kiểm thử tự động & Test Pyramid
