@@ -105,36 +105,36 @@ docs/
 ## 📚 Bảng Tra Cứu Tài Liệu Chi Tiết
 
 ### 1. Khởi Tạo & Vận Hành Nhanh
-- [setup.md](file:///D:/KHDLKPDL/GDMAS/docs/setup.md): Hướng dẫn từng bước thiết lập môi trường máy phát triển, cấu hình `.env`, kịch bản quét tự động PowerShell/Bash và smoke test.
-- [workflow.md](file:///D:/KHDLKPDL/GDMAS/docs/workflow.md): Sổ tay vận hành mô hình 7 Terminals độc lập, sơ đồ luồng dữ liệu, lịch chạy định kỳ và xử lý sự cố runtime.
+- [setup.md](GDMAS/docs/setup.md): Hướng dẫn từng bước thiết lập môi trường máy phát triển, cấu hình `.env`, kịch bản quét tự động PowerShell/Bash và smoke test.
+- [workflow.md](GDMAS/docs/workflow.md): Sổ tay vận hành mô hình 7 Terminals độc lập, sơ đồ luồng dữ liệu, lịch chạy định kỳ và xử lý sự cố runtime.
 
 ### 2. Kiến Trúc & Thiết Kế Dữ Liệu
-- [architecture/SAD.md](file:///D:/KHDLKPDL/GDMAS/docs/architecture/SAD.md): Thiết kế kiến trúc tổng thể, mô hình 7 khối dịch vụ, cơ chế Ingestion thuần Python, phân tích chuỗi thời gian và luồng SSE.
-- [architecture/ERD.md](file:///D:/KHDLKPDL/GDMAS/docs/architecture/ERD.md): Thiết kế cơ sở dữ liệu chi tiết, sơ đồ quan hệ Mermaid, từ điển dữ liệu 7 bảng, chiến lược đánh chỉ mục và câu lệnh SQL Upsert.
-- [tailieukientructuAI.md](file:///D:/KHDLKPDL/GDMAS/docs/tailieukientructuAI.md): Tài liệu kiến trúc toàn cảnh đã tinh giản cấu trúc thư mục, loại bỏ hoàn toàn n8n và GitHub Actions.
-- [yeucaubatbuoc.md](file:///D:/KHDLKPDL/GDMAS/docs/yeucaubatbuoc.md): Bảng đối chiếu yêu cầu bắt buộc của đồ án (6 Patterns, Time-Series, Microservices, Thẩm mỹ cao).
+- [architecture/SAD.md](GDMAS/docs/architecture/SAD.md): Thiết kế kiến trúc tổng thể, mô hình 7 khối dịch vụ, cơ chế Ingestion thuần Python, phân tích chuỗi thời gian và luồng SSE.
+- [architecture/ERD.md](GDMAS/docs/architecture/ERD.md): Thiết kế cơ sở dữ liệu chi tiết, sơ đồ quan hệ Mermaid, từ điển dữ liệu 7 bảng, chiến lược đánh chỉ mục và câu lệnh SQL Upsert.
+- [tailieukientructuAI.md](GDMAS/docs/tailieukientructuAI.md): Tài liệu kiến trúc toàn cảnh đã tinh giản cấu trúc thư mục, loại bỏ hoàn toàn n8n và GitHub Actions.
+- [yeucaubatbuoc.md](GDMAS/docs/yeucaubatbuoc.md): Bảng đối chiếu yêu cầu bắt buộc của đồ án (6 Patterns, Time-Series, Microservices, Thẩm mỹ cao).
 
 ### 3. Giao Tiếp Hệ Thống & Giao Diện API
-- [api/API.md](file:///D:/KHDLKPDL/GDMAS/docs/api/API.md): Đặc tả kỹ thuật đầy đủ cho Database REST API v1: Health, Earthquake Queries, 6 Patterns chuỗi thời gian, Phân cụm không gian và luồng Server-Sent Events (SSE).
+- [api/API.md](GDMAS/docs/api/API.md): Đặc tả kỹ thuật đầy đủ cho Database REST API v1: Health, Earthquake Queries, 6 Patterns chuỗi thời gian, Phân cụm không gian và luồng Server-Sent Events (SSE).
 
 ### 4. Quy Ước Phát Triển & Làm Việc Nhóm
-- [task-assignment.md](file:///D:/KHDLKPDL/GDMAS/docs/task-assignment.md): Bảng phân công công việc chi tiết cho 4 thành viên (1 Frontend, 3 Backend), định vị vai trò cho AI Agents và 4 lộ trình kế hoạch triển khai cá nhân độc lập dựa trên 3 trụ cột quy hoạch.
-- [quyuocchung.md](file:///D:/KHDLKPDL/GDMAS/docs/quyuocchung.md): 35 điều khoản quy ước phát triển cốt lõi, nguyên tắc Open-Closed Principle (không sửa mã nguồn cũ - chỉ bổ sung mới).
-- [development/branch-conventions.md](file:///D:/KHDLKPDL/GDMAS/docs/development/branch-conventions.md): Quy ước đặt tên nhánh (`feat/`, `fix/`, `docs/`), vòng đời nhánh và kích hoạt Local Test Suite.
-- [development/coding-conventions.md](file:///D:/KHDLKPDL/GDMAS/docs/development/coding-conventions.md): Tiêu chuẩn viết code Python (Ruff, Mapped Type Hints) và React TypeScript (High Aesthetics, Clean Code).
-- [development/team-workflow.md](file:///D:/KHDLKPDL/GDMAS/docs/development/team-workflow.md): Phân công trách nhiệm 7 Terminals, quy trình gửi và đánh giá Pull Request, tiêu chuẩn hoàn thành Definition of Done (DoD).
+- [task-assignment.md](GDMAS/docs/task-assignment.md): Bảng phân công công việc chi tiết cho 4 thành viên (1 Frontend, 3 Backend), định vị vai trò cho AI Agents và 4 lộ trình kế hoạch triển khai cá nhân độc lập dựa trên 3 trụ cột quy hoạch.
+- [quyuocchung.md](GDMAS/docs/quyuocchung.md): 35 điều khoản quy ước phát triển cốt lõi, nguyên tắc Open-Closed Principle (không sửa mã nguồn cũ - chỉ bổ sung mới).
+- [development/branch-conventions.md](GDMAS/docs/development/branch-conventions.md): Quy ước đặt tên nhánh (`feat/`, `fix/`, `docs/`), vòng đời nhánh và kích hoạt Local Test Suite.
+- [development/coding-conventions.md](GDMAS/docs/development/coding-conventions.md): Tiêu chuẩn viết code Python (Ruff, Mapped Type Hints) và React TypeScript (High Aesthetics, Clean Code).
+- [development/team-workflow.md](GDMAS/docs/development/team-workflow.md): Phân công trách nhiệm 7 Terminals, quy trình gửi và đánh giá Pull Request, tiêu chuẩn hoàn thành Definition of Done (DoD).
 
 ### 5. Sổ Tay Kỹ Thuật (Tooling & Technology Guides)
 
 | Công nghệ | Sổ tay Lệnh CLI | Sổ tay Chuyên đề | Sổ tay Xử lý Sự cố |
 | :--- | :--- | :--- | :--- |
-| **Docker** | [commands.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/docker/commands.md) | [compose.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/docker/compose.md) \| [volumes.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/docker/volumes.md) | [troubleshooting.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/docker/troubleshooting.md) |
-| **Git** | [commands.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/git/commands.md) | [branching.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/git/branching.md) \| [pull-request.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/git/pull-request.md) | [troubleshooting.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/git/troubleshooting.md) |
-| **Python / UV** | [uv-commands.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/python/uv-commands.md) | [dependencies.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/python/dependencies.md) | [troubleshooting.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/python/troubleshooting.md) |
-| **Postgres / DB** | [postgres-commands.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/database/postgres-commands.md) | [alembic-commands.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/database/alembic-commands.md) | [troubleshooting.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/database/troubleshooting.md) |
-| **Frontend / Web**| [npm-commands.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/frontend/npm-commands.md) | [development.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/frontend/development.md) | [troubleshooting.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/docker/troubleshooting.md) |
+| **Docker** | [commands.md](GDMAS/docs/guides/docker/commands.md) | [compose.md](GDMAS/docs/guides/docker/compose.md) \| [volumes.md](GDMAS/docs/guides/docker/volumes.md) | [troubleshooting.md](GDMAS/docs/guides/docker/troubleshooting.md) |
+| **Git** | [commands.md](GDMAS/docs/guides/git/commands.md) | [branching.md](GDMAS/docs/guides/git/branching.md) \| [pull-request.md](GDMAS/docs/guides/git/pull-request.md) | [troubleshooting.md](GDMAS/docs/guides/git/troubleshooting.md) |
+| **Python / UV** | [uv-commands.md](GDMAS/docs/guides/python/uv-commands.md) | [dependencies.md](GDMAS/docs/guides/python/dependencies.md) | [troubleshooting.md](GDMAS/docs/guides/python/troubleshooting.md) |
+| **Postgres / DB** | [postgres-commands.md](GDMAS/docs/guides/database/postgres-commands.md) | [alembic-commands.md](GDMAS/docs/guides/database/alembic-commands.md) | [troubleshooting.md](GDMAS/docs/guides/database/troubleshooting.md) |
+| **Frontend / Web**| [npm-commands.md](GDMAS/docs/guides/frontend/npm-commands.md) | [development.md](GDMAS/docs/guides/frontend/development.md) | [troubleshooting.md](GDMAS/docs/guides/docker/troubleshooting.md) |
 
 ### 6. Kiểm Thử & Đảm Bảo Chất Lượng
-- [testing/TESTING.md](file:///D:/KHDLKPDL/GDMAS/docs/testing/TESTING.md): Chiến lược kim tự tháp kiểm thử, kịch bản Local Test Suite `scripts/test.sh` và ngưỡng bao phủ mã nguồn 70%.
-- [testing/test-cases.md](file:///D:/KHDLKPDL/GDMAS/docs/testing/test-cases.md): Ma trận 17 trường hợp kiểm thử cụ thể cho Ingestion, Analysis, 6 Patterns, Clustering, Prediction, API và UI.
+- [testing/TESTING.md](GDMAS/docs/testing/TESTING.md): Chiến lược kim tự tháp kiểm thử, kịch bản Local Test Suite `scripts/test.sh` và ngưỡng bao phủ mã nguồn 70%.
+- [testing/test-cases.md](GDMAS/docs/testing/test-cases.md): Ma trận 17 trường hợp kiểm thử cụ thể cho Ingestion, Analysis, 6 Patterns, Clustering, Prediction, API và UI.
 

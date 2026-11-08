@@ -157,7 +157,7 @@ Khi container chạy bằng user không phải `root` (ví dụ `node` hoặc `a
   ```
 
 ### Vấn đề hiệu năng Bind Mount trên Windows (Docker Desktop)
-- Khi mount thư mục từ ổ đĩa Windows (ví dụ `D:\KHDLKPDL\...`) vào container, tốc độ I/O có thể chậm do qua tầng dịch NTFS sang Linux.
+- Khi mount thư mục từ ổ đĩa Windows (ví dụ `GDMAS/...`) vào container, tốc độ I/O có thể chậm do qua tầng dịch NTFS sang Linux.
 - **Khuyến nghị cho Windows:** 
   - Đặt dự án bên trong hệ thống tệp của WSL 2 (`\\wsl$\Ubuntu\home\...`) thay vì ổ đĩa Windows (`C:\`, `D:\`) khi cần tốc độ build và hot-reload nhanh nhất.
   - Sử dụng cờ `:cached` hoặc `:delegated` trong đường dẫn bind mount nếu có thể.

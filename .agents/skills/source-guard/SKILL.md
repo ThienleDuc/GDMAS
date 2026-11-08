@@ -196,5 +196,5 @@ Agent trình bày báo cáo tóm tắt rõ ràng:
 ---
 
 ## 📁 Tệp Bộ Nhớ & Nhật Ký Cục Bộ
-- **Bộ nhớ ngữ cảnh tinh gọn:** [`.agents/notes/memory/context-memory.md`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md)
-- **Biên bản thẩm định mã nguồn:** [`.agents/notes/changes/source-guard-report.md`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/changes/source-guard-report.md)
+- **Bộ nhớ ngữ cảnh tinh gọn:** [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md)
+- **Biên bản thẩm định mã nguồn:** [`.agents/notes/changes/source-guard-report.md`](GDMAS/.agents/notes/changes/source-guard-report.md)

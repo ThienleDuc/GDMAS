@@ -76,7 +76,7 @@ Mô tả cấu trúc gói tin đẩy qua endpoint `/api/v1/stream/earthquakes`:
 ---
 
 ## 4. Tài liệu Liên quan
-- Đặc tả API hoàn chỉnh: [API.md](file:///D:/KHDLKPDL/GDMAS/docs/api/API.md)
-- Thiết kế cơ sở dữ liệu: [ERD.md](file:///D:/KHDLKPDL/GDMAS/docs/architecture/ERD.md)
-- Hướng dẫn phát triển giao diện: [development.md](file:///D:/KHDLKPDL/GDMAS/docs/guides/frontend/development.md)
+- Đặc tả API hoàn chỉnh: [API.md](GDMAS/docs/api/API.md)
+- Thiết kế cơ sở dữ liệu: [ERD.md](GDMAS/docs/architecture/ERD.md)
+- Hướng dẫn phát triển giao diện: [development.md](GDMAS/docs/guides/frontend/development.md)
 

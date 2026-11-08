@@ -2,7 +2,7 @@
 
 > 💡 **Triết lý kiểm thử định hướng chất lượng GDMAS (Spec-Driven Testing Philosophy):**
 > 
-> 1. **Dựa trên Hợp đồng & Bất biến (Contract-Driven & Invariant-Centric):** Mọi ca kiểm thử phải truy vết trực tiếp từ Hợp đồng API ([docs/api/API.md](../../api/API.md)), Bất biến kiến trúc 7 Terminals, 6 Patterns chuỗi thời gian ([docs/yeucaubatbuoc.md](../../yeucaubatbuoc.md)) và Bố cục giao diện ([docs/planning/ui/](file:///d:/KHDLKPDL/GDMAS/docs/planning/ui/)).
+> 1. **Dựa trên Hợp đồng & Bất biến (Contract-Driven & Invariant-Centric):** Mọi ca kiểm thử phải truy vết trực tiếp từ Hợp đồng API ([docs/api/API.md](../../api/API.md)), Bất biến kiến trúc 7 Terminals, 6 Patterns chuỗi thời gian ([docs/yeucaubatbuoc.md](../../yeucaubatbuoc.md)) và Bố cục giao diện ([docs/planning/ui/](GDMAS/docs/planning/ui/)).
 > 2. **Chống giả định dữ liệu ngầm (No Blind Mocking):** Dữ liệu giả lập (Mock Fixtures) phải tuân thủ nghiêm ngặt chuẩn WGS84, múi giờ ISO 8601 UTC và định dạng GeoJSON chuẩn USGS.
 > 3. **Kiểm định khả năng chịu lỗi thực tế (Resilience Testing §4):** Bắt buộc phải có kịch bản kiểm tra ứng xử khi CSDL bị xóa trống (Empty State) và kịch bản phục hồi dữ liệu tự động phục vụ kịch bản demo hội đồng TS. Phạm Tuấn.
 > 4. **Mục đích của Khuôn mẫu:** Dùng làm khung chuẩn mực để Agent và Lập trình viên soạn thảo các bản kế hoạch kiểm thử chi tiết (`docs/planning/testing/TC-*.md`), đồng thời cung cấp đầy đủ thông số để tự động sinh ra các file mã nguồn kiểm thử thực thi (`test_*.py`, `*.test.tsx`, `*.ps1`).

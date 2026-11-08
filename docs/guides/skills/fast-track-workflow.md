@@ -70,7 +70,7 @@ flowchart TD
   1. Có tệp nào bị xóa (`D `) không? $\rightarrow$ Cảnh báo vi phạm.
   2. Có tệp lõi (`main.py`, `connection.py`, `contracts/`, `quyuocchung.md`) bị sửa không? $\rightarrow$ Gắn cờ WARNING.
   3. Tỷ lệ xóa vs thêm mới (Churn Ratio): Số dòng xóa có vượt trội số dòng thêm mới không?
-  4. Tự động cập nhật Section 5 (`Active Branch Snapshot`) và Section 6 (`Cumulative Branch Milestones`) trong [`.agents/notes/memory/context-memory.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md).
+  4. Tự động cập nhật Section 5 (`Active Branch Snapshot`) và Section 6 (`Cumulative Branch Milestones`) trong [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md).
 * **Quy tắc bất biến:** **Không tự ý commit hay push.** Giữ nguyên working tree để bạn tiếp tục thử nghiệm.
 
 ---
@@ -84,7 +84,7 @@ flowchart TD
   *(Hoặc: "Soạn nội dung commit cho tôi").*
 * **Kết quả:**
   - Trích xuất Type, Scope, Header chữ thường và Body dạng gạch đầu dòng chi tiết.
-  - Ghi bản dự thảo vào tệp cục bộ [`.agents/notes/changes/pending-commit.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/changes/pending-commit.md).
+  - Ghi bản dự thảo vào tệp cục bộ [`.agents/notes/changes/pending-commit.md`](GDMAS/.agents/notes/changes/pending-commit.md).
   - Không chạm vào lệnh `git commit`.
 
 ---

@@ -135,12 +135,12 @@ bash scripts/test.sh
 
 ## 📖 Hệ Thống Tài Liệu Kỹ Thuật
 
-Mọi tài liệu chi tiết của dự án được lưu trữ tại thư mục [docs/](file:///D:/KHDLKPDL/GDMAS/docs/README.md):
+Mọi tài liệu chi tiết của dự án được lưu trữ tại thư mục [docs/](GDMAS/docs/README.md):
 
-- 📘 [Hướng dẫn Cài đặt & Cấu hình Local (setup.md)](file:///D:/KHDLKPDL/GDMAS/docs/setup.md)
-- ⚙️ [Sổ tay Vận hành Hệ thống 7 Terminals (workflow.md)](file:///D:/KHDLKPDL/GDMAS/docs/workflow.md)
-- 📐 [Thiết kế Kiến trúc Hệ thống (SAD.md)](file:///D:/KHDLKPDL/GDMAS/docs/architecture/SAD.md)
-- 🗄️ [Thiết kế Cơ sở Dữ liệu & ERD (ERD.md)](file:///D:/KHDLKPDL/GDMAS/docs/architecture/ERD.md)
-- 🔌 [Đặc tả REST API & SSE (API.md)](file:///D:/KHDLKPDL/GDMAS/docs/api/API.md)
-- 📝 [Quy ước Chung & Open-Closed Principle (quyuocchung.md)](file:///D:/KHDLKPDL/GDMAS/docs/quyuocchung.md)
-- 🧪 [Chiến lược Kiểm thử Tự động (TESTING.md)](file:///D:/KHDLKPDL/GDMAS/docs/testing/TESTING.md)
+- 📘 [Hướng dẫn Cài đặt & Cấu hình Local (setup.md)](GDMAS/docs/setup.md)
+- ⚙️ [Sổ tay Vận hành Hệ thống 7 Terminals (workflow.md)](GDMAS/docs/workflow.md)
+- 📐 [Thiết kế Kiến trúc Hệ thống (SAD.md)](GDMAS/docs/architecture/SAD.md)
+- 🗄️ [Thiết kế Cơ sở Dữ liệu & ERD (ERD.md)](GDMAS/docs/architecture/ERD.md)
+- 🔌 [Đặc tả REST API & SSE (API.md)](GDMAS/docs/api/API.md)
+- 📝 [Quy ước Chung & Open-Closed Principle (quyuocchung.md)](GDMAS/docs/quyuocchung.md)
+- 🧪 [Chiến lược Kiểm thử Tự động (TESTING.md)](GDMAS/docs/testing/TESTING.md)

@@ -12,7 +12,7 @@ Tài liệu này đặc tả chi tiết bộ ca kiểm thử phi chức năng (*
 * **Đối tượng kiểm thử:**
   * **Server Backend:** PostgreSQL 16 (`gdmas-postgres`), FastAPI REST API & SSE Stream Service (`gdmas-api` - Cổng 8000).
   * **Client Frontend:** Single Page Application React 18 / Vite (`gdmas-web` - Cổng 3000).
-  * **Kịch bản điều khiển:** Script PowerShell [`scripts/demo-clear-patterns.ps1`](file:///d:/KHDLKPDL/GDMAS/scripts/demo-clear-patterns.ps1) và [`scripts/demo-init-patterns.ps1`](file:///d:/KHDLKPDL/GDMAS/scripts/demo-init-patterns.ps1).
+  * **Kịch bản điều khiển:** Script PowerShell [`scripts/demo-clear-patterns.ps1`](GDMAS/scripts/demo-clear-patterns.ps1) và [`scripts/demo-init-patterns.ps1`](GDMAS/scripts/demo-init-patterns.ps1).
 * **Khớp nối quy trình Demo:**
   * **Pha 1 (Clear):** Mô phỏng thảm họa CSDL bị xóa (Demo Bước 2) & Chứng minh Web hiển thị trạng thái lỗi/rỗng (Demo Bước 3).
   * **Pha 2 (Init):** Kích hoạt Backend Services tính toán lại 6 Patterns (Demo Bước 4), xác thực DB (Demo Bước 5) & Web phục hồi dữ liệu tự động (Demo Bước 6).

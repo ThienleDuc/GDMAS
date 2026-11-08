@@ -43,19 +43,19 @@ flowchart TD
 
 ## 📑 3. Mục Lục Các Tài Liệu Hướng Dẫn Chi Tiết
 
-1. [**`spec-driven-workflow.md`**](file:///D:/KHDLKPDL/GDMAS/docs/guides/skills/spec-driven-workflow.md):
+1. [**`spec-driven-workflow.md`**](GDMAS/docs/guides/skills/spec-driven-workflow.md):
    * *Ngữ cảnh:* Xây dựng tính năng lớn, bổ sung microservices trong 7 Terminals, sửa đổi cấu trúc CSDL hoặc hợp đồng dữ liệu dùng chung.
    * *Bộ kỹ năng:* `write-proposal`, `build-implementation`, `project-review`, `review-pr`.
 
-2. [**`fast-track-workflow.md`**](file:///D:/KHDLKPDL/GDMAS/docs/guides/skills/fast-track-workflow.md):
+2. [**`fast-track-workflow.md`**](GDMAS/docs/guides/skills/fast-track-workflow.md):
    * *Ngữ cảnh:* Sửa lỗi nhanh (hotfix/bugfix), cập nhật giao diện nhỏ, bổ sung test cases, chỉnh sửa tài liệu kỹ thuật hằng ngày.
    * *Bộ kỹ năng:* `propose-branch`, `git-branch-push`, `source-guard`, `generate-commit`, `git-commit-push`.
 
-3. [**`code-integrity-audit.md`**](file:///D:/KHDLKPDL/GDMAS/docs/guides/skills/code-integrity-audit.md):
+3. [**`code-integrity-audit.md`**](GDMAS/docs/guides/skills/code-integrity-audit.md):
    * *Ngữ cảnh:* Kiểm tra an toàn mã nguồn, bảo vệ nguyên tắc Open-Closed (RULE-03), xác thực 7 Bất biến kiến trúc (I1-I7), phòng ngừa lộ bí mật.
    * *Bộ kỹ năng:* `source-guard` (thanh tra nhanh tức thời) vs `project-review` (thẩm định chuyên sâu đa tầng).
 
-4. [**`git-automation.md`**](file:///D:/KHDLKPDL/GDMAS/docs/guides/skills/git-automation.md):
+4. [**`git-automation.md`**](GDMAS/docs/guides/skills/git-automation.md):
    * *Ngữ cảnh:* Quản lý vòng đời Git, bảo vệ nhánh `main`, đồng bộ với `develop`, chuẩn hóa Conventional Commit tiếng Việt có dấu và đẩy lên GitHub an toàn.
    * *Bộ kỹ năng:* `propose-branch`, `git-branch-push`, `generate-commit`, `git-commit-push`, `review-pr`.
 

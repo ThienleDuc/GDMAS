@@ -65,8 +65,8 @@ sequenceDiagram
   /write-proposal xây dựng tiến trình gom cụm không gian địa chấn bằng thuật toán DBSCAN tại Terminal 4
   ```
 * **Kết quả đầu ra:**
-  - Tệp đề xuất mới: [`.agents/notes/proposed/<id>-<slug>.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/proposed/)
-  - Cập nhật dòng index trong [`.agents/notes/README.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/README.md).
+  - Tệp đề xuất mới: [`.agents/notes/proposed/<id>-<slug>.md`](GDMAS/.agents/notes/proposed/)
+  - Cập nhật dòng index trong [`.agents/notes/README.md`](GDMAS/.agents/notes/README.md).
 * **Điểm dừng cứng (Hard Stop):**
   - Agent **dừng lại ngay sau khi viết xong proposal**.
   - Bạn mở tệp proposal lên, xem xét các mục: Mục tiêu, Kiến trúc 7 Terminals, 6 Patterns, In-Scope / Out-of-Scope.
@@ -89,7 +89,7 @@ sequenceDiagram
   ```
 * **Các bước Agent tự động thực hiện:**
   1. Kiểm tra Mục 9 trong proposal có đúng là `Approved` hay không (nếu chưa duyệt sẽ dừng lại và nhắc nhở).
-  2. Tạo thư mục [`.agents/notes/implemented/<id>-<slug>/`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/implemented/) chứa `plan.md` và `status.md`.
+  2. Tạo thư mục [`.agents/notes/implemented/<id>-<slug>/`](GDMAS/.agents/notes/implemented/) chứa `plan.md` và `status.md`.
   3. Tạo nhánh tính năng an toàn `feature/<slug>` từ `develop`.
   4. Lập trình theo 4 mô hình mở rộng GDMAS (tạo file `runner.py` riêng, route mới, migration mới, component mới).
   5. Chạy validation nhẹ: `uv run pytest` và `pnpm build`.

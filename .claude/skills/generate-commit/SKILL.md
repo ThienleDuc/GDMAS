@@ -14,7 +14,7 @@ Kỹ năng này hướng dẫn AI Agent **tự động phân tích toàn diện 
 > [!IMPORTANT]
 > - **Thực thi trực tiếp bằng Agent (No External Scripts):** Agent tự thực hiện quy trình bằng các lệnh Git và công cụ thao tác tệp, không phụ thuộc vào script `.ps1` hay `.sh` bên ngoài.
 > - **Tiêu chuẩn ngôn ngữ:** Mọi thông điệp commit (cả Header và Body bullets) bắt buộc phải là **tiếng Việt**, văn phong kỹ thuật chuẩn mực, súc tích, chữ thường, không chấm câu cuối tiêu đề.
-> - **Context-First (Tiết kiệm Token):** Ưu tiên đọc Mục 5 & Mục 6 của Cửa Sổ Ngữ Cảnh [`.agents/notes/memory/context-memory.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md) để xác định ngữ cảnh nhánh trước khi quét toàn bộ diff.
+> - **Context-First (Tiết kiệm Token):** Ưu tiên đọc Mục 5 & Mục 6 của Cửa Sổ Ngữ Cảnh [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md) để xác định ngữ cảnh nhánh trước khi quét toàn bộ diff.
 > - **Lưu trữ cục bộ an toàn:** Tệp biên bản ghi nhận tại `.agents/notes/changes/pending-commit.md` được loại trừ trong `.gitignore`, không bao giờ commit tệp này lên remote repository.
 
 ---
@@ -59,7 +59,7 @@ git branch --show-current
 1. **Bậc 1 (Người dùng chỉ định):**
    * Nếu người dùng truyền thông điệp hoặc yêu cầu cụ thể (ví dụ: *"commit: sửa lỗi sse kết nối lại"*), Agent ưu tiên trích xuất nội dung từ yêu cầu của người dùng.
 2. **Bậc 2 (Cửa Sổ Ngữ Cảnh - Token Saver):**
-   * Đọc Mục 5 của [`.agents/notes/memory/context-memory.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md).
+   * Đọc Mục 5 của [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md).
    * Nếu tên nhánh trong memory khớp với nhánh hiện tại, nạp `Type`, `Scope` và `Tiêu đề đề xuất` từ snapshot có sẵn.
 3. **Bậc 3 (Ánh xạ động từ danh sách tệp thay đổi):**
    * Dựa vào danh sách đường dẫn tệp thay đổi, tra cứu Bảng Ánh Xạ Kiến Trúc GDMAS:
@@ -110,7 +110,7 @@ git branch --show-current
 ### Bước 5: Ghi nhật ký vào `.agents/notes/changes/pending-commit.md`
 
 Agent sử dụng công cụ `write_file` để lưu bản ghi vào đường dẫn:
-`d:\KHDLKPDL\GDMAS\.agents\notes\changes\pending-commit.md`
+`GDMAS/.agents\notes\changes\pending-commit.md`
 
 Nội dung mẫu biên bản:
 ```markdown

@@ -153,7 +153,7 @@ Agent dùng công cụ `write_file` để lưu nội dung:
 ```
 
 ### Bước 6: Cập nhật Cửa Sổ Ngữ Cảnh context-memory.md
-* Cập nhật Mục 5 của [`.agents/notes/memory/context-memory.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md):
+* Cập nhật Mục 5 của [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md):
   `- **Nhánh hoạt động (Active Branch):** `<branch-name>``
 
 ### Bước 7: Báo cáo kết quả

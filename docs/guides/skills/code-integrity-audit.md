@@ -37,7 +37,7 @@ flowchart TD
    - `contracts/`: Hợp đồng trao đổi dữ liệu API - Web.
    - `docs/quyuocchung.md`: Hiến chương quy ước tối cao.
 4. **Kiểm soát tỷ lệ dòng thay đổi (Churn Ratio):** Cảnh báo nếu số dòng xóa vượt quá số dòng thêm mới.
-5. **Cập nhật Context Memory:** Cập nhật tự động Section 5 & 6 trong [`.agents/notes/memory/context-memory.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md) mà không làm mất lịch sử các nhánh khác.
+5. **Cập nhật Context Memory:** Cập nhật tự động Section 5 & 6 trong [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md) mà không làm mất lịch sử các nhánh khác.
 
 ### Cách Kích Hoạt
 ```text
@@ -46,7 +46,7 @@ flowchart TD
 *(Hoặc trong chat: "Hãy quét xem mã nguồn có vi phạm Open-Closed không", "Cập nhật lại context-memory").*
 
 ### Kết Quả Đầu Ra
-- Biên bản thẩm định cục bộ: [`.agents/notes/changes/source-guard-report.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/changes/source-guard-report.md).
+- Biên bản thẩm định cục bộ: [`.agents/notes/changes/source-guard-report.md`](GDMAS/.agents/notes/changes/source-guard-report.md).
 - Trạng thái đánh giá: `✅ ĐẠT CHUẨN`, `⚠️ CẢNH BÁO`, hoặc `❌ VI PHẠM`.
 - **Nhắc nhở bất biến:** Giữ nguyên toàn bộ working tree, không tự ý commit.
 

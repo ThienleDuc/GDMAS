@@ -34,12 +34,12 @@ Thư mục `.agents/notes` là **thư mục cấp cao nhất** dùng để lưu 
 
 1. **Bắt buộc theo dõi và push lên Remote Repository:**
    - Toàn bộ thư mục và mọi tệp bên trong:
-     - [`.agents/notes/bugs/`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/bugs/)
-     - [`.agents/notes/implemented/`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/implemented/)
-     - [`.agents/notes/proposed/`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/proposed/)
+     - [`.agents/notes/bugs/`](GDMAS/.agents/notes/bugs/)
+     - [`.agents/notes/implemented/`](GDMAS/.agents/notes/implemented/)
+     - [`.agents/notes/proposed/`](GDMAS/.agents/notes/proposed/)
    - Các tệp tài liệu hướng dẫn cấu trúc: `README.md`.
 
 2. **Chỉ lưu trữ cục bộ (Không push):**
-   - Bộ nhớ ngữ cảnh động: [`.agents/notes/memory/context-memory.md`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md).
-   - Các bản ghi tạm do AI skill sinh ra trong [`.agents/notes/changes/`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/changes/) (ví dụ: `pending-commit.md`, `source-guard-report.md`).
-   - Các bản ghi đề xuất tạo nhánh tạm thời trong [`.agents/notes/branches/`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/branches/) (ví dụ: `feature-*.md`).
+   - Bộ nhớ ngữ cảnh động: [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md).
+   - Các bản ghi tạm do AI skill sinh ra trong [`.agents/notes/changes/`](GDMAS/.agents/notes/changes/) (ví dụ: `pending-commit.md`, `source-guard-report.md`).
+   - Các bản ghi đề xuất tạo nhánh tạm thời trong [`.agents/notes/branches/`](GDMAS/.agents/notes/branches/) (ví dụ: `feature-*.md`).

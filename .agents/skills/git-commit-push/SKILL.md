@@ -8,7 +8,7 @@ description: >-
 
 # Kỹ Năng Tự Động Hóa Staging, Commit & Push GitHub (git-commit-push)
 
-Kỹ năng này hướng dẫn AI Agent **tự động hóa toàn bộ chu trình từ kiểm tra an toàn working tree, stage tệp, tạo Conventional Commit tiếng Việt chuẩn hóa, đồng bộ rebase đến đẩy nhánh lên GitHub remote repository**, đồng thời cập nhật Cửa Sổ Ngữ Cảnh [`.agents/notes/memory/context-memory.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md).
+Kỹ năng này hướng dẫn AI Agent **tự động hóa toàn bộ chu trình từ kiểm tra an toàn working tree, stage tệp, tạo Conventional Commit tiếng Việt chuẩn hóa, đồng bộ rebase đến đẩy nhánh lên GitHub remote repository**, đồng thời cập nhật Cửa Sổ Ngữ Cảnh [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md).
 
 > [!IMPORTANT]
 > - **Chỉ kích hoạt khi có chỉ thị rõ ràng (Explicit Trigger Only):** Kỹ năng này **CHỈ ĐƯỢC CHẠY khi người dùng chủ động yêu cầu** (qua lệnh `/git-commit-push` hoặc yêu cầu bằng lời như *"hãy commit và push"*, *"tạo commit cho tôi"*). AI Agent **tuyệt đối không bao giờ được tự động kích hoạt ngầm** quy trình commit & push sau mỗi lần sửa đổi mã nguồn.
@@ -70,10 +70,10 @@ Agent xác định nội dung commit theo thứ tự ưu tiên:
 1. **Nguồn 1 (Người dùng truyền trực tiếp):**
    * Nếu người dùng yêu cầu: *"commit: sửa lỗi sse kết nối lại"* hoặc truyền nội dung cụ thể, sử dụng ngay nội dung này làm tiêu đề/nội dung commit.
 2. **Nguồn 2 (`pending-commit.md`):**
-   * Đọc tệp [`.agents/notes/changes/pending-commit.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/changes/pending-commit.md).
+   * Đọc tệp [`.agents/notes/changes/pending-commit.md`](GDMAS/.agents/notes/changes/pending-commit.md).
    * Nếu nhánh ghi nhận khớp với nhánh hiện tại, trích xuất Header và Body bullets đã được sinh trước đó.
 3. **Nguồn 3 (Cửa Sổ Ngữ Cảnh `context-memory.md`):**
-   * Đọc Mục 5 của [`.agents/notes/memory/context-memory.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md).
+   * Đọc Mục 5 của [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md).
    * Nếu nhánh khớp, lấy `Type/Scope` và `Tiêu đề commit đề xuất`.
 4. **Nguồn 4 (Suy luận động từ cây thư mục Git):**
    * Ánh xạ danh sách tệp thay đổi theo bảng chuẩn:
@@ -123,7 +123,7 @@ git push -u origin <current-branch>
    ```bash
    git rev-parse --short HEAD
    ```
-2. Cập nhật Mục 5 & Mục 6 trong [`.agents/notes/memory/context-memory.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md) ghi nhận commit hash, tiêu đề và tóm tắt công việc vào lịch sử tích lũy.
+2. Cập nhật Mục 5 & Mục 6 trong [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md) ghi nhận commit hash, tiêu đề và tóm tắt công việc vào lịch sử tích lũy.
 
 ### Bước 9: Báo cáo kết quả
 * Nhánh đã đẩy: `<current-branch>`

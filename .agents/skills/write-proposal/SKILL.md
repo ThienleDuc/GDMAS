@@ -40,11 +40,11 @@ flowchart TD
 ### Bước 1: Khám Phá Bối Cảnh (Read-Only)
 Agent thực hiện đọc và tra cứu theo thứ tự:
 1. **Yêu cầu của người dùng:** Phân tích kỹ nội dung người dùng vừa yêu cầu trong phiên hội thoại.
-2. **Bộ nhớ ngữ cảnh tinh gọn:** Đọc [`.agents/notes/memory/context-memory.md`](file:///D:/KHDLKPDL/GDMAS/.agents/notes/memory/context-memory.md) để nắm bản đồ 7 Terminals, 6 Patterns chuỗi thời gian và trạng thái nhánh hiện thời.
+2. **Bộ nhớ ngữ cảnh tinh gọn:** Đọc [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md) để nắm bản đồ 7 Terminals, 6 Patterns chuỗi thời gian và trạng thái nhánh hiện thời.
 3. **Hiến chương & Kiến trúc:**
-   - [`docs/quyuocchung.md`](file:///D:/KHDLKPDL/GDMAS/docs/quyuocchung.md): Hiến chương quy ước kỹ thuật tối cao.
-   - [`docs/architecture/`](file:///D:/KHDLKPDL/GDMAS/docs/architecture/): Tài liệu kiến trúc luồng dữ liệu và 7 Terminals.
-   - [`contracts/`](file:///D:/KHDLKPDL/GDMAS/contracts/): Hợp đồng dữ liệu Backend - Frontend.
+   - [`docs/quyuocchung.md`](GDMAS/docs/quyuocchung.md): Hiến chương quy ước kỹ thuật tối cao.
+   - [`docs/architecture/`](GDMAS/docs/architecture/): Tài liệu kiến trúc luồng dữ liệu và 7 Terminals.
+   - [`contracts/`](GDMAS/contracts/): Hợp đồng dữ liệu Backend - Frontend.
 4. **Kiểm tra quyết định cũ (Conflict Detection):**
    - Quét tìm trong thư mục `.agents/notes/proposed/` và `.agents/notes/implemented/` xem tính năng này hoặc các phương án tương tự đã từng được đề xuất, được duyệt, hoặc **bị bác bỏ (Rejected)** trước đây hay chưa.
    - **Xử lý xung đột (Conflict Handling):**

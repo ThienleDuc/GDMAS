@@ -62,7 +62,7 @@ flowchart TD
      - **Giao diện & Trải nghiệm:** Quy chuẩn Dark Mode, bảng màu Design Tokens, các views và khả năng tương tác (Zoom & Filter).
      - **Kịch bản Demo & Kiểm thử:** Các bước thực nghiệm của hội đồng (ví dụ: Demo xóa CSDL rỗng §4), tiêu chí phi chức năng (độ trễ SSE $< 100\text{ ms}$, inference $< 500\text{ ms}$).
 2. **Ghi tệp Cache Cục Bộ:**
-   * Lưu hoặc cập nhật tệp [`.agents/notes/planning/planning-context-cache.md`](file:///d:/KHDLKPDL/GDMAS/.agents/notes/planning/planning-context-cache.md) với cấu trúc chuẩn:
+   * Lưu hoặc cập nhật tệp [`.agents/notes/planning/planning-context-cache.md`](GDMAS/.agents/notes/planning/planning-context-cache.md) với cấu trúc chuẩn:
      ```markdown
      # [PLANNING CONTEXT CACHE - BỘ NHỚ NGỮ CẢNH QUY HOẠCH CỤC BỘ]
      - **Cập nhật lần cuối:** <YYYY-MM-DD HH:mm:ss>
@@ -80,9 +80,9 @@ flowchart TD
 
 ### Bước 3: Tham khảo Khuôn Mẫu (Reference Templates) Ngang Hàng
 Trước khi sinh tài liệu, Agent đọc các khuôn mẫu chuẩn tại thư mục `templates/` đứng ngang hàng với file `SKILL.md`:
-1. [**`templates/feature-template.md`**](file:///d:/KHDLKPDL/GDMAS/.claude/skills/generate-planning/templates/feature-template.md): Khuôn mẫu chuẩn cho chức năng backend (Mục tiêu, Luồng dữ liệu, Hợp đồng Input/Output, Logic xử lý, Bất biến kiến trúc, Tiêu chí nghiệm thu).
-2. [**`templates/ui-template.md`**](file:///d:/KHDLKPDL/GDMAS/.claude/skills/generate-planning/templates/ui-template.md): Khuôn mẫu giao diện 2 tầng (Tầng 1: Master Layout Shell & Tokens; Tầng 2: View Content cắm vào Outlet, Wireframe ASCII, Tương tác Zoom & Filter, 4 Trạng thái giao diện).
-3. [**`templates/testing-template.md`**](file:///d:/KHDLKPDL/GDMAS/.claude/skills/generate-planning/templates/testing-template.md): Khuôn mẫu kế hoạch kiểm thử song hành (Functional & Non-Functional: Happy Path, CSDL rỗng Demo §4, Real-time SSE latency, Khung code Pytest & Vitest).
+1. [**`templates/feature-template.md`**](GDMAS/.claude/skills/generate-planning/templates/feature-template.md): Khuôn mẫu chuẩn cho chức năng backend (Mục tiêu, Luồng dữ liệu, Hợp đồng Input/Output, Logic xử lý, Bất biến kiến trúc, Tiêu chí nghiệm thu).
+2. [**`templates/ui-template.md`**](GDMAS/.claude/skills/generate-planning/templates/ui-template.md): Khuôn mẫu giao diện 2 tầng (Tầng 1: Master Layout Shell & Tokens; Tầng 2: View Content cắm vào Outlet, Wireframe ASCII, Tương tác Zoom & Filter, 4 Trạng thái giao diện).
+3. [**`templates/testing-template.md`**](GDMAS/.claude/skills/generate-planning/templates/testing-template.md): Khuôn mẫu kế hoạch kiểm thử song hành (Functional & Non-Functional: Happy Path, CSDL rỗng Demo §4, Real-time SSE latency, Khung code Pytest & Vitest).
 
 ---
 
@@ -106,12 +106,12 @@ Agent tạo lập hoặc cập nhật các tệp trong 3 thư mục con:
 - Các tệp đặc tả kiểm thử `01-test-*.md`, `02-test-*.md`... bao phủ toàn diện cả kiểm thử chức năng (Functional) và phi chức năng (Non-Functional Resilience Demo §4, Performance, Latency).
 
 #### 4. Cập nhật Mục lục Trung tâm:
-- Cập nhật nhánh cây `planning/` và bảng tra cứu trong [`docs/README.md`](file:///d:/KHDLKPDL/GDMAS/docs/README.md).
+- Cập nhật nhánh cây `planning/` và bảng tra cứu trong [`docs/README.md`](GDMAS/docs/README.md).
 
 ---
 
 ### Bước 5: Thẩm định An toàn Mã nguồn & Báo cáo
-1. Chạy quy trình kiểm tra an toàn theo hiến chương [source-guard](file:///d:/KHDLKPDL/GDMAS/.agents/skills/source-guard/SKILL.md):
+1. Chạy quy trình kiểm tra an toàn theo hiến chương [source-guard](GDMAS/.agents/skills/source-guard/SKILL.md):
    * Không có tệp mã nguồn ứng dụng nào bị xóa hay sửa đổi sai quy chuẩn.
    * Số dòng thêm mới vượt trội số dòng xóa.
 2. Cập nhật `source-guard-report.md` và `context-memory.md`.
