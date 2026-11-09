@@ -1,0 +1,68 @@
+{
+  "forecast": {
+    "baseline_hom_qua": {
+      "MAE": 43.05555555555556,
+      "RMSE": 58.30570774422994
+    },
+    "baseline_tb_7_ngay": {
+      "MAE": 41.09424603174604,
+      "RMSE": 51.60013134112905
+    },
+    "baseline_tb_train": {
+      "MAE": 42.70821482745545,
+      "RMSE": 56.4065005211698
+    },
+    "ARIMA(3, 0, 2)": {
+      "MAE": 38.39731723749519,
+      "RMSE": 49.668028549875906,
+      "coverage_95": 0.9861111111111112
+    },
+    "ARIMA(2, 0, 1)_log": {
+      "MAE": 37.415526517909456,
+      "RMSE": 48.62473840920661,
+      "coverage_95": 0.9722222222222222
+    },
+    "Ridge": {
+      "MAE": 41.08203442846051,
+      "RMSE": 51.7614546139219,
+      "coverage_95": 0.9791666666666666
+    },
+    "_cai_thien_so_voi_baseline_tot_nhat_%": 9.0
+  },
+  "forecast_winner": "ARIMA(2, 0, 1)_log",
+  "classifier": {
+    "baseline_giong_hom_nay": {
+      "accuracy": 0.4513888888888889,
+      "f1_macro": 0.3246076297399473,
+      "within_1_level": 0.8333333333333334
+    },
+    "baseline_lop_da_so": {
+      "accuracy": 0.5069444444444444,
+      "f1_macro": 0.16820276497695852,
+      "within_1_level": 0.8055555555555556
+    },
+    "RandomForest": {
+      "accuracy": 0.3680555555555556,
+      "f1_macro": 0.25275139148241366,
+      "within_1_level": 0.7986111111111112
+    },
+    "LogisticRegression": {
+      "accuracy": 0.3541666666666667,
+      "f1_macro": 0.27549689987079606,
+      "within_1_level": 0.7708333333333334
+    },
+    "PhanPhoiDuBao": {
+      "accuracy": 0.5138888888888888,
+      "f1_macro": 0.2637082903336773,
+      "within_1_level": 0.8611111111111112
+    }
+  },
+  "classifier_winner": "PhanPhoiDuBao",
+  "thresholds": [
+    375.0,
+    425.0,
+    475.0
+  ],
+  "n_train": 572,
+  "n_test": 144
+}
