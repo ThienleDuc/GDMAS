@@ -1,135 +1,104 @@
-# Hướng Dẫn Luồng Phát Triển Định Hướng Đặc Tả (Spec-Driven SDLC Workflow)
+# Luồng Phát Triển Định Hướng Đặc Tả & Kiểm Thử (Spec-Driven & Single-File Test)
 
-Tài liệu này hướng dẫn chi tiết quy trình phát triển tính năng lớn, thay đổi kiến trúc hoặc sửa lỗi phức tạp trong hệ thống **GDMAS**, sử dụng bộ 4 kỹ năng: **`write-proposal`**, **`build-implementation`**, **`project-review`**, và **`review-pr`**.
+Tài liệu này hướng dẫn quy trình phát triển tính năng (> 1 file), sửa bug phức tạp và kiểm thử chuyên sâu trong **GDMAS**, sử dụng bộ **5 kỹ năng cốt lõi** tại `.agents/skills/`: **`write-proposal`**, **`build-implementation`**, **`write-testcase`**, **`project-review`**, và **`review-pr`**.
 
 ---
 
 ## 🎯 Khi Nào Sử Dụng Luồng Này?
 
-Áp dụng cho các công việc có **quy mô vừa đến lớn**, đòi hỏi tính kỷ luật và kiểm soát kiến trúc chặt chẽ:
-- Bổ sung một Microservice Worker mới trong kiến trúc 7 Terminals (ví dụ: Clustering DBSCAN, Prediction LSTM/ARIMA).
-- Thêm hoặc sửa đổi cấu trúc bảng CSDL PostgreSQL (yêu cầu tạo Alembic migration).
-- Thay đổi hoặc mở rộng hợp đồng dữ liệu chuẩn giữa Backend và Frontend trong `contracts/`.
-- Thêm một luồng giao diện người dùng lớn hoặc trang phân tích biểu đồ mới cho 6 patterns chuỗi thời gian.
-- Tái cấu trúc (refactoring) mã nguồn có ảnh hưởng liên mô-đun.
+1. **Luồng Spec-Driven (Proposal `Approved` → Sinh đồng thời Implement + Testcase):** Áp dụng cho mọi công việc **lớn hơn sửa 1 dòng / 1 file**:
+   - Bổ sung hoặc nâng cấp Worker trong mô hình 7 Terminals (`ingestion`, `analysis`, `clustering`, `prediction`).
+   - Thêm bảng CSDL PostgreSQL / tạo Alembic migration mới.
+   - Mở rộng hợp đồng dữ liệu (`contracts/`) hoặc endpoint REST/SSE mới.
+   - Thêm view / biểu đồ thuộc 6 Patterns chuỗi thời gian.
+   - Sửa bug phức tạp ảnh hưởng nhiều module.
+2. **Luồng Kiểm thử riêng 1 file (`Mode: single-file-test`):** Áp dụng khi người dùng yêu cầu viết unit test cho **1 file cụ thể** → rẽ nhánh `test/<id>` trước, chạy test offline, ghi lỗi (nếu có) vào `.agents/notes/bugs/` rồi đẩy PR.
 
 ---
 
-## 🧭 Vòng Đời 4 Pha Phát Triển (The 4-Phase Lifecycle)
+## 🧭 Vòng Đời Tự Động Hóa 5 Pha (Spec-Driven)
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Dev as Lập Trình Viên (Người dùng)
-    participant Agent as AI Agent
-    participant Notes as .agents/notes/
-    participant Code as Working Tree (Mã nguồn)
-    participant Git as GitHub Remote (develop)
+    actor Dev as Thành viên (thien/son/van/tai)
+    participant Agent as AI Agent (.agents/skills)
+    participant Notes as .agents/notes/ (proposed, implemented, testcase, bugs)
+    participant Git as GitHub (ThienleDuc/GDMAS)
 
     Note over Dev,Agent: PHA 1 & 2: KHÁM PHÁ & ĐỀ XUẤT (write-proposal)
-    Dev->>Agent: Yêu cầu tính năng mới lớn (/write-proposal)
-    Agent->>Notes: Đọc bối cảnh, kiểm tra xung đột quyết định cũ
-    Agent->>Notes: Viết proposal .agents/notes/proposed/<id>-<slug>.md
-    Agent-->>Dev: DỪNG LẠI: Trình bày đề xuất, chờ phê duyệt
-    Dev->>Notes: Xem xét, điền "Decision: Approved" tại Mục 9
+    Dev->>Agent: Yêu cầu tính năng mới
+    Agent->>Notes: Đọc docs/, notes_index.py, kiểm xung đột trong proposed/ & implemented/
+    Agent->>Notes: Viết proposal .agents/notes/proposed/<id>.md (kèm tệp test dự kiến)
+    Agent-->>Dev: DỪNG: Trình bày proposal, chờ xác nhận §9
 
-    Note over Dev,Agent: PHA 3 & 4: LẬP TRÌNH & THỬ NGHIỆM (build-implementation)
-    Dev->>Agent: Bắt đầu triển khai (/build-implementation)
-    Agent->>Notes: Kiểm tra §9 Approved -> Tạo plan.md & status.md
-    Agent->>Code: Lập trình theo RULE-03 (Chỉ thêm mới, không sửa cũ)
-    Agent->>Code: Chạy validation nhẹ (pytest, pnpm build)
-    Agent-->>Dev: DỪNG LẠI TẠI VALIDATION TRÊN WORKING TREE (Không commit)
-    Dev->>Code: Kiểm thử thủ công trên môi trường dev (T6, T7)
+    Note over Dev,Agent: PHA 3: DUYỆT PROPOSAL THẢ LỎNG
+    Dev->>Notes: Tác giả hoặc đồng đội ký §9 Approved (KHÔNG cần ThienleDuc)
 
-    Note over Dev,Agent: PHA KIỂM ĐỊNH: THẨM ĐỊNH KIẾN TRÚC (project-review)
-    Dev->>Agent: Yêu cầu thẩm định mã nguồn (/project-review)
-    Agent->>Code: Kiểm tra 7 Invariants (I1-I7), bắt Drift và Scope Creep
-    Agent-->>Dev: Báo cáo kết quả thẩm định (PASS / WARNING)
-
-    Note over Dev,Agent: PHA ĐÓNG GÓI & ĐẨY LÊN GIT (review-pr)
-    Dev->>Agent: Ra lệnh chốt mốc (/review-pr hoặc "commit và push")
-    Agent->>Code: Scope Check vs plan.md, loại trừ .env, tạo Conventional Commit tiếng Việt
-    Agent->>Git: git push -u origin feature/<slug>
-    Agent-->>Dev: Báo cáo hoàn tất, cung cấp nhánh để mở PR vào develop
+    Note over Dev,Agent: PHA 4: TRIỂN KHAI ĐỒNG THỜI IMPLEMENT + TESTCASE & TỰ ĐỘNG ĐẨY PR
+    Agent->>Git: review-pr (Phần A): ./scripts/git-ship.sh start <type>/<id>
+    par Sinh đồng thời
+        Agent->>Notes: build-implementation tạo implemented/<id>/{plan.md,status.md}
+    and
+        Agent->>Notes: write-testcase tạo testcase/<id>.md (Mode: proposal-paired)
+    end
+    Agent->>Agent: Implement tuân thủ RULE-03 & I1–I7 + viết file unit test offline
+    Agent->>Notes: Chạy validation nhẹ, cập nhật testcase Status: passed & status.md: validation
+    Agent->>Agent: project-review (OCP/Churn + I1–I7 + testcase/<id>.md + Drift + Scope)
+    Agent->>Git: review-pr (Phần B): commit tiếng Việt → update → push PR → kiểm tra 0 conflict
+    Agent-->>Dev: Gửi link PR + Implementation Report (bất kỳ thành viên nào cũng merge được khi không xung đột)
 ```
 
 ---
 
-## 🛠️ Hướng Dẫn Thao Tác Chi Tiết Từng Kỹ Năng
+## 🧪 Vòng Đời Kiểm Thử Riêng 1 File (`single-file-test`)
 
-### 1. `write-proposal` (Pha 1 & 2: Soạn Thảo Đề Xuất)
-* **Mục tiêu:** Khảo sát toàn diện, ngăn chặn xung đột kiến trúc và đưa ra bản thiết kế chi tiết trước khi viết bất kỳ dòng code nào.
-* **Đặc tính:** **Read-Only tuyệt đối**. Không chạm vào code.
-* **Cách kích hoạt:**
-  ```text
-  /write-proposal xây dựng tiến trình gom cụm không gian địa chấn bằng thuật toán DBSCAN tại Terminal 4
-  ```
-* **Kết quả đầu ra:**
-  - Tệp đề xuất mới: [`.agents/notes/proposed/<id>-<slug>.md`](GDMAS/.agents/notes/proposed/)
-  - Cập nhật dòng index trong [`.agents/notes/README.md`](GDMAS/.agents/notes/README.md).
-* **Điểm dừng cứng (Hard Stop):**
-  - Agent **dừng lại ngay sau khi viết xong proposal**.
-  - Bạn mở tệp proposal lên, xem xét các mục: Mục tiêu, Kiến trúc 7 Terminals, 6 Patterns, In-Scope / Out-of-Scope.
-  - Nếu đồng ý, chỉnh sửa Mục 9 thành:
-    ```markdown
-    ## 9. Human Review
-    - **Reviewer:** <Tên của bạn>
-    - **Ngày duyệt:** <YYYY-MM-DD>
-    - **Quyết định:** Approved
-    ```
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Dev as Thành viên
+    participant Agent as AI Agent (write-testcase + review-pr)
+    participant Notes as .agents/notes/testcase & bugs
+    participant Git as GitHub (ThienleDuc/GDMAS)
 
----
-
-### 2. `build-implementation` (Pha 3 & 4: Kế Hoạch & Lập Trình)
-* **Mục tiêu:** Chuyển đổi bản đề xuất đã duyệt thành code thực tế theo đúng phạm vi.
-* **Đặc tính:** Tuân thủ nguyên tắc Open-Closed (RULE-03), duy trì nhật ký tiến độ sống.
-* **Cách kích hoạt:**
-  ```text
-  /build-implementation triển khai proposal 2026-11-08-001-dbscan-clustering
-  ```
-* **Các bước Agent tự động thực hiện:**
-  1. Kiểm tra Mục 9 trong proposal có đúng là `Approved` hay không (nếu chưa duyệt sẽ dừng lại và nhắc nhở).
-  2. Tạo thư mục [`.agents/notes/implemented/<id>-<slug>/`](GDMAS/.agents/notes/implemented/) chứa `plan.md` và `status.md`.
-  3. Tạo nhánh tính năng an toàn `feature/<slug>` từ `develop`.
-  4. Lập trình theo 4 mô hình mở rộng GDMAS (tạo file `runner.py` riêng, route mới, migration mới, component mới).
-  5. Chạy validation nhẹ: `uv run pytest` và `pnpm build`.
-* **Điểm dừng cứng (Hard Stop):**
-  - **DỪNG LẠI Ở TRẠNG THÁI `validation` TRÊN WORKING TREE.**
-  - **Tuyệt đối không commit hay push.** Toàn bộ mã nguồn nằm nguyên trên máy để bạn mở trình duyệt hoặc bật terminal kiểm tra trực tiếp.
+    Dev->>Agent: Yêu cầu kiểm thử file cụ thể (vd. runner.py)
+    Agent->>Git: 1. Checkout nhánh mới TRƯỚC: ./scripts/git-ship.sh start test/<id>
+    Agent->>Notes: 2. Tạo .agents/notes/testcase/<id>.md (Mode: single-file-test)
+    Agent->>Agent: 3. Viết unit test offline & chạy pytest / unittest / vitest
+    alt Phát hiện lỗi trong code nguồn mục tiêu
+        Agent->>Notes: 4a. Tạo .agents/notes/bugs/BUG-<handle>-NNN-<slug>.md & Status: failed_with_bugs
+    else Mọi test case đều đạt
+        Agent->>Notes: 4b. Cập nhật testcase/<id>.md → Status: passed
+    end
+    Agent->>Git: 5. project-review → review-pr Phần B: commit → update → push PR → kiểm 0 conflict & merge
+```
 
 ---
 
-### 3. `project-review` (Thẩm Định Chuyên Sâu Đa Tầng)
-* **Mục tiêu:** Đóng vai trò lớp kiểm định kiến trúc độc lập trước khi mã nguồn được đưa vào lịch sử Git.
-* **Cách kích hoạt:**
-  ```text
-  /project-review thẩm định các thay đổi vừa code trên nhánh hiện tại
-  ```
-* **Nội dung kiểm tra:**
-  - **7 Bất biến kiến trúc GDMAS (I1 - I7):**
-    * *I1:* Có lỡ nhúng worker vào `main.py` không?
-    * *I2:* Có xóa file cũ hay phá vỡ hàm tiện ích cũ không?
-    * *I3:* Hợp đồng dữ liệu có chuẩn không, thời gian có đúng UTC và tọa độ WGS84 không?
-    * *I4:* Có sửa file migration Alembic cũ không?
-    * *I5:* Component mới có đáp ứng đúng 6 Patterns chuỗi thời gian không?
-    * *I6:* Có để lộ bí mật hay stage file `.env` không?
-    * *I7:* Test cases cũ có được bảo toàn không?
-  - **Kiểm tra lan phạm vi (Scope Mismatch):** So sánh tệp đã sửa với danh mục `In Scope` trong `plan.md`.
-  - **Kiểm tra độ lệch tài liệu (Drift Detection):** Bắt lỗi khi code đã đổi mà tài liệu trong `docs/` chưa cập nhật.
+## 🛠️ Chi Tiết 5 Kỹ Năng Cốt Lõi
 
----
+### 1. `write-proposal` (`.agents/skills/write-proposal/SKILL.md`)
+- Đọc nhanh `AGENTS.md`, `docs/coding-rules.md`, `docs/quyuocchung.md`.
+- Chạy `python3 scripts/notes_index.py` & `grep` trong `.agents/notes/proposed/` + `implemented/` để kiểm xung đột (kể cả `Scope of Rejection`). Nếu gặp `CONFLICT DETECTED`, ghi nhận để **gom hỏi cuối phiên** thay vì cắt ngang thao tác an toàn khác.
+- Tự động sinh ID `yyyy-mm-dd-<slug>-<handle>` bằng Slug Engine (`<handle>` từ `./scripts/git-ship.sh me`).
+- Viết `.agents/notes/proposed/<id>.md` từ `_TEMPLATE.md` (khai báo rõ `Architecture Impact` và tệp test dự kiến ở §8).
+- **Dừng chờ xác nhận §9 (thả lỏng):** bất kỳ thành viên nào trong `.agents/team.md`, kể cả tác giả tự duyệt hay xác nhận rõ trong chat, đều mở khóa bước tiếp theo — **không cần chờ `ThienleDuc`**.
 
-### 4. `review-pr` (Đóng Gói Git, Scope Check & Đẩy Lên GitHub)
-* **Mục tiêu:** Chốt mốc hoàn thành công việc sau khi bạn đã kiểm thử thực tế và hài lòng.
-* **Đặc tính:** **Chỉ chạy khi có lệnh chỉ định riêng biệt**. Không bao giờ tự động nối tiếp sau khi code.
-* **Cách kích hoạt:**
-  ```text
-  /review-pr tôi đã test xong, hãy đóng gói và đẩy nhánh này lên GitHub
-  ```
-* **Các bước Agent tự động thực hiện:**
-  1. Chạy Scope Check cuối cùng và tự động gọi `project-review`.
-  2. Gỡ bỏ mọi tệp cấu hình `.env` khỏi Staging để bảo vệ bí mật.
-  3. Tạo Conventional Commit tiếng Việt có dấu chuẩn GDMAS (Header chuẩn `feat(...)`, Body gạch đầu dòng rõ ràng).
-  4. Đẩy nhánh lên GitHub: `git push -u origin feature/<slug>`.
-  5. Cập nhật `status.md` thành `ready_for_merge` và báo cáo hoàn tất.
+### 2. `build-implementation` (`.agents/skills/build-implementation/SKILL.md`)
+- Kiểm tra `§9` đã có `Decision: Approved` + `Reviewer` hợp lệ từ `.agents/team.md`.
+- Tự động gọi `review-pr` Phần A (`./scripts/git-ship.sh start <type>/<id>`) trước khi sửa code.
+- **Khởi tạo đồng thời** `.agents/notes/implemented/<id>/{plan.md,status.md}` (khai báo cả tệp code và tệp test trong `In Scope`) **VÀ** gọi `write-testcase` tạo `.agents/notes/testcase/<id>.md` từ [`.agents/notes/testcase/_TEMPLATE.md`](../../../.agents/notes/testcase/_TEMPLATE.md) (`Mode: proposal-paired`).
+- Lập trình theo RULE-03 & I1–I7, giữ `status.md` sống; không hỏi xin phép cho mỗi thao tác thêm/sửa file an toàn.
+- Chạy validation nhẹ (`uv run pytest`, `uv run ruff check .`, `pnpm build`, `notes_index.py --check`), cập nhật `testcase/<id>.md`, đặt `Status: validation` rồi **tự chuyển sang `review-pr` Phần B**.
 
+### 3. `write-testcase` (`.agents/skills/write-testcase/SKILL.md`)
+- Chế độ 1 (`proposal-paired`): Sinh đồng thời với `implemented/<id>/`, lập kịch bản kiểm thử từ `proposal` + code triển khai, tạo unit/integration test chạy **offline 100%** (mock USGS/DB ngoài) và điền kết quả chạy thật vào `.agents/notes/testcase/<id>.md`.
+- Chế độ 2 (`single-file-test`): Khi kiểm thử riêng 1 file cụ thể: **rẽ nhánh `test/<id>` trước**, viết unit test offline cho file đó, chạy kiểm thử; nếu phát hiện lỗi, tạo bug report trong `.agents/notes/bugs/BUG-<handle>-NNN-<slug>.md`, gắn `Status: failed_with_bugs` và `Related Bugs:` rồi bàn giao `review-pr` Phần B.
+
+### 4. `project-review` (`.agents/skills/project-review/SKILL.md`)
+- Kiểm tra 5 lớp trước khi commit/push: (1) Nhất quán quyết định cũ; (2) OCP / Không xóa file trái phép / Bảo vệ tệp lõi / Churn; (3) 7 Bất biến I1–I7 (bao gồm kiểm chứng đã tạo đủ `.agents/notes/testcase/<id>.md`, mã test offline & log `.agents/notes/bugs/` nếu test fail); (4) Drift tài liệu; (5) Scope Creep so với `plan.md`.
+
+### 5. `review-pr` (`.agents/skills/review-pr/SKILL.md`)
+- Chạy `git-ship.sh scope`, bảo vệ `.env`/secret, gọi `project-review`, tổng hợp Conventional Commit tiếng Việt qua bảng Type/Scope, chạy `./scripts/git-ship.sh update` (merge-forward `develop`) và `./scripts/git-ship.sh push`.
+- Chạy `./scripts/git-ship.sh merge --dry-run` (hoặc `merge`): **bắt buộc kiểm tra không xung đột (`0 conflicts`)**, không bắt buộc riêng `ThienleDuc` — nếu `CONFLICT` thì chặn merge; nếu **0 conflict** thì cho phép merge và chạy `./scripts/git-ship.sh sync`.
+- **Gom câu hỏi nguy hiểm cuối phiên:** Mọi thao tác xóa file/folder hoặc conflict (nếu xuất hiện) được giữ nguyên và gom thành 1 danh sách câu hỏi cuối phiên.

@@ -1,20 +1,12 @@
-﻿# Thư Mục Ghi Nhận Tính Năng & Tác Vụ Đã Triển Khai (Implemented)
+# Thư Mục Triển Khai & Tiến Độ Sống (`.agents/notes/implemented/`)
 
-Thư mục này dùng để ghi nhận các tính năng, module, đặc tả kiến trúc và cấu hình đã hoàn thành trong hệ thống **GDMAS**.
+Thư mục này chứa thư mục triển khai `yyyy-mm-dd-<slug>-<handle>/` (gồm `plan.md` và `status.md`) cho các proposal đã có `Decision: Approved` ở §9.
 
----
+## Quy tắc
 
-## Danh Mục Đã Triển Khai Thành Công
-
-1. **Chuẩn Hóa Hệ Thống Tài Liệu Kỹ Thuật (100%):**
-   - Hoàn thành toàn bộ tài liệu kiến trúc, API, quy ước phát triển, sổ tay kỹ thuật và kiểm thử.
-2. **Loại Bỏ n8n & GitHub Actions `ci.yml`:**
-   - Thay thế bằng Ingestion Worker thuần Python chạy định kỳ 5 phút tại Terminal 2.
-   - Thay thế bằng Local Test Suite `scripts/test.sh` kiểm tra tự động nội bộ.
-3. **Mô Hình Kiến Trúc 7 Terminals:**
-   - Thiết kế 7 khối dịch vụ độc lập phân tán theo mô hình Microservices/Modular.
-4. **Trực Quan Hóa 6 Patterns Chuỗi Thời Gian:**
-   - Đặc tả chi tiết 6 patterns phân tích dữ liệu địa chấn tại Backend và Frontend.
-5. **Kênh Server-Sent Events (SSE):**
-   - Duy trì luồng truyền phát dữ liệu thời gian thực giữa FastAPI và React Client.
-
+1. **Điều kiện tạo:** Proposal tương ứng trong `.agents/notes/proposed/<id>.md` phải ở trạng thái `Decision: Approved` (được duyệt bởi bất kỳ thành viên nào trong `.agents/team.md`, không cần `ThienleDuc`).
+2. **Khuôn mẫu chuẩn:** Copy từ [`_TEMPLATE/plan.md`](_TEMPLATE/plan.md) và [`_TEMPLATE/status.md`](_TEMPLATE/status.md).
+3. **Vòng đời `status.md`:** `planned → in_progress ⇄ blocked → validation → completed`.
+   - Agent đẩy PR lên ở trạng thái `Status: validation`.
+   - `Status: completed` cập nhật sau khi PR đã kiểm tra không xung đột và được **merge vào `develop`**.
+4. **Kiểm tra:** `python3 scripts/notes_index.py` và `python3 scripts/notes_index.py --check`.

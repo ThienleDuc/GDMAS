@@ -276,14 +276,17 @@ Cấu trúc dự án được tinh gọn tối đa, tập trung vào kiến trú
 GDMAS/
 │
 ├── .agents/                              # Ngữ cảnh và nhật ký phát triển của AI Agent
-│   ├── notes/                            # Thư mục ghi chú trạng thái dự án
-│   │   ├── bugs/                         # Thư mục nhật ký theo dõi lỗi và rủi ro kỹ thuật
-│   │   ├── changes/                      # Thư mục ghi nhận thay đổi mã nguồn trước khi commit
-│   │   ├── implemented/                  # Thư mục ghi nhận tính năng/tác vụ đã hoàn thành
-│   │   └── proposed/                     # Thư mục đề xuất tính năng và kế hoạch tiếp theo
-│   └── skills/                           # Thư mục kỹ năng tự động hóa (Antigravity Skills)
-│       ├── generate-commit/              # Skill phân tích diff và sinh Conventional Commit
-│       └── git-commit-push/              # Skill tự động hóa quy trình commit & push nhánh
+│   ├── notes/                            # Bộ nhớ quyết định duy nhất (.agents/notes/)
+│   │   ├── bugs/                         # Nhật ký theo dõi lỗi và rủi ro kỹ thuật
+│   │   ├── implemented/                  # Kế hoạch triển khai & trạng thái sống
+│   │   ├── proposed/                     # Đề xuất tính năng và quyết định kiến trúc
+│   │   └── testcase/                     # Biên bản kiểm thử (proposal-paired & single-file-test)
+│   └── skills/                           # Bộ 5 kỹ năng cốt lõi (.agents/skills/)
+│       ├── write-proposal/               # Khám phá read-only & soạn proposal (Pha 1+2)
+│       ├── build-implementation/         # Lập plan/status đồng thời testcase & implement (Pha 4)
+│       ├── write-testcase/               # Tạo testcase & unit test offline (đồng thời & test/<id>)
+│       ├── project-review/               # Thẩm định OCP/Churn & 7 Bất biến I1–I7
+│       └── review-pr/                    # Tự động hóa Git, đẩy PR & merge khi 0 conflict
 │
 ├── apps/                                 # Mã nguồn các ứng dụng chính
 │   ├── api/                              # Backend FastAPI & 4 Worker Services độc lập (Python)

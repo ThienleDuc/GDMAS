@@ -1,45 +1,21 @@
-# Thư Mục Quản Lý Bản Ghi Của Agent (.agents/notes)
+# Nguyên tắc tham chiếu từ `.claude/` sang `.agents/`
 
-Thư mục `.agents/notes` là **thư mục cấp cao nhất** dùng để lưu trữ toàn bộ các ghi chú, nhật ký, báo cáo và dữ liệu sinh ra hoặc chỉnh sửa trong quá trình phát triển và vận hành các kỹ năng (AI Skills) của hệ thống **GDMAS**.
+Thư mục `.claude/notes/` chỉ giữ duy nhất tệp hướng dẫn này để điều hướng Claude Code và các agent tương thích về nguồn sự thật thống nhất của dự án **GDMAS**:
 
----
+1. **Bộ kỹ năng duy nhất (`.agents/skills/`):**
+   - Không lưu bản sao kỹ năng trong `.claude/skills/`. Mọi thao tác đều đọc và thực thi trực tiếp **5 skill cốt lõi** tại:
+     - [`.agents/skills/write-proposal/SKILL.md`](../../.agents/skills/write-proposal/SKILL.md) — Khám phá read-only, kiểm conflict, viết proposal (`_TEMPLATE.md`).
+     - [`.agents/skills/build-implementation/SKILL.md`](../../.agents/skills/build-implementation/SKILL.md) — Lập **đồng thời** `implemented/<id>/{plan.md,status.md}` và gọi `write-testcase` tạo `testcase/<id>.md`, code theo RULE-03 & I1–I7.
+     - [`.agents/skills/write-testcase/SKILL.md`](../../.agents/skills/write-testcase/SKILL.md) — Sinh `.agents/notes/testcase/<id>.md` (từ [`.agents/notes/testcase/_TEMPLATE.md`](../../.agents/notes/testcase/_TEMPLATE.md)) + viết unit test offline cho 2 luồng: (1) đồng thời khi proposal `Approved`, (2) kiểm thử riêng 1 file trên nhánh `test/<id>` và ghi bug vào `.agents/notes/bugs/`.
+     - [`.agents/skills/project-review/SKILL.md`](../../.agents/skills/project-review/SKILL.md) — Thẩm định OCP/Churn, 7 Bất biến I1–I7, kiểm tra `testcase/<id>.md` & mã test offline, drift & scope creep.
+     - [`.agents/skills/review-pr/SKILL.md`](../../.agents/skills/review-pr/SKILL.md) — Tự động hóa Git toàn phần qua [`scripts/git-ship.sh`](../../scripts/git-ship.sh) & [`.githooks/`](../../.githooks/).
 
-## 📁 Cấu Trúc Các Thư Mục Con
+2. **Bộ nhớ quyết định duy nhất (`.agents/notes/`):**
+   - Chỉ duy trì 4 thư mục chuẩn: [`proposed/`](../../.agents/notes/proposed/README.md), [`implemented/`](../../.agents/notes/implemented/README.md), [`testcase/`](../../.agents/notes/testcase/README.md), [`bugs/`](../../.agents/notes/bugs/README.md) (điểm vào: [`.agents/notes/README.md`](../../.agents/notes/README.md)).
+   - Kiểm tra & sinh bảng index tự động qua `python3 scripts/notes_index.py` (`--testcases`, `--bugs`, `--check`).
 
-```text
-.agents/notes/
-├── README.md               # [Push Git] Tài liệu định nghĩa thư mục cấp cao nhất .agents/notes
-├── bugs/                   # [Push Git] Bắt buộc push: Tài liệu truy vết sự cố, bug logs, rủi ro kỹ thuật
-│   └── README.md
-├── implemented/            # [Push Git] Bắt buộc push: Ghi nhận tính năng & module đã triển khai thành công
-│   └── README.md
-├── proposed/               # [Push Git] Bắt buộc push: Kế hoạch và tài liệu đề xuất kiến trúc, tính năng kế tiếp
-│   └── README.md
-├── memory/                 # Bộ nhớ cửa sổ ngữ cảnh tinh gọn cho AI Agent
-│   ├── README.md           # [Push Git] Hướng dẫn quản lý memory
-│   └── context-memory.md   # [Cục bộ] Snapshot bối cảnh dự án ~60 dòng (tiết kiệm token)
-├── changes/                # [Cục bộ] Bỏ qua qua .gitignore: Nhật ký thay đổi & pending-commit.md
-│   ├── README.md           # [Push Git] Hướng dẫn sử dụng
-│   └── pending-commit.md   # [Cục bộ] Bản ghi commit kế tiếp do skill 'generate-commit' tạo ra
-├── planning/               # [Cục bộ] Bỏ qua qua .gitignore: Bộ nhớ ngữ cảnh nén (Context cache) sinh bởi skill 'generate-planning'
-│   └── README.md           # [Push Git] Hướng dẫn sử dụng
-└── branches/               # [Cục bộ] Bỏ qua qua .gitignore: Bản ghi đề xuất tạo nhánh
-    ├── README.md           # [Push Git] Hướng dẫn sử dụng
-    └── *.md                # [Cục bộ] Các đề xuất nhánh do skill 'propose-branch' tạo ra
-```
-
----
-
-## 🔒 Quy Ước Đồng Bộ Git (.gitignore Policy)
-
-1. **Bắt buộc theo dõi và push lên Remote Repository:**
-   - Toàn bộ thư mục và mọi tệp bên trong:
-     - [`.agents/notes/bugs/`](GDMAS/.agents/notes/bugs/)
-     - [`.agents/notes/implemented/`](GDMAS/.agents/notes/implemented/)
-     - [`.agents/notes/proposed/`](GDMAS/.agents/notes/proposed/)
-   - Các tệp tài liệu hướng dẫn cấu trúc: `README.md`.
-
-2. **Chỉ lưu trữ cục bộ (Không push):**
-   - Bộ nhớ ngữ cảnh động: [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md).
-   - Các bản ghi tạm do AI skill sinh ra trong [`.agents/notes/changes/`](GDMAS/.agents/notes/changes/) (ví dụ: `pending-commit.md`, `source-guard-report.md`).
-   - Các bản ghi đề xuất tạo nhánh tạm thời trong [`.agents/notes/branches/`](GDMAS/.agents/notes/branches/) (ví dụ: `feature-*.md`).
+3. **Nguyên tắc vận hành & phân quyền cốt lõi (chi tiết tại [`AGENTS.md`](../../AGENTS.md) & [`CLAUDE.md`](../../CLAUDE.md)):**
+   - **Tiêu chí proposal (§9) thả lỏng:** Bất kỳ thành viên nào trong [`.agents/team.md`](../../.agents/team.md) (`thien`, `son`, `van`, `tai`), kể cả tác giả tự duyệt, đều có thể ký `Decision: Approved` — **không cần chờ `ThienleDuc`**.
+   - **Merge PR theo nguyên tắc Không Xung Đột (Conflict-Free Gate):** **Không nhất thiết phải là `ThienleDuc`** mới được phép merge PR — chỉ cần kiểm tra **không có xung đột (`0 conflicts`)** với nhánh đích qua `./scripts/git-ship.sh merge` (hoặc GitHub PR check) và `notes_index.py --check` / test đạt chuẩn là cho phép merge.
+   - **Đồng thời Implement + Testcase & Kiểm thử 1 file (`test/<id>`):** Proposal được duyệt sẽ sinh song song `implemented/<id>/` và `testcase/<id>.md` + file test offline; kiểm thử 1 file cụ thể phải checkout sang nhánh mới `test/<id>` trước khi viết unit test và ghi lỗi (nếu có) vào `.agents/notes/bugs/`.
+   - **Bỏ qua hỏi với sửa/thêm an toàn; gom câu hỏi nguy hiểm cuối phiên:** Tự động thêm/sửa file theo scope không ngắt quãng hỏi từng bước; mọi thao tác xóa file/folder hoặc conflict được tạm giữ và gom thành **1 danh sách câu hỏi cuối phiên**.

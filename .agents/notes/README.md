@@ -1,45 +1,88 @@
-# Thư Mục Quản Lý Bản Ghi Của Agent (.agents/notes)
+# `.agents/notes/`: Bộ nhớ quyết định & nhật ký GDMAS
 
-Thư mục `.agents/notes` là **thư mục cấp cao nhất** dùng để lưu trữ toàn bộ các ghi chú, nhật ký, báo cáo và dữ liệu sinh ra hoặc chỉnh sửa trong quá trình phát triển và vận hành các kỹ năng (AI Skills) của hệ thống **GDMAS**.
+Bộ nhớ bền của dự án **GDMAS**: mọi thay đổi không-tầm-thường (> 1 file) bắt đầu bằng một proposal tại đây,
+kế hoạch thực thi (`plan.md`) và trạng thái sống (`status.md`) nằm ngay cạnh.
+Đọc file này trước khi viết, review hay triển khai bất kỳ thay đổi không-tầm-thường nào.
+Quy trình đầy đủ: [docs/agent-workflow.md](../../docs/agent-workflow.md). Đội ngũ: [.agents/team.md](../team.md).
 
----
-
-## 📁 Cấu Trúc Các Thư Mục Con
+## Cấu trúc
 
 ```text
 .agents/notes/
-├── README.md               # [Push Git] Tài liệu định nghĩa thư mục cấp cao nhất .agents/notes
-├── bugs/                   # [Push Git] Bắt buộc push: Tài liệu truy vết sự cố, bug logs, rủi ro kỹ thuật
-│   └── README.md
-├── implemented/            # [Push Git] Bắt buộc push: Ghi nhận tính năng & module đã triển khai thành công
-│   └── README.md
-├── proposed/               # [Push Git] Bắt buộc push: Kế hoạch và tài liệu đề xuất kiến trúc, tính năng kế tiếp
-│   └── README.md
-├── memory/                 # Bộ nhớ cửa sổ ngữ cảnh tinh gọn cho AI Agent
-│   ├── README.md           # [Push Git] Hướng dẫn quản lý memory
-│   └── context-memory.md   # [Cục bộ] Snapshot bối cảnh dự án ~60 dòng (tiết kiệm token)
-├── changes/                # [Cục bộ] Bỏ qua qua .gitignore: Nhật ký thay đổi & pending-commit.md
-│   ├── README.md           # [Push Git] Hướng dẫn sử dụng
-│   └── pending-commit.md   # [Cục bộ] Bản ghi commit kế tiếp do skill 'generate-commit' tạo ra
-├── planning/               # [Cục bộ] Bỏ qua qua .gitignore: Bộ nhớ ngữ cảnh nén (Context cache) sinh bởi skill 'generate-planning'
-│   └── README.md           # [Push Git] Hướng dẫn sử dụng
-└── branches/               # [Cục bộ] Bỏ qua qua .gitignore: Bản ghi đề xuất tạo nhánh
-    ├── README.md           # [Push Git] Hướng dẫn sử dụng
-    └── *.md                # [Cục bộ] Các đề xuất nhánh do skill 'propose-branch' tạo ra
+├── README.md                              # file này
+├── proposed/                              # MỌI proposal, bất kể kết quả. Không di chuyển.
+│   ├── README.md
+│   ├── _TEMPLATE.md
+│   └── yyyy-mm-dd-<slug>-<handle>.md      # quyết định ghi ở "## 9. Human Review"
+├── implemented/                           # Tạo đồng thời khi proposal Approved (build-implementation)
+│   ├── README.md
+│   ├── _TEMPLATE/{plan.md,status.md}
+│   └── yyyy-mm-dd-<slug>-<handle>/{plan.md,status.md}
+├── testcase/                              # Tạo đồng thời khi proposal Approved HOẶC khi kiểm thử 1 file (write-testcase)
+│   ├── README.md
+│   ├── _TEMPLATE.md
+│   └── yyyy-mm-dd-<slug>-<handle>.md
+└── bugs/                                  # Nhật ký bug ngoài vòng đời proposal (bugs/README.md)
+    ├── README.md
+    ├── INDEX.md
+    ├── _TEMPLATE.md
+    └── BUG-<handle>-NNN-<slug>.md
 ```
 
----
+## Vòng đời Proposal (tiêu chí thả lỏng — không cần `ThienleDuc` duyệt)
 
-## 🔒 Quy Ước Đồng Bộ Git (.gitignore Policy)
+| `Decision:` | Metadata `Status:` | Ý nghĩa | Bước tiếp |
+|---|---|---|---|
+| `Pending` | `proposed` | Chờ xác nhận của thành viên thực hiện / đồng đội | Chờ thành viên xác nhận (§9) |
+| `Changes Requested` | `changes_requested` | Có góp ý trong `Comments:` | Sửa ngay trên file đó, thêm `### Revision` |
+| `Approved` | `approved` | Được làm (**bất kỳ thành viên nào trong `.agents/team.md`, kể cả tác giả, đều duyệt được — không cần `ThienleDuc`**) | `build-implementation` tạo `implemented/<id>/` **đồng thời** `write-testcase` tạo `testcase/<id>.md` |
+| `Rejected` | `rejected` | Không làm, kèm `Scope of Rejection:` | Ở lại `proposed/` làm negative knowledge |
 
-1. **Bắt buộc theo dõi và push lên Remote Repository:**
-   - Toàn bộ thư mục và mọi tệp bên trong:
-     - [`.agents/notes/bugs/`](GDMAS/.agents/notes/bugs/)
-     - [`.agents/notes/implemented/`](GDMAS/.agents/notes/implemented/)
-     - [`.agents/notes/proposed/`](GDMAS/.agents/notes/proposed/)
-   - Các tệp tài liệu hướng dẫn cấu trúc: `README.md`.
+> **Phân quyền:** Duyệt **proposal (§9)** được thả lỏng cho mọi thành viên (`thien`, `son`, `van`, `tai`).
+> Khi **Merge PR** vào `develop`: **không bắt buộc riêng `ThienleDuc`** — chỉ cần kiểm tra **không có xung đột (conflict-free)** và đạt checks là được phép merge (`./scripts/git-ship.sh merge` hoặc GitHub PR).
 
-2. **Chỉ lưu trữ cục bộ (Không push):**
-   - Bộ nhớ ngữ cảnh động: [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md).
-   - Các bản ghi tạm do AI skill sinh ra trong [`.agents/notes/changes/`](GDMAS/.agents/notes/changes/) (ví dụ: `pending-commit.md`, `source-guard-report.md`).
-   - Các bản ghi đề xuất tạo nhánh tạm thời trong [`.agents/notes/branches/`](GDMAS/.agents/notes/branches/) (ví dụ: `feature-*.md`).
+Quyết định mới thay quyết định cũ thì ghi `- Overrides: <id>` trong `Related Proposals` của chính nó;
+bảng index sinh tự động sẽ đánh dấu cái cũ `superseded`. Không sửa file cũ.
+
+## Công thức tra cứu
+
+```bash
+# Tổng quan mọi proposal (ID, Tiêu đề, Area, Decision, Implementation, superseded)
+python3 scripts/notes_index.py
+
+# Tổng quan mọi testcase
+python3 scripts/notes_index.py --testcases
+
+# Tổng quan mọi bug
+python3 scripts/notes_index.py --bugs
+
+# Kiểm tra tính nhất quán toàn bộ notes (exit 1 nếu lỗi; pre-push hook tự chạy)
+python3 scripts/notes_index.py --check
+
+# Đã quyết gì về <chủ đề>? (đọc nội dung, không chỉ tiêu đề)
+grep -ril "<từ khóa>" .agents/notes/proposed/ .agents/notes/implemented/
+
+# Negative knowledge: cái gì bị bác, trong phạm vi nào?
+grep -l "^Decision: Rejected" .agents/notes/proposed/*.md
+grep -A1 "^Scope of Rejection" .agents/notes/proposed/<file>.md
+
+# Proposal đang chờ xác nhận
+grep -l "^Decision: \(Pending\|Changes Requested\)" .agents/notes/proposed/*.md
+
+# Implementation chưa xong
+grep -L "Status: completed" .agents/notes/implemented/*/status.md
+
+# Bug đã biết cho triệu chứng này? Bug critical đang mở?
+grep -ril "<triệu chứng>" .agents/notes/bugs/
+grep -l "Severity:\*\* critical" .agents/notes/bugs/BUG-*.md
+```
+
+Một kết quả `Rejected` không tự động là conflict: dòng `Scope of Rejection:` nói rõ bối cảnh nào bị bác.
+
+## Bảng index tự động
+
+Bảng index **không ghi tay** và không nằm trong file này: `scripts/notes_index.py` sinh bảng trực tiếp từ các file note
+nên nhiều nhánh chạy song song không bao giờ gây git conflict ở file index.
+
+Nguồn dữ liệu: `ID`, tiêu đề, `Area` ở Metadata của `proposed/<id>.md`; `Decision` ở §9; `Implementation` = `Status:`
+trong `implemented/<id>/status.md`; `superseded` suy ra từ `Overrides: <id>`. Vì vậy chỉ cần sửa đúng file gốc.

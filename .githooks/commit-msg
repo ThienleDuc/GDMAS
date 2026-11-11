@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Commit-msg hook cho GDMAS: ép chuẩn Conventional Commits <type>(<scope>): <mô tả>
+
+set -euo pipefail
+
+msg_file="$1"
+first_line="$(grep -vE '^[[:space:]]*(#|$)' "$msg_file" | head -n 1 || true)"
+
+if [ -z "$first_line" ]; then
+    echo "BỊ CHẶN [commit-msg]: Commit message không được để trống." >&2
+    exit 1
+fi
+
+# Cho phép Merge / Revert commit do git sinh
+if [[ "$first_line" =~ ^(Merge\ |Revert\ \") ]]; then
+    exit 0
+fi
+
+if ! [[ "$first_line" =~ ^(feat|fix|docs|refactor|test|chore|style|perf)\([a-z0-9_,-]+\):[[:space:]].{3,}$ ]]; then
+    echo "BỊ CHẶN [commit-msg]: Sai định dạng Conventional Commit." >&2
+    echo "Nhận được : $first_line" >&2
+    echo "Kỳ vọng   : <type>(<scope>): <mô tả tiếng Việt súc tích> [(<id>)]" >&2
+    echo "  type    : feat | fix | docs | refactor | test | chore | style | perf" >&2
+    echo "  scope   : api | web | ingestion | analysis | clustering | prediction | realtime | db | contracts | infra | docs | agents | skills | scripts | core" >&2
+    exit 1
+fi

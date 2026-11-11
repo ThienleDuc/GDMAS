@@ -1,152 +1,75 @@
 ---
 name: build-implementation
 description: >-
-  Pha 3+4 của quy trình phát triển GDMAS — Chuyển đổi một bản proposal đã được phê duyệt
-  (Decision: Approved tại §9) thành bản kế hoạch plan.md và nhật ký sống status.md trong
-  .agents/notes/implemented/<id>-<slug>/, tiến hành lập trình tuân thủ RULE-03 (Open-Closed),
-  chạy validation nhẹ cục bộ (pytest, pnpm build) và DỪNG LẠI ở trạng thái validation trên
-  Working Tree. Tuyệt đối không commit hay push lên Git.
+  Pha 4 của agent workflow GDMAS (docs/agent-workflow.md) — kiểm tra proposal §9 Decision: Approved
+  (bất kỳ thành viên nào trong .agents/team.md duyệt đều hợp lệ, không cần ThienleDuc), gọi review-pr
+  Phần A rẽ nhánh, ĐỒNG THỜI sinh cả .agents/notes/implemented/<id>/{plan.md,status.md} VÀ
+  .agents/notes/testcase/<id>.md (phối hợp skill write-testcase), code theo RULE-03 & I1-I7,
+  hoàn thiện unit/integration test offline, chạy validation nhẹ, đặt `Status: validation` rồi
+  TỰ ĐỘNG chuyển giao sang review-pr Phần B đẩy PR (cho phép merge khi kiểm tra không xung đột, không bắt buộc riêng ThienleDuc).
 ---
 
-# Kỹ Năng Lập Kế Hoạch & Lập Trình Triển Khai (build-implementation)
+# build-implementation
 
-Kỹ năng này chịu trách nhiệm biến một đề xuất đã được phê duyệt thành sản phẩm phần mềm thực tế trong dự án **GDMAS**, nối tiếp giữa `write-proposal` (dừng chờ duyệt) và `review-pr` (chỉ commit/push khi có lệnh riêng).
+Nối giữa `write-proposal` (chờ thành viên xác nhận §9), `write-testcase` (sinh đồng thời đặc tả & unit test) và `review-pr` (nhánh/commit/push/PR).
 
-> [!IMPORTANT]
-> - **Điều Kiện Tiên Quyết Bắt Buộc:** Phải kiểm tra tệp đề xuất `.agents/notes/proposed/<id>-<slug>.md`. Mục `## 9. Human Review` **bắt buộc phải là `Decision: Approved`** và có chữ ký xác nhận của người dùng. Nếu đang là `Pending`, `Changes Requested` hoặc để trống thì Agent **phải dừng lại và yêu cầu phê duyệt trước**.
-> - **Dừng Cứng Tại Validation (Strict No Auto-Commit):** Sau khi lập trình và chạy kiểm thử xong, Agent **bắt buộc phải DỪNG LẠI ở trạng thái `validation`**. Giữ nguyên toàn bộ tệp đã sửa đổi trên **Working Tree** để người dùng trực tiếp kiểm tra và chạy thử trên local. **Tuyệt đối KHÔNG tự ý chạy `git commit` hay `git push`**.
-> - **Tuân Thủ Tuyệt Đối RULE-03 (Open-Closed):** Mọi chức năng mới phải được viết dưới dạng bổ sung tệp mới (Service Runner mới, Route mới, Schema/Model mới, Chart Component mới). Cấm sửa đổi phá vỡ mã nguồn cũ.
+## Điều kiện tiên quyết (kiểm trước mọi thứ)
 
----
+1. Tìm proposal `.agents/notes/proposed/<id>.md`.
+2. Đọc `## 9. Human Review`:
+   - Phải có `Decision: Approved`, `Reviewer:` (bất kỳ handle hợp lệ nào trong [.agents/team.md](../../../.agents/team.md) — **không cần `ThienleDuc`**) và `Review Date:`.
+   - Nếu đang là `Pending`, `Changes Requested`, `Rejected` hoặc thiếu `Reviewer:`: **DỪNG và hỏi xác nhận**.
+   - Nếu người dùng vừa xác nhận rõ ràng trong chat cho đúng proposal này ("duyệt", "approved", "làm đi"), cập nhật `Status: approved` và §9 (`Decision: Approved`, `Reviewer: <handle>`, `Review Date: <hôm nay>`, ghi chỉ thị vào `Comments:`).
+3. Nếu `.agents/notes/implemented/<id>/` đã có: đang **làm tiếp** — đọc `plan.md`, `status.md` và `.agents/notes/testcase/<id>.md` (nếu có), tiếp tục từ trạng thái hiện có, không ghi đè.
+4. Grep `.agents/notes/bugs/` theo vùng đụng tới; có bug `critical` đang mở thì dừng báo người dùng ngay.
 
-## 🧭 Quy Trình Thực Thi Dành Cho AI Agent
+## Quy tắc tương tác khi thực thi
 
-```mermaid
-flowchart TD
-    A[Bắt đầu: Nhận lệnh triển khai proposal] --> B[Bước 1: Kiểm tra điều kiện tiên quyết §9 Approved]
-    B --> C{Đã duyệt Approved?}
-    C -- Chưa duyệt --> D[DỪNG LẠI - Yêu cầu người dùng phê duyệt trước]
-    C -- Đã duyệt --> E[Bước 2: Tạo plan.md và status.md trong implemented/]
-    E --> F[Bước 3: Tạo nhánh tính năng từ develop]
-    F --> G[Bước 4: Lập trình theo nguyên tắc Open-Closed]
-    G --> H[Bước 5: Duy trì cập nhật status.md liên tục]
-    H --> I[Bước 6: Chạy kiểm thử nhẹ validation cục bộ]
-    I --> J[Bước 7: Đổi Status thành validation & Báo cáo kết quả]
-    J --> K[DỪNG LẠI HOÀN TOÀN TRÊN WORKING TREE - Chờ người dùng nghiệm thu]
-```
+- **Tự động bỏ qua câu hỏi đồng ý đối với file/folder sửa đổi hoặc thêm mới:** Khi proposal đã `Approved` (§9), tự động tạo/sửa `plan.md`, `status.md`, `testcase/<id>.md`, mã nguồn và bộ file test bắt buộc liền mạch, **không dừng hỏi xác nhận từng file/folder**.
+- **Gom hỏi cuối phiên cho trường hợp nguy hiểm:** Nếu một bước đòi hỏi **xóa file, xóa folder (`rm` / `git status: D`)** hoặc phát sinh **conflict** ngoài kế hoạch, **không tự ý xóa** — bỏ qua thao tác nguy hiểm đó, hoàn thành các phần thêm/sửa an toàn trước rồi **tổng hợp mọi câu hỏi nguy hiểm thành 1 danh sách duy nhất ở cuối phiên**.
 
----
+## Các bước
 
-## 🛠️ Hướng Dẫn Chi Tiết Từng Bước
+1. **ĐỒNG THỜI sinh Implement (`plan.md`, `status.md`) VÀ Testcase (`.agents/notes/testcase/<id>.md`):**
+   - Trong `.agents/notes/implemented/<id>/`, tạo từ [.agents/notes/implemented/_TEMPLATE/](../../../.agents/notes/implemented/_TEMPLATE/plan.md):
+     - `plan.md`: `Approved By`/`Approved At` lấy từ §9; `In Scope` **phải liệt kê cả tệp code nguồn, `.agents/notes/testcase/<id>.md` VÀ tệp test tự động** (`apps/api/tests/.../test_*.py` / `scripts/tests/...` / FE test).
+     - `status.md`: `Status: planned`, `Started: <hôm nay>`, `Owner: <handle>`.
+   - Đồng thời kích hoạt **Luồng 1 của [`write-testcase`](../write-testcase/SKILL.md)**: tạo `.agents/notes/testcase/<id>.md` từ [.agents/notes/testcase/_TEMPLATE.md](../../../.agents/notes/testcase/_TEMPLATE.md) (`Mode: proposal-paired`, `Proposal: .agents/notes/proposed/<id>.md`) chứa sẵn ma trận kịch bản test.
+   - Chạy `python3 scripts/notes_index.py --check`.
 
-### Bước 1: Kiểm Tra Điều Kiện Tiên Quyết
-1. Tìm tệp đề xuất: `.agents/notes/proposed/<id>-<slug>.md`.
-2. Kiểm tra phần `## 9. Human Review`:
-   - Phải có dòng: `- **Quyết định:** Approved` (hoặc `Decision: Approved`).
-   - Phải có tên người duyệt và ngày duyệt.
-   - Nếu vẫn là `Pending`, `Changes Requested`, hoặc chưa điền: **DỪNG LẠI NGAY** và thông báo cho người dùng rằng tính năng chưa được duyệt chính thức.
-3. Nếu thư mục `.agents/notes/implemented/<id>-<slug>/` đã tồn tại: Xác định đây là phiên **làm tiếp** tác vụ dở dang, đọc `plan.md` và `status.md` để tiếp tục, không ghi đè.
-4. Rà soát thư mục `.agents/notes/bugs/`: Nếu có bug mức độ `critical` liên quan đến module sắp sửa đổi, phải thông báo cho người dùng trước khi tiến hành.
+2. **Tạo nhánh trước khi sửa file mã nguồn (Phần A của `review-pr`):**
+   - Chạy `./scripts/git-ship.sh start <type>/<id>` (vd. `feat/2026-11-11-trend-resample-api-son`).
+   - Không bao giờ sửa code trực tiếp trên `develop` hay `main`.
 
-### Bước 2: Tạo Kế Hoạch `plan.md` & Nhật Ký `status.md`
-Tạo thư mục `.agents/notes/implemented/<id>-<slug>/` chứa 2 tệp:
+3. **Triển khai mã nguồn** theo `plan.md`, tuân thủ [AGENTS.md](../../../AGENTS.md), [docs/coding-rules.md](../../../docs/coding-rules.md) (I1–I7) và [docs/quyuocchung.md](../../../docs/quyuocchung.md) (**RULE-03 Open-Closed**):
+   - **I1 (7 Terminals):** Worker chạy qua `apps/api/src/gdmas/services/<service>/runner.py`, cấm nhúng vòng lặp vào `main.py`.
+   - **I2 (OCP):** Không xóa tệp cũ, không làm vỡ chữ ký hàm cũ đang dùng; mở rộng bằng file/route/component mới.
+   - **I3 (Contracts, UTC & WGS84):** Kiểm tra `contracts/` & `docs/api/API.md`; mọi timestamp UTC ISO 8601 (`Z`), tọa độ WGS84.
+   - **I4 (Migrations):** Thay đổi schema DB phải tạo Alembic migration mới, không sửa migration cũ.
+   - **I5 (6 Patterns & UI):** Biểu đồ mới đặt trong `apps/web/src/components/charts/`, giữ Dark Mode và Loading/Error/Empty state.
 
-1. **`plan.md` (Kế hoạch triển khai kỹ thuật):**
-   ```markdown
-   # [KẾ HOẠCH TRIỂN KHAI - IMPLEMENTATION PLAN]
-   - **Proposal ID:** <YYYY-MM-DD-NNN>
-   - **Tên tính năng:** <Tên tính năng>
-   - **Người duyệt:** <Tên người dùng>
-   - **Ngày duyệt:** <YYYY-MM-DD>
+4. **Giữ `status.md` sống:**
+   - Cập nhật `planned → in_progress ⇄ blocked → validation`.
+   - Ghi ngay `Deviations From Plan` và `Decisions Made During Implementation` khi phát sinh sai lệch.
 
-   ## 1. Phạm Vi Thực Hiện (Scope)
-   - **In Scope (Chỉ làm những mục này):**
-     * Tệp mới 1: apps/api/src/gdmas/services/<service>/runner.py
-     * Tệp mới 2: apps/web/src/components/charts/<ChartName>.tsx
-   - **Out of Scope (Tuyệt đối không đụng vào):**
-     * Không can thiệp apps/api/src/gdmas/main.py (bảo vệ T6)
-     * Không sửa đổi connection.py và base.py
+5. **Hoàn thiện mã test thực thi & cập nhật `.agents/notes/testcase/<id>.md`:**
+   - Với mọi task có code/logic/API/UI/script *(trừ task chỉ sửa chữ trong docs không có logic)*:
+     - Hoàn thiện tệp test tự động chạy **offline 100% (I7)**: `apps/api/tests/unit|integration/test_<slug>.py` (hoặc `scripts/tests/test_<slug>.py`, FE test) theo kịch bản đã thiết kế ở `.agents/notes/testcase/<id>.md`.
+     - Chạy test thật và ghi kết quả quan sát thật vào `.agents/notes/testcase/<id>.md` (`Status: passed`, hoặc `failed_with_bugs` + log vào `.agents/notes/bugs/` nếu phát hiện lỗi chưa xử lý).
 
-   ## 2. Các Bước Lập Trình Tuân Thủ Open-Closed
-   - Bước 1: Tạo Schema Pydantic và Model SQLAlchemy mới (nếu có DB).
-   - Bước 2: Tạo migration mới qua Alembic.
-   - Bước 3: Viết logic xử lý cốt lõi hoặc service runner.
-   - Bước 4: Viết UI component và kết nối API/SSE.
+6. **Validation nhẹ & Kiểm tra an toàn OCP:**
+   - Backend (nếu đụng `apps/api/`): `cd apps/api && uv run pytest <tệp_test_liên_quan_và_mới_tạo>` (chạy toàn bộ `uv run pytest` nếu diff rộng đụng `contracts/**`, `alembic/**`, `core/**`, `db/**`, `main.py`, `docker-compose.yml`, `.env.example`) + `uv run ruff check . && uv run ruff format --check .`.
+   - Frontend (nếu đụng `apps/web/`): `cd apps/web && pnpm build`.
+   - Scripts/Workflow: `python3 -m unittest discover -s scripts/tests -v`.
+   - Notes: `python3 scripts/notes_index.py --check`.
+   - Kiểm nhanh OCP working tree: `git status --porcelain` xác nhận không có xóa file (`D`) ngoài ý muốn và không sửa trái phép tệp lõi.
+   - Cập nhật tài liệu trong `Architecture Impact`.
 
-   ## 3. Tiêu Chí Validation Cục Bộ
-   - Backend: uv run pytest <test_file>
-   - Frontend: pnpm build
-   ```
+7. **Đặt `Status: validation` và TỰ ĐỘNG chuyển giao sang `review-pr` (Phần B):**
+   - Đặt `Status: validation` trong `status.md` (chỉ đặt `completed` sau khi đã kiểm tra không xung đột và merge PR vào `develop`).
+   - Xuất báo cáo theo Agent Output Contract ([docs/agent-workflow.md](../../../docs/agent-workflow.md) §6, gồm mục `Test Files Created`).
+   - Chạy ngay **Phần B của skill `review-pr`** (`scope` → `project-review` → commit → `update` → `push` → tạo PR; khi người dùng yêu cầu merge hoặc nhánh không xung đột thì có thể gọi `./scripts/git-ship.sh merge`), trừ khi người dùng chủ động bảo dừng giữ ở working tree.
 
-2. **`status.md` (Nhật Ký Tiến Độ Sống):**
-   ```markdown
-   # [TRẠNG THÁI TIẾN ĐỘ - STATUS LOG]
-   - **Trạng thái:** planned
-   - **Ngày bắt đầu:** <YYYY-MM-DD>
-   - **Nhánh làm việc:** feature/<slug>
+## Skill này không làm
 
-   ## Danh Sách Tác Vụ
-   - [ ] Khởi tạo nhánh làm việc an toàn
-   - [ ] Viết code Backend
-   - [ ] Viết code Frontend
-   - [ ] Chạy kiểm thử validation cục bộ
-
-   ## Quyết Định Phát Sinh Trong Khi Code (Decisions Made)
-   - (Ghi lại các thay đổi kỹ thuật nhỏ phát sinh ngoài dự kiến ban đầu)
-
-   ## Lệch Kế Hoạch (Deviations From Plan)
-   - (Nếu có bất kỳ khác biệt nào so với plan.md, bắt buộc phải giải thích tại đây)
-
-   ## Lần Cập Nhật Gần Nhất (Last Update)
-   - <YYYY-MM-DD HH:mm>: Khởi tạo kế hoạch làm việc.
-   ```
-
-### Bước 3: Tạo Nhánh Làm Việc Chuẩn GDMAS
-Chuyển nhánh hoặc tạo nhánh làm việc an toàn tách từ `develop`:
-```powershell
-git checkout develop
-git pull origin develop
-git checkout -b feature/<slug>
-```
-*(Tuyệt đối không bao giờ làm việc trực tiếp trên nhánh `main` hay commit thẳng lên `develop` khi chưa hoàn thiện).*
-
-### Bước 4: Triển Khai Mã Nguồn (Lập Trình Thực Tế)
-Tuân thủ nghiêm ngặt 4 mô hình mở rộng của GDMAS:
-- **Thêm Service Worker (Đáp ứng 7 Terminals):** Tạo file `runner.py` riêng biệt trong `apps/api/src/gdmas/services/<service>/runner.py` để chạy độc lập tại Terminal tương ứng. **Tuyệt đối không nhúng worker ngầm vào `main.py`**.
-- **Thêm REST API Route:** Tạo tệp route mới trong `apps/api/src/gdmas/api/routes/<route_name>.py` và đăng ký vào router chính bằng `router.include_router()`.
-- **Thêm Bảng CSDL:** Khai báo ORM model mới, tạo migration Alembic mới bằng lệnh:
-  ```powershell
-  uv run alembic revision --autogenerate -m "bổ sung bảng <tên_bảng>"
-  ```
-  *(Cấm sửa đổi các tệp migration cũ).*
-- **Thêm Giao Diện Biểu Đồ (6 Patterns):** Tạo component mới trong `apps/web/src/components/charts/<PatternName>.tsx`.
-- **Cập Nhật Hợp Đồng (`contracts/`):** Đảm bảo đồng bộ schema giữa Backend và Frontend, sử dụng thời gian UTC ISO 8601 và tọa độ WGS84.
-
-### Bước 5: Duy Trì `status.md` Sống
-Trong suốt quá trình code:
-- Đổi trạng thái: `planned` $\rightarrow$ `in_progress` $\rightarrow$ `validation`.
-- Đánh dấu các checkbox công việc đã hoàn thành.
-- Nếu có quyết định kỹ thuật phát sinh hoặc sai lệch nhỏ so với `plan.md`, bắt buộc phải ghi ngay vào mục `Deviations From Plan` và `Decisions Made`.
-
-### Bước 6: Chạy Validation Nhẹ Cục Bộ (Local Verification)
-1. **Kiểm tra cú pháp & build:**
-   - Backend: Chạy unit test liên quan bằng `uv run pytest <path_to_test>` hoặc kiểm tra cú pháp Python.
-   - Frontend: Kiểm tra biên dịch TypeScript và đóng gói `pnpm build` (hoặc `pnpm lint`).
-2. **Kiểm tra an toàn mã nguồn:**
-   - Chạy kỹ năng `source-guard` để thẩm định xem có tệp nào bị xóa nhầm hoặc có tệp lõi nào bị can thiệp trái phép không.
-
-### Bước 7: DỪNG LẠI TẠI `validation` (Cốt Lõi)
-- Đặt trạng thái trong `status.md` thành: `- **Trạng thái:** validation`.
-- **DỪNG MỌI HOẠT ĐỘNG.**
-- **TUYỆT ĐỐI KHÔNG CHẠY `git commit` hay `git push`.**
-- Thông báo cho người dùng:
-  > *"Đã hoàn thành lập trình tính năng theo kế hoạch và vượt qua các bước kiểm thử nhẹ. Trạng thái hiện tại là `validation`. Toàn bộ mã nguồn đang được giữ nguyên an toàn trên Working Tree để bạn trực tiếp kiểm tra và chạy thử. Khi nào bạn muốn đóng gói và đẩy lên GitHub, xin vui lòng yêu cầu tôi commit (hoặc kích hoạt kỹ năng `review-pr`)."*
-
----
-
-## 🚫 Điều Kỹ Năng Này Tuyệt Đối Không Làm
-- Không tự ý commit hay push mã nguồn lên Git.
-- Không tự ý mở Pull Request hay merge nhánh.
-- Không sửa đổi hoặc xóa các tệp note trong `.agents/notes/proposed/`.
-- Không tự ý triển khai khi Mục 9 trong proposal chưa được duyệt `Approved`.
-
+Không tự viết proposal mới thay `write-proposal`, không tự ý xóa/di chuyển note, không merge khi còn xung đột (`CONFLICT`).
