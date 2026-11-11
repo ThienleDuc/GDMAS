@@ -49,3 +49,4 @@ Thư mục `.agents/notes` là **thư mục cấp cao nhất** dùng để lưu 
 | Proposal ID | Nội dung | Phụ trách | Decision | Implementation |
 | --- | --- | --- | --- | --- |
 | [2026-11-10-001](proposed/2026-11-10-001-feat-03-timeseries-analysis.md) | FEAT-03 — Worker phân tích chuỗi thời gian, Patterns 1–4 | Lê Trung Sơn | Approved | [validation](implemented/2026-11-10-001-feat-03-timeseries-analysis/status.md) |
+| [2026-11-11-001](proposed/2026-11-11-001-analysis-legacy-alias-compatibility.md) | FEAT-03 — Bổ sung tương thích alias P2/P3 trước công bố snapshot | Lê Trung Sơn | Approved | [validation](implemented/2026-11-11-001-analysis-legacy-alias-compatibility/status.md) |
