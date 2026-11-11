@@ -1,94 +1,47 @@
-# Hướng Dẫn Thẩm Định An Toàn Mã Nguồn & Kiểm Soát Kiến Trúc (Code Integrity Audit Guide)
+# Thẩm Định An Toàn Mã Nguồn & Kiểm Soát Kiến Trúc (`project-review`)
 
-Tài liệu này hướng dẫn cách sử dụng hai lớp gác cổng chất lượng mã nguồn trong hệ thống **GDMAS**: **`source-guard`** (Thanh tra nhanh tức thời) và **`project-review`** (Thẩm định kiến trúc chuyên sâu).
-
----
-
-## ⚖️ 1. So Sánh Hai Lớp Kiểm Định: Khi Nào Dùng Kỹ Năng Nào?
-
-```mermaid
-flowchart TD
-    DevChanges[Thay đổi trên Working Tree] --> AuditChoice{Mục tiêu kiểm định là gì?}
-
-    AuditChoice -- "Kiểm tra nhanh an toàn Working tree<br/>Xem có xóa file, sửa file lõi, tính churn<br/>Cập nhật Context Memory để nắm bối cảnh" --> SG["source-guard<br/>(Lớp gác cổng cấp 1: Tức thời, nhẹ, tiết kiệm token)"]
-
-    AuditChoice -- "Thẩm định sâu trước khi commit tính năng lớn<br/>Kiểm tra 7 Invariants (I1-I7)<br/>Đối chiếu Scope plan.md & Drift tài liệu" --> PR["project-review<br/>(Lớp gác cổng cấp 2: Chuyên sâu, toàn diện)"]
-```
-
-| Tiêu chí | `source-guard` (Lớp 1 - Thanh Tra Nhanh) | `project-review` (Lớp 2 - Thẩm Định Sâu) |
-| :--- | :--- | :--- |
-| **Bản chất** | Thanh tra an toàn working tree tức thời & cập nhật bộ nhớ | Thẩm định đặc tả kiến trúc, hợp đồng và phạm vi kế hoạch |
-| **Thời điểm chạy** | Bất cứ lúc nào trong phiên làm việc, sau khi gõ vài dòng code | Trước khi commit một tính năng lớn hoặc trước khi mở PR |
-| **Nguồn đối chiếu** | Trạng thái Git cục bộ (`git status`, `git diff`) | Note hệ thống (`proposed/`, `implemented/plan.md`, `contracts/`) |
-| **Trọng tâm kiểm tra** | Cấm xóa tệp (`D`), cấm sửa tệp lõi, tỷ lệ churn (+/-) | 7 Bất biến kiến trúc (I1-I7), lan phạm vi, độ lệch tài liệu (Drift) |
-| **Tác vụ đi kèm** | Cập nhật Section 5 & 6 trong `context-memory.md` | Xuất bảng đánh giá chi tiết 7 Invariants và đề xuất ghi Bug log |
-| **Tiêu tốn Token** | **Rất thấp** (~vài trăm token) | **Trung bình** (đối chiếu tài liệu và diff) |
+Trong mô hình **5 skill cốt lõi** (`.agents/skills/`), mọi lớp kiểm soát an toàn working tree (`OCP`, cấm xóa tệp trái phép, bảo vệ tệp lõi, kiểm soát Churn) và thẩm định kiến trúc chuyên sâu (**7 Bất biến I1–I7**, kiểm tra **`.agents/notes/testcase/` & mã test offline**, log bug vào **`.agents/notes/bugs/`**, phát hiện **Drift** và **Scope Creep**) đã được hợp nhất vào kỹ năng duy nhất: **[`project-review`](../../../.agents/skills/project-review/SKILL.md)**.
 
 ---
 
-## 🛡️ 2. `source-guard` (Thanh Tra An Toàn & Bộ Nhớ Tích Lũy)
+## 🛡️ 1. Kiểm Soát Working Tree & Nguyên Tắc Open-Closed (OCP)
 
-### Nhiệm Vụ Cốt Lõi
-1. **Bảo vệ nguyên tắc Open-Closed (RULE-03):** "Không sửa mã nguồn hiện tại – Chỉ bổ sung thêm mới" *(Closed for Modification, Open for Extension)*.
-2. **Cảnh báo xóa tệp (`git status: D`):** Không cho phép xóa bất kỳ tệp nào đã tồn tại trong repository (ngoại trừ tệp cấu hình được cấp phép như `docker-compose.override.yml`).
-3. **Cảnh báo can thiệp tệp lõi kiến trúc:**
-   - `apps/api/src/gdmas/main.py`: Điểm khởi chạy FastAPI; cấm nhúng worker ngầm.
-   - `apps/api/src/gdmas/db/connection.py` & `base.py`: Kết nối CSDL tập trung.
-   - `contracts/`: Hợp đồng trao đổi dữ liệu API - Web.
-   - `docs/quyuocchung.md`: Hiến chương quy ước tối cao.
-4. **Kiểm soát tỷ lệ dòng thay đổi (Churn Ratio):** Cảnh báo nếu số dòng xóa vượt quá số dòng thêm mới.
-5. **Cập nhật Context Memory:** Cập nhật tự động Section 5 & 6 trong [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md) mà không làm mất lịch sử các nhánh khác.
-
-### Cách Kích Hoạt
-```text
-/source-guard
-```
-*(Hoặc trong chat: "Hãy quét xem mã nguồn có vi phạm Open-Closed không", "Cập nhật lại context-memory").*
-
-### Kết Quả Đầu Ra
-- Biên bản thẩm định cục bộ: [`.agents/notes/changes/source-guard-report.md`](GDMAS/.agents/notes/changes/source-guard-report.md).
-- Trạng thái đánh giá: `✅ ĐẠT CHUẨN`, `⚠️ CẢNH BÁO`, hoặc `❌ VI PHẠM`.
-- **Nhắc nhở bất biến:** Giữ nguyên toàn bộ working tree, không tự ý commit.
+Khi chạy `project-review`, Agent tự động quét:
+1. **Cấm tự ý xóa tệp (`git status: D`):** Không cho phép xóa tệp code, test hay tài liệu hiện có trừ khi được phép rõ ràng trong `plan.md` hoặc người dùng xác nhận từ **danh sách câu hỏi cuối phiên**.
+2. **Bảo vệ tệp lõi (`Core Protected Files`):**
+   - `apps/api/src/gdmas/main.py` (cấm nhúng worker ngầm — I1)
+   - `apps/api/src/gdmas/db/connection.py` & `base.py`
+   - `apps/api/alembic/versions/*` (cấm sửa migration cũ — I4)
+   - `contracts/` (hợp đồng API–Web — I3)
+   - `AGENTS.md`, `docs/coding-rules.md`, `docs/quyuocchung.md`
+3. **Tỷ lệ Churn (`git diff --shortstat`):** Nếu `deletions > insertions` trên mã nguồn đang ổn định → cảnh báo `WARNING` và rà soát lý do OCP.
 
 ---
 
-## 🏛️ 3. `project-review` (Thẩm Định Chuyên Sâu 7 Bất Biến GDMAS)
+## 🏛️ 2. Thẩm Định 7 Bất Biến Kiến Trúc (Invariants I1–I7)
 
-### 7 Bất Biến Kiến Trúc Bắt Buộc (Invariants I1 - I7)
+Bản đầy đủ kèm dấu hiệu vi phạm xem tại [docs/coding-rules.md](../../coding-rules.md):
 
-Khi chạy `project-review`, Agent quét toàn bộ diff để xác thực 7 bất biến sau:
-
-```text
-┌────────────────────────────────────────────────────────────────────────┐
-│                   7 BẤT BIẾN KIẾN TRÚC GDMAS                           │
-├───────┬────────────────────────────┬───────────────────────────────────┤
-│ Mã    │ Tên Bất Biến               │ Quy Chuẩn Kiểm Tra                │
-├───────┼────────────────────────────┼───────────────────────────────────┤
-│ I1    │ Tách biệt 7 Terminals      │ Cấm nhúng worker ngầm vào main.py │
-│ I2    │ Open-Closed (RULE-03)      │ Cấm xóa file, cấm đổi hàm cũ      │
-│ I3    │ Chuẩn Hợp Đồng & Múi Giờ   │ Schema contracts/, UTC & WGS84    │
-│ I4    │ Bất Biến Alembic Migration │ Cấm sửa migration cũ trong CSDL   │
-│ I5    │ 6 Patterns Chuỗi Thời Gian │ Component mới trong charts/       │
-│ I6    │ An Toàn Bí Mật (Secrets)   │ Cấm stage .env, không lộ secrets  │
-│ I7    │ Bảo Toàn Test Cases Cũ     │ Test cũ phải pass, thêm test mới  │
-└───────┴────────────────────────────┴───────────────────────────────────┘
-```
-
-### Các Bước Kiểm Tra Nâng Cao
-1. **Kiểm tra nhất quán quyết định:** Quét `.agents/notes/proposed/` để phát hiện nếu diff đi ngược lại các quyết định đã duyệt hoặc làm lại phương án đã từng bị bác bỏ.
-2. **Kiểm tra lan phạm vi (Scope Mismatch):** Đối chiếu danh sách tệp thay đổi thực tế với mục `In Scope` trong `plan.md`. Báo động nếu sửa file ngoài kế hoạch.
-3. **Kiểm tra độ lệch tài liệu (Drift Detection):** Cảnh báo nếu code có thay đổi route, body, bảng DB hay component mà tài liệu trong `docs/` hoặc `contracts/` chưa cập nhật.
-
-### Cách Kích Hoạt
-```text
-/project-review
-```
-*(Hoặc trong chat: "Review diff hiện tại theo chuẩn kiến trúc", "Kiểm tra xem có vi phạm 7 invariants không").*
+| Mã | Tên Bất Biến | Trọng tâm kiểm tra |
+|---|---|---|
+| **I1** | Tách biệt 7 Terminals | `main.py` chỉ phục vụ REST/SSE; worker chạy qua `runner.py` riêng (`CRITICAL BUG` nếu vi phạm) |
+| **I2** | Open-Closed (`RULE-03`) | Không xóa file, không phá chữ ký hàm cũ |
+| **I3** | Hợp đồng, UTC & WGS84 | Khớp `contracts/` & `docs/api/API.md`; UTC ISO 8601 (`Z`), tọa độ WGS84 |
+| **I4** | Bất biến Alembic Migration | Cấm sửa file migration đã có (`CRITICAL BUG` nếu vi phạm) |
+| **I5** | 6 Patterns & Dark Mode UI | Chart mới đặt tại `components/charts/`, không mock tĩnh, đủ Loading/Error/Empty state |
+| **I6** | Bảo mật & Secrets | Cấm stage/log `.env`, key, password (`CRITICAL BUG` nếu vi phạm) |
+| **I7** | Toàn vẹn & Tạo testcase + unit test bắt buộc | Bảo toàn test cũ; **bắt buộc có `.agents/notes/testcase/<id>.md` (từ `.agents/notes/testcase/_TEMPLATE.md`) + file unit test offline**; nếu `single-file-test` phát hiện lỗi, bắt buộc có `BUG-<handle>-NNN` trong `.agents/notes/bugs/` |
 
 ---
 
-## 💡 Tóm Tắt Nguyên Tắc Phối Hợp
+## 🔍 3. Kiểm Tra Quyết Định Cũ, Drift & Scope Creep
 
-- Trong lúc đang code hằng ngày: Gọi `/source-guard` thường xuyên để tự tin mã nguồn luôn tuân thủ Open-Closed và Context Memory luôn được cập nhật.
-- Trước khi đóng gói commit tính năng lớn: Gọi `/project-review` để rà soát toàn diện 7 Invariants và ngăn chặn lan phạm vi.
+1. **Nhất quán quyết định:** Chạy `python3 scripts/notes_index.py --check` (`--testcases`, `--bugs`) và grep `.agents/notes/proposed/` + `implemented/` để không lặp lại phương án bị bác trong `Scope of Rejection`.
+2. **Độ lệch tài liệu (`Drift`):** Đối chiếu mục `Architecture Impact` trong proposal với các tệp docs/contract đã cập nhật trong diff.
+3. **Lan phạm vi (`Scope Creep`):** Đối chiếu diff thực tế với `plan.md` §2 `In Scope` / `Out of Scope` (hoặc `Test File:` + `.agents/notes/bugs/` khi ở nhánh `test/<id>`) qua `./scripts/git-ship.sh scope`.
 
+---
+
+## 🚫 Ranh Giới & Gom Câu Hỏi Cuối Phiên
+
+`project-review` xuất báo cáo thẩm định (`PASS` / `WARNING` / `VIOLATION`), chặn merge nếu còn **xung đột (`CONFLICT`)** hoặc vi phạm `CRITICAL BUG` / thiếu testcase, và đề xuất tạo `BUG-<handle>-NNN` nếu phát hiện lỗi nặng. Khi mọi kiểm tra sạch và **0 conflict**, bất kỳ thành viên nào cũng có thể merge PR (không bắt buộc riêng `ThienleDuc`). Khi gặp vi phạm liên quan đến **xóa file/folder** hoặc **conflict**, `project-review` ghi nhận vào mục câu hỏi để tổng hợp **1 lần duy nhất cuối phiên** cho người dùng quyết định.

@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Pre-commit hook cho GDMAS:
+# 1. Chặn commit trực tiếp trên nhánh dùng chung (main, develop)
+# 2. Chặn stage file nhạy cảm (.env, *.key, *.pem, .agents/me, .artifacts/)
+# 3. Quét secret trong diff đang stage
+# 4. Kiểm tra lỗi khoảng trắng / conflict marker (git diff --cached --check)
+
+set -euo pipefail
+
+branch="$(git branch --show-current 2>/dev/null || true)"
+if [ "$branch" = "main" ] || [ "$branch" = "develop" ]; then
+    echo "BỊ CHẶN [pre-commit]: Không được commit trực tiếp lên nhánh dùng chung '$branch'." >&2
+    echo "Hãy tạo nhánh tính năng trước: ./scripts/git-ship.sh start <type>/<id>" >&2
+    exit 1
+fi
+
+staged_files="$(git diff --cached --name-only --diff-filter=ACMR)"
+if [ -z "$staged_files" ]; then
+    exit 0
+fi
+
+# 2. Chặn file bí mật / file local nhạy cảm
+while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    case "$file" in
+        *.env.example) ;;
+        .env|.env.*|*/.env|*/.env.*|*.env|*.pem|*.key|id_rsa*|id_ed25519*|.agents/me|.claude/me|.artifacts/*)
+            echo "BỊ CHẶN [pre-commit]: Không được phép commit tệp nhạy cảm/cục bộ: $file" >&2
+            echo "Gỡ khỏi staging: git restore --staged \"$file\"" >&2
+            exit 1
+            ;;
+    esac
+done <<< "$staged_files"
+
+# 3. Quét secret (ưu tiên detect-secrets-hook nếu có baseline, luôn chạy regex fallback)
+if command -v detect-secrets-hook >/dev/null 2>&1 && [ -f ".secrets.baseline" ]; then
+    echo "$staged_files" | tr '\n' '\0' | xargs -0 detect-secrets-hook --baseline .secrets.baseline
+fi
+
+python3 - <<'PY'
+import re, subprocess, sys
+
+diff = subprocess.check_output(
+    ["git", "diff", "--cached", "-U0", "--", ".", ":(exclude)*.env.example", ":(exclude)template/**", ":(exclude)docs/**"],
+    text=True,
+    errors="replace",
+)
+
+patterns = [
+    ("OpenAI/API Key", re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")),
+    ("GitHub Token", re.compile(r"\b(?:ghp|gho|ghu|ghs)_[A-Za-z0-9]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b")),
+    ("AWS Access Key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    ("Private Key Block", re.compile(r"-----BEGIN (?:RSA|EC|OPENSSH|DSA|PGP|PRIVATE) KEY-----")),
+]
+
+current_file = "<unknown>"
+for line in diff.splitlines():
+    if line.startswith("+++ b/"):
+        current_file = line[6:]
+        continue
+    if not line.startswith("+") or line.startswith("+++"):
+        continue
+    added = line[1:]
+    for label, rx in patterns:
+        if rx.search(added):
+            print(f"BỊ CHẶN [pre-commit]: Phát hiện nghi vấn secret ({label}) trong {current_file}", file=sys.stderr)
+            sys.exit(1)
+PY
+
+# 4. Kiểm tra conflict marker (mọi file) & whitespace lỗi (file code, bỏ qua trailing 2-space của Markdown)
+python3 - <<'PY'
+import re, subprocess, sys
+
+diff = subprocess.check_output(["git", "diff", "--cached", "-U0"], text=True, errors="replace")
+marker_rx = re.compile(r"^\+(?:<{7}(?:\s|$)|={7}$|>{7}(?:\s|$))")
+current_file = "<unknown>"
+for line in diff.splitlines():
+    if line.startswith("+++ b/"):
+        current_file = line[6:]
+        continue
+    if marker_rx.match(line):
+        print(f"BỊ CHẶN [pre-commit]: Phát hiện conflict marker chưa giải quyết trong {current_file}", file=sys.stderr)
+        sys.exit(1)
+PY
+
+git diff --cached --check -- ':(exclude)*.md'

@@ -48,7 +48,7 @@ Quy trình chuẩn gồm 6 bước khép kín:
 ```
 
 ### Bước 1: Tiếp nhận Task & Tạo nhánh mới
-- Đọc kỹ yêu cầu và đối chiếu với tài liệu kiến trúc [SAD.md](GDMAS/docs/architecture/SAD.md) và [API.md](GDMAS/docs/api/API.md).
+- Đọc kỹ yêu cầu và đối chiếu với tài liệu kiến trúc [SAD.md](../architecture/SAD.md) và [API.md](../api/API.md).
 - Kéo mã nguồn mới nhất từ `origin/develop` và tạo nhánh theo quy chuẩn:
   ```bash
   git switch develop
@@ -74,21 +74,19 @@ Quy trình chuẩn gồm 6 bước khép kín:
   ```
 
 ### Bước 4: Đồng bộ code & Mở Pull Request
-- Rebase nhánh của bạn lên đỉnh mới nhất của `develop`:
+- Merge-forward đỉnh mới nhất của `develop` và đẩy nhánh lên GitHub (qua `./scripts/git-ship.sh` hoặc `review-pr`):
   ```bash
-  git fetch origin
-  git rebase origin/develop
-  git push -u origin feature/your-feature-name
+  ./scripts/git-ship.sh update
+  ./scripts/git-ship.sh push
   ```
-- Mở Pull Request hướng vào nhánh đích `develop`.
+- Mở Pull Request hướng vào nhánh đích `develop` (có thể tag reviewer khi cần, không khóa merge).
 
-### Bước 5: Code Review & Phê duyệt
-- Thành viên khác hoặc Tech Lead tiến hành review code trong vòng 24 giờ.
-- Nếu có yêu cầu chỉnh sửa, tác giả commit bổ sung trên chính nhánh đó.
+### Bước 5: Kiểm tra Không Xung Đột & Hợp nhất (Merge)
+- **Tiêu chí proposal (§9) & merge đều mở:** Bất kỳ thành viên nào trong `.agents/team.md` đều duyệt được proposal và có thể merge PR miễn đã **kiểm tra không có xung đột (`0 conflicts`)** qua `./scripts/git-ship.sh merge` (không bắt buộc riêng `ThienleDuc`).
+- Nếu có yêu cầu chỉnh sửa hoặc phát hiện xung đột, giải quyết bằng **commit mới** (không amend/rebase) rồi chạy lại `./scripts/git-ship.sh update` → `push`.
 
 ### Bước 6: Merge & Dọn dẹp
-- Sử dụng phương thức **Squash and Merge** trên giao diện GitHub.
-- Xóa nhánh feature trên GitHub và xóa nhánh local trên máy.
+- Sau khi PR không xung đột đã merge trên GitHub hoặc qua `./scripts/git-ship.sh merge`, chạy `./scripts/git-ship.sh sync` để cập nhật `develop` và xóa nhánh local đã merge.
 
 ---
 
@@ -144,7 +142,8 @@ Liên quan đến: Pattern 2 (Trend Analysis) trong `yeucaubatbuoc.md`.
 ## 📋 Checklist tuân thủ quy ước
 - [x] Tuân thủ nguyên tắc Open-Closed (Không sửa mã nguồn hiện có, chỉ bổ sung mới).
 - [x] Không đưa thông tin nhạy cảm (.env) lên commit.
-- [x] Đã rebase với origin/develop mới nhất.
+- [x] Đã tạo tài liệu kiểm thử (`.agents/notes/testcase/<id>.md` từ [`.agents/notes/testcase/_TEMPLATE.md`](../../.agents/notes/testcase/_TEMPLATE.md)) + file test tự động offline.
+- [x] Đã merge-forward `origin/develop` mới nhất (`./scripts/git-ship.sh update`).
 ```
 
 ### Tiêu chí phê duyệt (Review Criteria):
@@ -160,8 +159,9 @@ Liên quan đến: Pattern 2 (Trend Analysis) trong `yeucaubatbuoc.md`.
 - [ ] Đúng chức năng theo yêu cầu phân công.
 - [ ] Tuân thủ nguyên tắc không sửa code cũ, chỉ bổ sung thêm mới.
 - [ ] Code có Type Hints, định dạng chuẩn qua Ruff (Python) hoặc ESLint (TypeScript).
+- [ ] Đã tạo file test tự động offline và tài liệu kiểm thử [`.agents/notes/testcase/<id>.md`](../../.agents/notes/testcase/_TEMPLATE.md) (và log vào `.agents/notes/bugs/` nếu phát hiện lỗi).
 - [ ] Đã kiểm thử chức năng và không còn lỗi nghiêm trọng đã biết.
-- [ ] Đã tạo Pull Request, vượt qua kiểm thử tự động cục bộ (`scripts/test.sh`) và được ít nhất 1 thành viên review duyệt.
+- [ ] Đã tạo Pull Request, vượt qua kiểm thử cục bộ (`pytest` / `pnpm build` / `notes_index.py --check`) và **kiểm tra không có xung đột (`0 conflicts`)** trước khi merge.
 
 ### 5.2. DoD cho từng Service
 - [ ] Có entrypoint riêng (file runner độc lập).
@@ -192,7 +192,7 @@ Liên quan đến: Pattern 2 (Trend Analysis) trong `yeucaubatbuoc.md`.
   2. Hôm nay sẽ làm gì?
   3. Đang gặp khó khăn hoặc cần ai hỗ trợ?
 - **Giải quyết xung đột kỹ thuật:**
-  1. Khi có bất đồng về cấu trúc API hoặc bảng cơ sở dữ liệu, ưu tiên đối chiếu tài liệu [API.md](GDMAS/docs/api/API.md) và [ERD.md](GDMAS/docs/architecture/ERD.md).
+  1. Khi có bất đồng về cấu trúc API hoặc bảng cơ sở dữ liệu, ưu tiên đối chiếu tài liệu [API.md](../api/API.md) và [ERD.md](../architecture/ERD.md).
   2. Tech Lead giữ quyền quyết định cuối cùng dựa trên tiêu chí: *Đơn giản, hoạt động được, không phá vỡ nguyên tắc độc lập của các service*.
   3. Mọi thống nhất kỹ thuật mới phải được cập nhật lại vào tài liệu tương ứng trong thư mục `docs/`.
 

@@ -59,6 +59,7 @@ Mọi nhánh làm việc tạm thời phải tuân theo cấu trúc cú pháp:
 | `hotfix/` | Sửa lỗi khẩn cấp | Sửa lỗi nghiêm trọng phát sinh trực tiếp từ `main` | `hotfix/postgres-port-binding` |
 | `docs/` | Bổ sung tài liệu | Cập nhật SAD, ERD, API specs, hướng dẫn setup | `docs/add-api-specification`<br>`docs/update-erd-diagram` |
 | `refactor/`| Tinh chỉnh mã nguồn | Tối ưu code mà không thay đổi nghiệp vụ bên ngoài | `refactor/clustering-service-dbscan` |
+| `test/` | Kiểm thử chuyên sâu 1 file cụ thể | Checkout nhánh mới trước khi viết unit test offline & log lỗi vào `.agents/notes/bugs/` | `test/2026-11-11-prediction-runner-tai` |
 | `chore/` | Cấu hình & Công cụ | Cập nhật docker-compose, linter, dependencies | `chore/update-uv-lock`<br>`chore/setup-docker-compose` |
 
 > **Nguyên tắc cú pháp:** Sử dụng toàn bộ chữ thường (lowercase), các từ cách nhau bởi dấu gạch ngang (`-`), tên mang tính mô tả rõ ràng, không đặt tên chung chung như `test`, `dev1`, `fix`.
@@ -80,31 +81,26 @@ git switch -c feature/api-temporal-endpoint
 - **Bổ sung thêm mới:** Tạo file runner mới, router mới, component biểu đồ mới theo yêu cầu được phân công.
 - Commit thường xuyên với thông điệp rõ ràng theo chuẩn Conventional Commits (`feat:`, `fix:`, `docs:`).
 
-### Bước 3: Đồng bộ và Rebase trước khi mở Pull Request
-Trước khi push code lên GitHub, bắt buộc phải kéo code mới nhất của `develop` về và rebase nhánh của mình để tránh xung đột:
+### Bước 3: Đồng bộ Merge-Forward trước khi mở Pull Request
+Kéo code mới nhất từ `origin/develop` bằng merge-forward (không rebase sau khi đã push để giữ comment PR và tránh force-push):
 ```bash
-git fetch origin
-git rebase origin/develop
+./scripts/git-ship.sh update
 ```
-*Nếu có xung đột (conflict), giải quyết từng file, sau đó `git add <file>` và `git rebase --continue`.*
+*(Nếu xung đột chạm `contracts/`, `AGENTS.md`, `apps/api/alembic/versions/`, `docs/quyuocchung.md`: dừng giải quyết thủ công hoặc đưa vào danh sách câu hỏi cuối phiên cho nhóm chốt.)*
 
 ### Bước 4: Đẩy nhánh lên Remote & Mở Pull Request
 ```bash
-git push -u origin feature/api-temporal-endpoint
+./scripts/git-ship.sh push
 ```
 Tạo Pull Request trên GitHub hướng về nhánh đích `develop`.
 
-### Bước 5: Review & Hợp nhất (Merge)
-- Nhánh chỉ được merge khi có ít nhất 1 thành viên review và duyệt.
-- Phương thức hợp nhất: **Squash and Merge** để giữ lịch sử nhánh `develop` gọn gàng.
-- Xóa nhánh feature trên GitHub sau khi merge thành công.
+### Bước 5: Kiểm tra không xung đột & Hợp nhất (Merge)
+- **Không bắt buộc riêng `ThienleDuc`:** bất kỳ thành viên nào đều có thể merge PR vào `develop` sau khi **kiểm tra không có xung đột (`0 conflicts`)** qua `./scripts/git-ship.sh merge` (hoặc GitHub merge check) và đạt validation.
+- Xóa nhánh feature sau khi merge thành công.
 
 ### Bước 6: Dọn dẹp máy cục bộ
 ```bash
-git switch develop
-git pull origin develop
-git branch -d feature/api-temporal-endpoint
-git fetch --prune
+./scripts/git-ship.sh sync
 ```
 
 ---
@@ -113,10 +109,10 @@ git fetch --prune
 
 Áp dụng trên GitHub Repository:
 
-1. **Bắt buộc mở Pull Request trước khi Merge:** Cấm lệnh `git push` trực tiếp lên `main` và `develop`.
-2. **Yêu cầu xét duyệt (Code Review):** Cần tối thiểu 01 Approval từ thành viên khác trong nhóm.
-3. **Bắt buộc vượt qua bộ kiểm thử tự động cục bộ (Local Test Suite):** Tác giả nhánh phải chạy script `scripts/test.sh` (hoặc `uv run pytest` và `pnpm run build`), xác nhận kết quả kiểm tra cú pháp và unit test đều đạt 100% trước khi yêu cầu review.
-4. **Không cho phép Force Push (`--force`):** Nghiêm cấm ép ghi đè lịch sử trên các nhánh chính.
+1. **Bắt buộc kiểm tra không xung đột trước khi Merge (Conflict-Free Gate):** Cấm lệnh `git push` raw trực tiếp lên `main` và `develop` bỏ qua PR/conflict check (chặn bởi `.githooks/` và GitHub Ruleset).
+2. **Quyền Merge mở theo điều kiện Không Xung Đột:** Không bắt buộc riêng `@ThienleDuc` duyệt ở `.github/CODEOWNERS` — bất kỳ thành viên nào cũng có thể merge PR khi `0 conflicts` và checks đạt chuẩn.
+3. **Bắt buộc vượt qua kiểm thử cục bộ & tạo testcase (`write-testcase`):** Tác giả nhánh phải tạo tài liệu kiểm thử theo [`.agents/notes/testcase/_TEMPLATE.md`](../../.agents/notes/testcase/_TEMPLATE.md) kèm file unit test offline, chạy `uv run pytest` / `pnpm build` và `python3 scripts/notes_index.py --check`. Nếu test 1 file phát hiện lỗi, ghi nhận ngay vào `.agents/notes/bugs/`.
+4. **Không cho phép Force Push (`--force`):** Nghiêm cấm ép ghi đè lịch sử trên các nhánh.
 
 ---
 

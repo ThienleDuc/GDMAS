@@ -3,36 +3,22 @@
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# 1. LOCAL SKILL ARTIFACTS & NOTES (.agents/notes & .claude/notes)
+# 1. AGENT NOTES, LOCAL IDENTITY & TEMPORARY ARTIFACTS
 # ------------------------------------------------------------------------------
-# Bỏ qua các tệp nhật ký tạm và đề xuất sinh bởi kỹ năng (chỉ lưu cục bộ)
-.agents/notes/changes/*
-!.agents/notes/changes/README.md
-.agents/notes/branches/*
-!.agents/notes/branches/README.md
-.agents/notes/memory/*
-!.agents/notes/memory/README.md
-.agents/notes/planning/*
-!.agents/notes/planning/README.md
-
-# BẮT BUỘC THEO DÕI VÀ PUSH: Toàn bộ thư mục và file thuộc bugs, implemented, proposed
+# BẮT BUỘC THEO DÕI VÀ PUSH: Toàn bộ 4 thư mục bugs, implemented, proposed, testcase trong .agents/notes/
 !.agents/notes/bugs/**
 !.agents/notes/implemented/**
 !.agents/notes/proposed/**
+!.agents/notes/testcase/**
+!.claude/notes/README.md
 
-# Bỏ qua các tệp nhật ký tạm tương ứng trong .claude/notes
-.claude/notes/changes/*
-!.claude/notes/changes/README.md
-.claude/notes/branches/*
-!.claude/notes/branches/README.md
-.claude/notes/memory/*
-!.claude/notes/memory/README.md
-.claude/notes/planning/*
-!.claude/notes/planning/README.md
+# Nhận diện cá nhân cục bộ và artifact MR/PR tạm
+.agents/me
+.claude/me
+.artifacts/
 
-!.claude/notes/bugs/**
-!.claude/notes/implemented/**
-!.claude/notes/proposed/**
+# Thư mục tham khảo cục bộ (không đẩy lên GitHub)
+/template/
 
 # ------------------------------------------------------------------------------
 # 2. BIẾN MÔI TRƯỜNG & DỮ LIỆU BẢO MẬT (Security & Secrets)
