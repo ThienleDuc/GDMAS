@@ -43,3 +43,9 @@ Thư mục `.agents/notes` là **thư mục cấp cao nhất** dùng để lưu 
    - Bộ nhớ ngữ cảnh động: [`.agents/notes/memory/context-memory.md`](GDMAS/.agents/notes/memory/context-memory.md).
    - Các bản ghi tạm do AI skill sinh ra trong [`.agents/notes/changes/`](GDMAS/.agents/notes/changes/) (ví dụ: `pending-commit.md`, `source-guard-report.md`).
    - Các bản ghi đề xuất tạo nhánh tạm thời trong [`.agents/notes/branches/`](GDMAS/.agents/notes/branches/) (ví dụ: `feature-*.md`).
+
+## Theo Dõi Proposal
+
+| Proposal ID | Nội dung | Phụ trách | Decision | Implementation |
+| --- | --- | --- | --- | --- |
+| [2026-11-10-001](proposed/2026-11-10-001-feat-03-timeseries-analysis.md) | FEAT-03 — Worker phân tích chuỗi thời gian, Patterns 1–4 | Lê Trung Sơn | Approved | [validation](implemented/2026-11-10-001-feat-03-timeseries-analysis/status.md) |

@@ -1,0 +1,841 @@
+{
+  "$defs": {
+    "CorrelationMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "variables": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Variables",
+          "type": "array"
+        },
+        "units": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Units",
+          "type": "object"
+        },
+        "matrix": {
+          "items": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "title": "Matrix",
+          "type": "array"
+        },
+        "sample_counts": {
+          "items": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "title": "Sample Counts",
+          "type": "array"
+        },
+        "method": {
+          "const": "pearson",
+          "title": "Method",
+          "type": "string"
+        },
+        "observation_unit": {
+          "const": "event",
+          "title": "Observation Unit",
+          "type": "string"
+        },
+        "weighting_note": {
+          "title": "Weighting Note",
+          "type": "string"
+        },
+        "corr_mag_depth": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Corr Mag Depth"
+        },
+        "correlation_strength": {
+          "title": "Correlation Strength",
+          "type": "string"
+        }
+      },
+      "required": [
+        "metadata",
+        "variables",
+        "units",
+        "matrix",
+        "sample_counts",
+        "method",
+        "observation_unit",
+        "weighting_note",
+        "corr_mag_depth",
+        "correlation_strength"
+      ],
+      "title": "CorrelationMetrics",
+      "type": "object"
+    },
+    "LinePoint": {
+      "additionalProperties": false,
+      "properties": {
+        "date": {
+          "title": "Date",
+          "type": "string"
+        },
+        "event_count": {
+          "title": "Event Count",
+          "type": "integer"
+        },
+        "avg_magnitude": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Avg Magnitude"
+        },
+        "max_magnitude": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Max Magnitude"
+        },
+        "avg_depth": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Avg Depth"
+        },
+        "energy_joules": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Energy Joules"
+        },
+        "partial": {
+          "title": "Partial",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "date",
+        "event_count",
+        "avg_magnitude",
+        "max_magnitude",
+        "avg_depth",
+        "energy_joules",
+        "partial"
+      ],
+      "title": "LinePoint",
+      "type": "object"
+    },
+    "Metadata": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "computed_at": {
+          "format": "date-time",
+          "title": "Computed At",
+          "type": "string"
+        },
+        "period_start": {
+          "format": "date-time",
+          "title": "Period Start",
+          "type": "string"
+        },
+        "period_end": {
+          "format": "date-time",
+          "title": "Period End",
+          "type": "string"
+        },
+        "input_events": {
+          "title": "Input Events",
+          "type": "integer"
+        },
+        "valid_events": {
+          "title": "Valid Events",
+          "type": "integer"
+        },
+        "excluded_values": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Excluded Values",
+          "type": "object"
+        },
+        "data_quality": {
+          "enum": [
+            "OK",
+            "INSUFFICIENT_DATA",
+            "EMPTY"
+          ],
+          "title": "Data Quality",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "computed_at",
+        "period_start",
+        "period_end",
+        "input_events",
+        "valid_events",
+        "excluded_values",
+        "data_quality"
+      ],
+      "title": "Metadata",
+      "type": "object"
+    },
+    "ScatterPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "magnitude": {
+          "title": "Magnitude",
+          "type": "number"
+        },
+        "depth_km": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Depth Km"
+        }
+      },
+      "required": [
+        "id",
+        "timestamp",
+        "magnitude",
+        "depth_km"
+      ],
+      "title": "ScatterPoint",
+      "type": "object"
+    },
+    "SeasonalPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "cycle_index": {
+          "title": "Cycle Index",
+          "type": "integer"
+        },
+        "period_label": {
+          "title": "Period Label",
+          "type": "string"
+        },
+        "seasonal_factor": {
+          "title": "Seasonal Factor",
+          "type": "number"
+        }
+      },
+      "required": [
+        "cycle_index",
+        "period_label",
+        "seasonal_factor"
+      ],
+      "title": "SeasonalPoint",
+      "type": "object"
+    },
+    "SeasonalSeries": {
+      "additionalProperties": false,
+      "properties": {
+        "data_quality": {
+          "enum": [
+            "OK",
+            "INSUFFICIENT_DATA"
+          ],
+          "title": "Data Quality",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason"
+        },
+        "period": {
+          "title": "Period",
+          "type": "integer"
+        },
+        "complete_buckets": {
+          "title": "Complete Buckets",
+          "type": "integer"
+        },
+        "seasonal_line": {
+          "items": {
+            "$ref": "#/$defs/SeasonalPoint"
+          },
+          "title": "Seasonal Line",
+          "type": "array"
+        },
+        "timestamps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Timestamps",
+          "type": "array"
+        },
+        "observed": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Observed",
+          "type": "array"
+        },
+        "trend": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Trend",
+          "type": "array"
+        },
+        "seasonal": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Seasonal",
+          "type": "array"
+        },
+        "residual": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Residual",
+          "type": "array"
+        },
+        "seasonality_strength": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Seasonality Strength"
+        },
+        "residual_variance": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Residual Variance"
+        }
+      },
+      "required": [
+        "data_quality",
+        "reason",
+        "period",
+        "complete_buckets",
+        "seasonal_line",
+        "timestamps",
+        "observed",
+        "trend",
+        "seasonal",
+        "residual",
+        "seasonality_strength",
+        "residual_variance"
+      ],
+      "title": "SeasonalSeries",
+      "type": "object"
+    },
+    "SeasonalityMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "by_interval": {
+          "additionalProperties": {
+            "$ref": "#/$defs/SeasonalSeries"
+          },
+          "title": "By Interval",
+          "type": "object"
+        },
+        "seasonal_line": {
+          "items": {
+            "$ref": "#/$defs/SeasonalPoint"
+          },
+          "title": "Seasonal Line",
+          "type": "array"
+        },
+        "seasonal_components": {
+          "items": {
+            "$ref": "#/$defs/SeasonalPoint"
+          },
+          "title": "Seasonal Components",
+          "type": "array"
+        },
+        "seasonality_strength": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Seasonality Strength"
+        },
+        "periodicity": {
+          "title": "Periodicity",
+          "type": "string"
+        },
+        "peak_season": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Peak Season"
+        }
+      },
+      "required": [
+        "metadata",
+        "by_interval",
+        "seasonal_line",
+        "seasonal_components",
+        "seasonality_strength",
+        "periodicity",
+        "peak_season"
+      ],
+      "title": "SeasonalityMetrics",
+      "type": "object"
+    },
+    "TemporalInterval": {
+      "additionalProperties": false,
+      "properties": {
+        "line_chart": {
+          "items": {
+            "$ref": "#/$defs/LinePoint"
+          },
+          "title": "Line Chart",
+          "type": "array"
+        }
+      },
+      "required": [
+        "line_chart"
+      ],
+      "title": "TemporalInterval",
+      "type": "object"
+    },
+    "TemporalMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "interval": {
+          "const": "day",
+          "default": "day",
+          "title": "Interval",
+          "type": "string"
+        },
+        "by_interval": {
+          "additionalProperties": {
+            "$ref": "#/$defs/TemporalInterval"
+          },
+          "title": "By Interval",
+          "type": "object"
+        },
+        "line_chart": {
+          "items": {
+            "$ref": "#/$defs/LinePoint"
+          },
+          "title": "Line Chart",
+          "type": "array"
+        },
+        "scatter_plot": {
+          "items": {
+            "$ref": "#/$defs/ScatterPoint"
+          },
+          "title": "Scatter Plot",
+          "type": "array"
+        },
+        "histogram": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Histogram",
+          "type": "object"
+        },
+        "total_events": {
+          "title": "Total Events",
+          "type": "integer"
+        },
+        "data_points": {
+          "title": "Data Points",
+          "type": "integer"
+        },
+        "avg_magnitude": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Avg Magnitude"
+        },
+        "max_magnitude": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Max Magnitude"
+        },
+        "min_magnitude": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Min Magnitude"
+        },
+        "avg_depth": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Avg Depth"
+        },
+        "time_distribution": {
+          "items": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "object"
+          },
+          "title": "Time Distribution",
+          "type": "array"
+        }
+      },
+      "required": [
+        "metadata",
+        "by_interval",
+        "line_chart",
+        "scatter_plot",
+        "histogram",
+        "total_events",
+        "data_points",
+        "avg_magnitude",
+        "max_magnitude",
+        "min_magnitude",
+        "avg_depth",
+        "time_distribution"
+      ],
+      "title": "TemporalMetrics",
+      "type": "object"
+    },
+    "TrendMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "by_interval": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "$ref": "#/$defs/TrendSeries"
+            },
+            "type": "object"
+          },
+          "title": "By Interval",
+          "type": "object"
+        },
+        "series": {
+          "items": {
+            "$ref": "#/$defs/TrendPoint"
+          },
+          "title": "Series",
+          "type": "array"
+        },
+        "trend_line": {
+          "items": {
+            "$ref": "#/$defs/TrendPoint"
+          },
+          "title": "Trend Line",
+          "type": "array"
+        },
+        "slope": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Slope"
+        },
+        "trend_direction": {
+          "title": "Trend Direction",
+          "type": "string"
+        },
+        "direction": {
+          "title": "Direction",
+          "type": "string"
+        },
+        "resampling": {
+          "title": "Resampling",
+          "type": "string"
+        },
+        "metric": {
+          "title": "Metric",
+          "type": "string"
+        }
+      },
+      "required": [
+        "metadata",
+        "by_interval",
+        "series",
+        "trend_line",
+        "slope",
+        "trend_direction",
+        "direction",
+        "resampling",
+        "metric"
+      ],
+      "title": "TrendMetrics",
+      "type": "object"
+    },
+    "TrendPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "period": {
+          "title": "Period",
+          "type": "string"
+        },
+        "actual_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Actual Value"
+        },
+        "trend_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Trend Value"
+        },
+        "partial": {
+          "title": "Partial",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "period",
+        "actual_value",
+        "trend_value",
+        "partial"
+      ],
+      "title": "TrendPoint",
+      "type": "object"
+    },
+    "TrendSeries": {
+      "additionalProperties": false,
+      "properties": {
+        "series": {
+          "items": {
+            "$ref": "#/$defs/TrendPoint"
+          },
+          "title": "Series",
+          "type": "array"
+        },
+        "slope": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Slope"
+        },
+        "trend_direction": {
+          "enum": [
+            "increasing",
+            "decreasing",
+            "stable",
+            "insufficient_data"
+          ],
+          "title": "Trend Direction",
+          "type": "string"
+        },
+        "slope_unit": {
+          "title": "Slope Unit",
+          "type": "string"
+        },
+        "moving_average_window": {
+          "title": "Moving Average Window",
+          "type": "integer"
+        },
+        "slope_tolerance": {
+          "title": "Slope Tolerance",
+          "type": "number"
+        }
+      },
+      "required": [
+        "series",
+        "slope",
+        "trend_direction",
+        "slope_unit",
+        "moving_average_window",
+        "slope_tolerance"
+      ],
+      "title": "TrendSeries",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "time_series": {
+      "$ref": "#/$defs/TemporalMetrics"
+    },
+    "trend": {
+      "$ref": "#/$defs/TrendMetrics"
+    },
+    "seasonality": {
+      "$ref": "#/$defs/SeasonalityMetrics"
+    },
+    "correlation": {
+      "$ref": "#/$defs/CorrelationMetrics"
+    }
+  },
+  "required": [
+    "time_series",
+    "trend",
+    "seasonality",
+    "correlation"
+  ],
+  "title": "AnalysisPatterns",
+  "type": "object"
+}
