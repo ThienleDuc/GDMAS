@@ -32,12 +32,14 @@ Blocked:
 | Test liên quan (`pytest`) | PASS | `cd apps/api && uv run pytest tests/unit -q -W error::FutureWarning` → 36 passed |
 | Lint / Build (`ruff`) | PASS (trên file đã đụng) | ruff toàn repo vốn đỏ sẵn ở `develop` — ngoài phạm vi |
 | Notes check (`notes_index.py --check`) | PASS | |
+| Tích hợp PostgreSQL thật (Docker T1) | PASS | `docker compose up -d postgres` + `alembic upgrade head`; 9847 sự kiện USGS `all_month` → `runner --once` 0.97s, 6 bản ghi gắn `service_run_id`; chạy lại thay snapshot (chỉ còn id 7–12); cửa sổ 0 ngày → 0 bản ghi, run `SUCCESS` 0, `/patterns` báo CSDL trống; chạy lại tự tính đủ |
+| T6 `GET /api/v1/patterns` | PASS | HTTP 200, ~34 ms (lần đầu 152 ms); Pattern 1–4 `COMPUTED` kèm khóa FE (`data_points`, `avg_depth`, `slope`, `direction`, `cycle_hours`, `amplitude`, `corr_mag_depth`, `correlation_strength`) |
 | Tài liệu cập nhật | N/A | Architecture Impact: none |
 
 ---
 
 ## Known Issues
-- Chưa chạy `python -m gdmas.services.analysis.runner --once` trên PostgreSQL thật (máy dev không có container T1 đang chạy); `_load_events` và lệnh xóa/chèn snapshot mới kiểm qua fake session.
+- none — đã kiểm tích hợp trên PostgreSQL 16 thật (xem bảng Validation).
 
 ---
 
@@ -59,9 +61,8 @@ Blocked:
 
 ## Next Actions
 - review-pr Phần B: scope → project-review → commit → update → push → kiểm 0 conflict.
-- Sau merge: chạy `--once` trên Docker T1 rồi gọi `GET /api/v1/patterns` để xác nhận.
 
 ---
 
 ## Last Update
-2026-11-12 — Hoàn tất code + test, chuyển `validation`.
+2026-11-12 — Đã kiểm tích hợp trên PostgreSQL thật + T6 `/api/v1/patterns`; giữ `validation` chờ merge.

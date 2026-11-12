@@ -75,7 +75,11 @@ cd apps/api && uv run pytest tests/unit/test_analysis_patterns.py tests/unit/tes
 
 - **Ngày chạy cuối:** `2026-11-12`
 - **Kết quả quan sát thật:** `36 passed in 2.89s` (test_analysis_patterns: 27, test_analysis_service: 5, test_analysis_runner: 4), chạy với `-W error::FutureWarning`. Ruff check/format sạch trên các file đã đụng. `python -m gdmas.services.analysis.runner --help` hiển thị `--once`.
-- **Chưa kiểm:** chạy `--once` trên PostgreSQL thật (cần Docker T1) — ghi ở `status.md` Known Issues.
+- **Kiểm tích hợp thủ công trên PostgreSQL 16 (Docker T1, 2026-11-12):**
+  - 9847 sự kiện thật (USGS `all_month`, 2026-10-13 → 2026-11-12) → `python -m gdmas.services.analysis.runner --once` mã thoát 0, 0.97s, 6 bản ghi `analysis_results` (`time_series` × day/week/month, `trend`/week, `seasonality`/day, `correlation`/day) cùng `service_run_id`.
+  - Trend tuần: 3 tuần đầy đủ, 2 tuần dở dang có `is_complete=false`, p = 0.13 → `stable`. Seasonality tuần: độ mạnh 0.14 → "Chu kỳ yếu". Correlation 5×5 đối xứng, không NaN. Histogram tổng 9847.
+  - Chạy lại: snapshot cũ bị thay (chỉ còn id 7–12). Cửa sổ 0 ngày (mô phỏng DB rỗng, không xóa dữ liệu thô): 0 bản ghi, run `SUCCESS` 0, `GET /api/v1/patterns` trả `success: false`; chạy lại tự tính đủ.
+  - `GET /api/v1/patterns`: HTTP 200, ~34 ms; Pattern 1–4 `COMPUTED`.
 
 ---
 
