@@ -74,7 +74,11 @@ cd apps/api && uv run pytest tests/unit/test_ingestion_parser.py tests/unit/test
 
 - **Ngày chạy cuối:** `2026-11-12`
 - **Kết quả quan sát thật:** `56 passed in 0.88s` (test_ingestion_parser: 33, test_ingestion_upsert: 9, test_ingestion_service: 14). Ruff check/format sạch trên các file đã đụng.
-- **Chưa kiểm:** chạy Upsert trên PostgreSQL thật (cần Docker T1) — ghi ở `status.md` Known Issues.
+- **Kiểm tích hợp thủ công trên PostgreSQL 16 (Docker T1, 2026-11-12):**
+  - `alembic upgrade head` → ràng buộc `uq_earthquake_source_event UNIQUE (source, source_event_id)` tồn tại.
+  - Lần 1 (USGS `all_month`): `inserted=9847`, `skipped_invalid=0`, 8.5s; `ServiceRun` `SUCCESS` 9847.
+  - Sửa tay: A (`magnitude=99`, `source_updated_at` lùi 1 ngày), B (`source_updated_at=NULL`), C (`magnitude=77`, `source_updated_at` tiến 1 ngày) rồi nạp lại → `updated=2`, `unchanged=9844`: A về 0.9, B có lại `source_updated_at`, C giữ 77 (đúng điều kiện WHERE ERD §4; sau đó đã khôi phục C từ `raw_data`). `count(*) = count(distinct (source, source_event_id)) = 9847`.
+  - URL chính từ chối kết nối + fallback trả payload không phải JSON → `ServiceRun` `FAILED`, `error_message` bắt đầu bằng `FeedUnavailableError`, ≤ 200 ký tự.
 
 ---
 

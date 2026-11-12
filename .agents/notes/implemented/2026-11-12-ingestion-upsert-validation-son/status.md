@@ -32,12 +32,14 @@ Blocked:
 | Test liên quan (`pytest`) | PASS | `cd apps/api && uv run pytest tests/unit -q` → 56 passed |
 | Lint / Build (`ruff`) | PASS (trên file đã đụng) | `uv run ruff check <7 file>` + `ruff format --check` sạch; ruff toàn repo vốn đỏ sẵn (191 lỗi / 30 file chưa format ở `develop`) — ngoài phạm vi |
 | Notes check (`notes_index.py --check`) | PASS | |
+| Tích hợp PostgreSQL thật (Docker T1) | PASS | `alembic upgrade head` có `uq_earthquake_source_event`; USGS `all_month` lần 1: +9847 (8.5s, 20 batch); sửa tay 3 dòng rồi nạp lại: `updated=2`, `unchanged=9844` — dòng `source_updated_at` cũ hơn và dòng NULL được khôi phục, dòng mới hơn giữ nguyên; 0 dòng trùng; cả 2 URL lỗi → run `FAILED`, thông báo ≤ 200 ký tự |
 | Tài liệu cập nhật | N/A | Architecture Impact: none (đã khớp ERD §4) |
 
 ---
 
 ## Known Issues
-- Upsert chưa chạy trên PostgreSQL thật (máy dev không có container T1 đang chạy); mới kiểm qua compile SQL dialect PostgreSQL + fake session. Nên chạy `python -m gdmas.services.ingestion.runner` 1 chu kỳ trên Docker trước/sau merge.
+- none — đã kiểm tích hợp trên PostgreSQL 16 thật (xem bảng Validation).
+- Gợi ý ngoài phạm vi: parser chỉ kiểm `magnitude` là số hữu hạn, chưa chặn giá trị phi lý (vd. > 10); có thể bổ sung ở proposal sau nếu nhóm cần.
 
 ---
 
@@ -61,4 +63,4 @@ Blocked:
 ---
 
 ## Last Update
-2026-11-12 — Hoàn tất code + test, chuyển `validation`.
+2026-11-12 — Đã kiểm tích hợp Upsert trên PostgreSQL thật; giữ `validation` chờ merge.
