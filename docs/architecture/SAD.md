@@ -137,7 +137,10 @@ flowchart LR
 ### 3. Data Analysis Service
 
 - **Nhiệm vụ:** Định kỳ 5 phút/lần tổng hợp dữ liệu chuỗi thời gian, tính toán các chỉ số thống kê (Pattern 1), thực hiện Re-sampling theo tuần/tháng để trích xuất đường xu hướng (Trend - Pattern 2), phân tích chu kỳ mùa vụ (Seasonality - Pattern 3), và tính ma trận tương quan Pearson đa biến (Pattern 4).
-- **Đầu ra:** Ghi nhận vào bảng `analysis_results`.
+- **Tổ chức nội bộ:** `analysis/patterns.py` tính 4 patterns bằng các hàm thuần; `analysis/service.py` đọc dữ liệu thật, ghi `service_runs` và thay snapshot trong một transaction. `analysis/runner.py --once` chạy một chu kỳ; lệnh không cờ tiếp tục lặp mỗi 5 phút ở Terminal 3.
+- **Đầu ra:** 6 bản ghi snapshot trong `analysis_results`: `time_series` × `day/week/month`, `trend`, `seasonality` và `correlation`, gắn cùng `service_run_id`. Giữ `analysis_type=time_series` để tương thích `/api/v1/patterns`; chưa tạo endpoint `/analysis/*` mới.
+- **Dữ liệu rỗng/thưa:** DB rỗng thì xóa snapshot cũ và không chèn kết quả giả. Mùa vụ thiếu dữ liệu ghi `time_interval=day`, `status=insufficient_data`, các chỉ số chưa xác định là `null`. Chỉ dùng kỳ đã kết thúc tại thời điểm bắt đầu chu kỳ UTC cho hồi quy/phân rã; ngày đang dở dang vẫn hiện ở số liệu thực tế với `is_complete=false` trong Trend.
+- **Giới hạn cửa sổ:** Mặc định phân tích 365 ngày; mùa vụ tuần cần ít nhất 14 ngày đầy đủ. Mùa vụ năm cần ít nhất 24 tháng nên chỉ có thể tính khi gọi service với `window_days` đủ dài và có dữ liệu tương ứng; không mặc định dữ liệu động đất có mùa vụ.
 
 ### 4. Clustering Service
 
@@ -305,7 +308,10 @@ GDMAS/
 │   │   │   │   │   ├── upsert.py         # Khử trùng lặp và Upsert PostgreSQL
 │   │   │   │   │   ├── service.py        # Điều phối chu kỳ, fallback và nhật ký
 │   │   │   │   │   └── runner.py         # Worker T2 độc lập
-│   │   │   │   ├── analysis/             # Phân tích chuỗi thời gian: 6 patterns (Chu kỳ 5 phút/lần)
+│   │   │   │   ├── analysis/             # Phân tích chuỗi thời gian: Pattern 1–4 (5 phút/lần)
+│   │   │   │   │   ├── patterns.py       # Tính Temporal, Trend, Seasonality, Correlation
+│   │   │   │   │   ├── service.py        # Nhật ký và snapshot trong một transaction
+│   │   │   │   │   └── runner.py         # Worker T3 độc lập, hỗ trợ --once
 │   │   │   │   ├── clustering/           # Phân cụm địa chấn DBSCAN/K-Means (Chu kỳ 1 ngày/lần)
 │   │   │   │   └── prediction/           # Dự báo định lượng & Phân loại ngày kế tiếp t+1 (Chu kỳ 5 phút/lần)
 │   │   │   ├── realtime/                 # Luồng Server-Sent Events (SSE) đẩy dữ liệu thời gian thực

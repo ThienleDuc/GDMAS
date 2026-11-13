@@ -97,6 +97,11 @@ python -m gdmas.services.ingestion.runner
 ```bash
 python -m gdmas.services.analysis.runner
 ```
+Chạy ngay một chu kỳ cho Demo, không chờ hết 5 phút:
+```bash
+python -m gdmas.services.analysis.runner --once
+```
+Mã thoát `0` khi thành công, `1` khi chu kỳ thất bại.
 
 #### Terminal 6 – Prediction Worker (Chu kỳ 5 phút):
 ```bash
@@ -142,14 +147,15 @@ pnpm dev --port 3000
    - Trích xuất danh sách điểm tọa độ độ sâu vs độ lớn (Scatter plot).
    - Gom nhóm tần suất độ lớn theo các khoảng $0-2$, $2-3$, $3-4$, $4-5$, $>5$ (Histogram).
 3. **Xử lý Pattern 2 (Trend Analysis):**
-   - Thực hiện **Re-sampling** chuỗi dữ liệu theo tuần/tháng (`freq='W'` hoặc `freq='M'`).
+   - Chọn re-sampling ngày khi dữ liệu trải dưới 28 ngày, tuần khi từ 28 ngày, tháng khi từ 180 ngày; nhãn theo đầu kỳ (`D`, `W-MON`, `MS`).
    - Áp dụng thuật toán Moving Average hoặc phân rã chuỗi để bóc tách thành phần xu hướng (Trend component).
+   - Hồi quy chỉ dùng kỳ đã kết thúc tại thời điểm bắt đầu chu kỳ UTC; kỳ dở dang vẫn hiện trong `series` với `is_complete=false`.
 4. **Xử lý Pattern 3 (Seasonality Analysis):**
    - Phân tích tính chu kỳ / mùa vụ (**Seasonal line**) sau khi Re-sampling.
    - Nếu dữ liệu không thể hiện mùa vụ rõ rệt, ghi nhận kết luận khách quan "Chu kỳ yếu/không có mùa vụ".
 5. **Xử lý Pattern 4 (Correlation Analysis):**
-   - Lập ma trận tương quan Pearson giữa 5 biến: `magnitude`, `depth_km`, `latitude`, `longitude`, `daily_count`.
-6. **Lưu trữ kết quả:** Đóng gói toàn bộ kết quả vào định dạng JSONB và ghi vào bảng `analysis_results`.
+   - Lập ma trận tương quan Pearson giữa 5 biến: `magnitude`, `depth_km`, `latitude`, `longitude`, `daily_event_count`; kèm Spearman. Biến không có phương sai hoặc thiếu mẫu trả hệ số `null`, không suy diễn quan hệ nhân quả.
+6. **Lưu trữ kết quả:** Đóng gói JSONB, thay snapshot `analysis_results` và cập nhật `ServiceRun` SUCCESS trong một transaction. Khi lỗi ghi snapshot, rollback giữ nguyên kết quả cũ rồi ghi FAILED. DB rỗng thì không chèn số liệu giả; khi có dữ liệu trở lại, chu kỳ kế tiếp tự tính lại.
 
 ---
 
@@ -301,5 +307,5 @@ docker exec -t gdmas-postgres pg_dump -U postgres gdmas_db > backups/gdmas_backu
 | **Mất mạng nguồn USGS** | Log Ingestion báo `HTTPTimeout` hoặc `ConnectionRefused` | USGS tạm thời bảo trì hoặc đường truyền quốc tế chập chờn | Worker tự động ghi nhận lỗi, bỏ qua mẻ này và thử lại sau 5 phút. CSDL giữ nguyên dữ liệu cũ, API vẫn phục vụ bình thường. |
 | **Trùng cổng 5432 / 8000** | Lỗi `port is already allocated` hoặc `Address already in use` | PostgreSQL trên máy host hoặc tiến trình cũ chưa thoát hẳn | Kiểm tra PID bằng `netstat -ano \| findstr :5432` trên Windows (hoặc `lsof -i :5432` trên Linux) và dừng tiến trình chiếm cổng. |
 | **Worker Ingestion bị Crash** | Terminal Ingestion thoát ra dấu nhắc lệnh shell | Ngoại lệ chưa bắt (Unhandled exception) do GeoJSON dị biệt | Kiểm tra log lỗi, chạy lại `python -m gdmas.services.ingestion.runner`. Do có cơ chế Upsert, khi chạy lại worker sẽ tự bù đắp dữ liệu thiếu. |
-| **Chưa đủ dữ liệu Re-sampling** | Log Analysis báo `ValueError: Not enough data points for resampling` | Hệ thống mới khởi động, bảng `earthquake_events` có ít hơn 7 ngày dữ liệu | Worker tự động chuyển chế độ Re-sampling sang đơn vị tuần (`freq='W'`) thay vì tháng (`freq='M'`) để bảo đảm biểu đồ luôn hiển thị được. |
+| **Chưa đủ dữ liệu Re-sampling** | Trend/mùa vụ trả `status=insufficient_data` | Dữ liệu mới nạp hoặc chưa đủ kỳ đầy đủ | Trend dùng ngày khi dưới 28 ngày dữ liệu, tuần từ 28 ngày và tháng từ 180 ngày; bỏ kỳ dở dang khỏi hồi quy. Mùa vụ cần ≥ 14 ngày hoặc ≥ 24 tháng đầy đủ; nếu chưa đủ thì trả chỉ số `null` và kết luận khách quan. |
 

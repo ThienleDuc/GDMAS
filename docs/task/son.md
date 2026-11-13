@@ -3,6 +3,17 @@
 Vai trò: Backend Dev 1 (Terminal 2 `ingestion` chu kỳ 5 phút & Terminal 3 `analysis` chu kỳ 5 phút — `apps/api/src/gdmas/services/`).
 Phạm vi phụ trách: Đường ống thu thập dữ liệu địa chấn từ USGS và toàn bộ động cơ phân tích chuỗi thời gian tính toán 4 Patterns đầu tiên (Temporal, Trend, Seasonality, Correlation) lưu vào bảng `analysis_results`.
 
+## Tiến độ cập nhật ngày 2026-11-13
+
+| Task | Trạng thái thực tế | Bằng chứng / phần còn lại |
+|---|---|---|
+| 1 — Ingestion | Hoàn tất, đã merge | PR #4 và #5; upsert, kiểm tra dữ liệu, fallback, 77 unit test offline |
+| 2 — Động cơ 4 Patterns | Đã triển khai, validation đạt; chờ merge Analysis | Temporal/Trend/Seasonality/Correlation từ dữ liệu thật, có test hồi quy cho kỳ dở dang |
+| 3 — Snapshot, nhật ký, Demo | Đã triển khai, validation đạt; chờ merge Analysis | `--once`, ServiceRun, snapshot nguyên tử, rollback giữ kết quả cũ, DB rỗng/phục hồi có test tích hợp |
+| 4 — Kiểm thử | 126 test offline đạt; còn lint/format nền toàn backend | 121 unit + 5 integration; lint/format sạch trên tệp thay đổi. Toàn backend còn 172 lỗi lint và 28 tệp cần format ngoài diff, cần phạm vi xử lý riêng |
+
+Các phần mô tả bên dưới giữ bối cảnh gốc của task; tra trạng thái hiện tại ở bảng trên và `.agents/notes/implemented/`.
+
 Lưu ý kiến trúc và quy ước:
 - Terminal 2 (`gdmas.services.ingestion.runner`) và Terminal 3 (`gdmas.services.analysis.runner`) phải chạy hoàn toàn độc lập với máy chủ FastAPI (`main.py`), tuân thủ Bất biến `I1` (Tách biệt 7 Terminals).
 - Tuân thủ nguyên tắc Open-Closed (`RULE-03`): giữ nguyên giao diện lệnh `python -m gdmas.services.<tên>.runner`, tách phần xử lý nghiệp vụ mới vào các hàm/file dịch vụ rõ ràng.
