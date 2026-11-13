@@ -131,6 +131,8 @@ flowchart LR
 
 - **Nhiệm vụ:** Kết nối định kỳ 5 phút/lần tới USGS GeoJSON Feed, kiểm tra tính hợp lệ của dữ liệu, chuẩn hóa trường và thực thi Upsert vào bảng `earthquake_events`.
 - **Độ tin cậy:** Khử trùng lặp qua ràng buộc `UNIQUE (source, source_event_id)` và cập nhật lại thông số nếu USGS có hiệu chỉnh sau đó.
+- **Tổ chức nội bộ:** `ingestion/parser.py` chuẩn hóa GeoJSON và loại feature không hợp lệ; `ingestion/upsert.py` khử trùng lặp trong batch và ghi theo chiến lược ERD §4; `ingestion/service.py` điều phối nguồn chính, fallback và nhật ký `service_runs`. `runner.py` tiếp tục chạy độc lập ở Terminal 2.
+- **Biên dữ liệu:** ID vượt 64 ký tự bị loại thay vì cắt để tránh gộp nhầm sự kiện. Độ sâu thiếu phần tử thứ ba dùng `0.0`; độ sâu được cung cấp nhưng không phải số hữu hạn bị loại. Số nguyên vượt miền `float` không làm hỏng cả batch: feature lỗi được tính vào `skipped_invalid`, các feature hợp lệ vẫn được xử lý.
 
 ### 3. Data Analysis Service
 
@@ -299,6 +301,10 @@ GDMAS/
 │   │   │   ├── schemas/                  # Pydantic Schemas xác thực dữ liệu
 │   │   │   ├── services/                 # 4 Services xử lý nghiệp vụ độc lập (chạy trên từng terminal riêng):
 │   │   │   │   ├── ingestion/            # Thu thập dữ liệu USGS (Chu kỳ 5 phút/lần)
+│   │   │   │   │   ├── parser.py         # Chuẩn hóa và kiểm tra GeoJSON
+│   │   │   │   │   ├── upsert.py         # Khử trùng lặp và Upsert PostgreSQL
+│   │   │   │   │   ├── service.py        # Điều phối chu kỳ, fallback và nhật ký
+│   │   │   │   │   └── runner.py         # Worker T2 độc lập
 │   │   │   │   ├── analysis/             # Phân tích chuỗi thời gian: 6 patterns (Chu kỳ 5 phút/lần)
 │   │   │   │   ├── clustering/           # Phân cụm địa chấn DBSCAN/K-Means (Chu kỳ 1 ngày/lần)
 │   │   │   │   └── prediction/           # Dự báo định lượng & Phân loại ngày kế tiếp t+1 (Chu kỳ 5 phút/lần)
