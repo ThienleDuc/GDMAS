@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import asc, desc, or_
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from gdmas.db.connection import get_db
@@ -221,9 +222,9 @@ def list_earthquakes(
                 last_updated=datetime.now(UTC),
             ),
         )
-    except Exception:
+    except SQLAlchemyError as exc:
         # Chỉ khi CSDL bị mất kết nối hoàn toàn mới kích hoạt fallback
-        pass
+        logger.warning("Truy vấn danh sách địa chấn thất bại (%s).", type(exc).__name__)
 
     # Xử lý fallback trên MOCK_USGS_DATA
     filtered = list(MOCK_USGS_DATA)
@@ -332,8 +333,10 @@ def sync_usgs_earthquakes(db: Session = Depends(get_db)):
                             )
                             db.add(new_event)
                             synced_items += 1
-                    except Exception:
-                        pass
+                    except SQLAlchemyError as exc:
+                        logger.warning(
+                            "Không ghi được sự kiện đồng bộ (%s).", type(exc).__name__
+                        )
 
                     # 2. Cập nhật vào danh sách memory MOCK_USGS_DATA
                     if not any(
@@ -361,8 +364,11 @@ def sync_usgs_earthquakes(db: Session = Depends(get_db)):
 
                 try:
                     db.commit()
-                except Exception:
+                except SQLAlchemyError as exc:
                     db.rollback()
+                    logger.warning(
+                        "Giao dịch đồng bộ đã rollback (%s).", type(exc).__name__
+                    )
 
                 return SyncResponse(
                     success=True,
@@ -371,8 +377,15 @@ def sync_usgs_earthquakes(db: Session = Depends(get_db)):
                     source="USGS",
                     timestamp=datetime.now(UTC),
                 )
-    except Exception as e:
-        logger.warning(f"Lỗi khi gọi USGS Feed: {e}")
+    except (
+        httpx.HTTPError,
+        ValueError,
+        TypeError,
+        AttributeError,
+        OverflowError,
+        SQLAlchemyError,
+    ) as exc:
+        logger.warning("Không hoàn tất đồng bộ USGS (%s).", type(exc).__name__)
 
     # Fallback phản hồi thành công với số lượng hiện tại nếu mạng bên ngoài offline
     return SyncResponse(
@@ -406,8 +419,8 @@ def get_earthquake(event_id: str, db: Session = Depends(get_db)):
 
         if event:
             return event
-    except Exception:
-        pass
+    except SQLAlchemyError as exc:
+        logger.warning("Truy vấn chi tiết địa chấn thất bại (%s).", type(exc).__name__)
 
     for m in MOCK_USGS_DATA:
         if str(m["id"]) == event_id or m["source_event_id"] == event_id:

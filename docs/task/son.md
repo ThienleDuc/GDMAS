@@ -10,7 +10,7 @@ Phạm vi phụ trách: Đường ống thu thập dữ liệu địa chấn t�
 | 1 — Ingestion | Hoàn tất, đã merge | PR #4 và #5; upsert, kiểm tra dữ liệu, fallback, 77 unit test offline |
 | 2 — Động cơ 4 Patterns | Hoàn tất, đã merge PR #6 | Temporal/Trend/Seasonality/Correlation từ dữ liệu thật, có test hồi quy cho kỳ dở dang |
 | 3 — Snapshot, nhật ký, Demo | Hoàn tất, đã merge PR #6 | `--once`, ServiceRun, snapshot nguyên tử, rollback giữ kết quả cũ, DB rỗng/phục hồi có test tích hợp |
-| 4 — Kiểm thử | Đợt 1 đã validation, chờ merge; đợt 2 chưa bắt đầu | 131 test offline đạt, format toàn backend sạch; OpenAPI/ORM/config/migration giữ nguyên. Còn 19 lỗi ngoại lệ/biến thừa cho PR đợt 2, không ignore |
+| 4 — Kiểm thử | Đợt 1 đã merge PR #8; đợt 2 validation đạt, chờ merge | 149 test offline (144 unit + 5 integration), full Ruff check/format xanh; hợp đồng API/ORM/config/migration giữ nguyên, có test retry/ngắt và logging an toàn |
 
 Các phần mô tả bên dưới giữ bối cảnh gốc của task; tra trạng thái hiện tại ở bảng trên và `.agents/notes/implemented/`.
 

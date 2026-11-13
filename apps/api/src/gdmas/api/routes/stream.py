@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Request
 from sqlalchemy import desc
+from sqlalchemy.exc import SQLAlchemyError
 from sse_starlette.sse import EventSourceResponse
 
 from gdmas.db.connection import SessionLocal
@@ -45,8 +46,8 @@ async def broadcast_database_cleared():
         try:
             q.put_nowait(raw_message)
             count += 1
-        except Exception as e:
-            logger.warning(f"Lỗi khi push SSE cleared event vào queue: {e}")
+        except asyncio.QueueFull:
+            logger.warning("Queue SSE đầy (QueueFull), bỏ qua client chưa nhận kịp.")
 
     logger.warning(f"Đã broadcast tín hiệu database_cleared tới {count} SSE clients.")
     return {"success": True, "clients_notified": count}
@@ -153,8 +154,8 @@ def get_latest_state(
                 "new_run_info": new_run_info,
                 "latest_run": latest_run_dict,
             }
-    except Exception as e:
-        logger.warning(f"Lỗi khi truy vấn SSE data: {e}")
+    except SQLAlchemyError as exc:
+        logger.warning("Truy vấn SSE data thất bại (%s).", type(exc).__name__)
         return {
             "success": False,
             "total": 0,

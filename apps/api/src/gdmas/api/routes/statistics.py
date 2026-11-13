@@ -1,7 +1,9 @@
+import logging
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from gdmas.db.connection import get_db
@@ -13,6 +15,7 @@ from gdmas.schemas.earthquake import (
 )
 
 router = APIRouter(prefix="/statistics", tags=["Statistics"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/earthquakes", response_model=StatisticsResponse)
@@ -83,9 +86,9 @@ def get_earthquake_statistics(db: Session = Depends(get_db)):
                 time_series_preview=default_time_series if total > 0 else [],
             ),
         )
-    except Exception:
+    except SQLAlchemyError as exc:
         # Chỉ fallback khi CSDL bị lỗi kết nối
-        pass
+        logger.warning("Truy vấn thống kê địa chấn thất bại (%s).", type(exc).__name__)
 
     # Fallback dữ liệu mẫu KPI
     return StatisticsResponse(

@@ -25,7 +25,7 @@
 - Related Proposals:
   - .agents/notes/proposed/2026-11-12-ingestion-upsert-validation-son.md
   - .agents/notes/proposed/2026-11-12-analysis-four-patterns-son.md
-- Related Bugs: none
+- Related Bugs: BUG-son-006, BUG-son-007
 
 ---
 
@@ -93,6 +93,7 @@ Tệp cấu hình, test và tài liệu bổ sung:
 - `apps/api/tests/fixtures/quality_contracts.json` (mới — snapshot hợp đồng API/ORM và hash bảo vệ)
 - `apps/api/tests/unit/test_quality_boundaries.py` (mới — kiểm metadata/schema, chữ ký route và ranh giới lỗi bị sửa)
 - `apps/api/tests/unit/test_worker_error_boundaries.py` (mới — worker tiếp tục sau lỗi và dừng sạch khi ngắt)
+- `apps/api/tests/unit/test_api_error_boundaries.py` (mới — test lỗi DB/HTTP/SSE tách riêng khỏi kiểm hợp đồng)
 - `docs/workflow.md`, `docs/task/son.md`
 - `.agents/notes/proposed/2026-11-13-backend-lint-validation-son.md`
 - `.agents/notes/implemented/2026-11-13-backend-lint-validation-son/{plan.md,status.md}`

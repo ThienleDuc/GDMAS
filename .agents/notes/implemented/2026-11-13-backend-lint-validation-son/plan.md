@@ -9,7 +9,7 @@
 - Approved By: son
 - Approved At: 2026-11-13
 - Implementer: agent | son
-- Status: in_progress
+- Status: validation
 
 ---
 
@@ -54,6 +54,9 @@ Hoàn tất Task 4 theo hai PR: bảo trì hình thức trước, xử lý ngo�
 - `apps/api/tests/fixtures/quality_contracts.json`
 - `apps/api/tests/unit/test_quality_boundaries.py`
 - `apps/api/tests/unit/test_worker_error_boundaries.py`
+- `apps/api/tests/unit/test_api_error_boundaries.py`
+- `.agents/notes/bugs/BUG-son-006-worker-retry-stop.md`
+- `.agents/notes/bugs/BUG-son-007-error-log-content.md`
 - `docs/workflow.md`
 - `docs/task/son.md`
 - `.agents/notes/proposed/2026-11-13-backend-lint-validation-son.md`
@@ -74,6 +77,8 @@ Full pytest, kiểm hợp đồng, format toàn backend, lint nhóm hình thức
 ### Step 3 — Đợt 2: ranh giới lỗi
 Rẽ fix/2026-11-13-backend-lint-validation-son từ develop sau merge đợt 1; thêm test worker retry/dừng và API error/logging trước sửa. Giữ tương thích; không ghi credential vào log; bỏ biến thừa nhưng giữ side effect.
 ### Step 4 — Validation/merge/completed
+Chi tiết đợt 2: DB fallback bắt SQLAlchemyError, HTTP/GeoJSON bắt lỗi nguồn/định dạng dự kiến, queue SSE chỉ bỏ qua QueueFull. Lỗi lập trình ngoài dự kiến được phát hiện thay vì bị nuốt. Worker giữ catch-all có giải trình tại biên Terminal, làm sạch thông báo và xử lý ngắt cả lúc chờ retry. Test API tách tệp riêng để kiểm chứng từng vùng.
+
 Full pytest offline, Ruff check/format toàn backend xanh, notes/scope và I1–I7 đạt. Merge PR đợt 2 khi 0 conflict; sau đó ghi completed và Task 4 hoàn tất qua PR tài liệu nếu cần.
 
 ---

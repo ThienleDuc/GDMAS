@@ -9,7 +9,7 @@ import time
 from datetime import UTC, datetime
 
 from gdmas.core.config import settings
-from gdmas.services.ingestion.service import IngestionService
+from gdmas.services.ingestion.service import IngestionService, summarize_error
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,6 +17,16 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger("gdmas.services.ingestion.runner")
+
+
+def _wait_for_next_cycle(interval: int) -> bool:
+    """Chờ chu kỳ kế; xử lý ngắt cả trong nhánh retry sau lỗi."""
+    try:
+        time.sleep(interval)
+    except (KeyboardInterrupt, SystemExit):
+        print("\n[GDMAS-Ingestion] Tiến trình đã nhận lệnh dừng an toàn.", flush=True)
+        return False
+    return True
 
 
 def run() -> None:
@@ -28,7 +38,7 @@ def run() -> None:
         flush=True,
     )
     print(
-        f"[GDMAS-Ingestion] Terminal 2: USGS Data Ingestion Service Active", flush=True
+        "[GDMAS-Ingestion] Terminal 2: USGS Data Ingestion Service Active", flush=True
     )
     print(
         f"[GDMAS-Ingestion] Chu kỳ nạp tự động: {interval} giây ({minutes} phút / lần)",
@@ -69,19 +79,22 @@ def run() -> None:
                 f"[GDMAS-Ingestion] Đang chờ {interval} giây ({minutes} phút) cho chu kỳ tiếp theo...\n",
                 flush=True,
             )
-            time.sleep(interval)
+            if not _wait_for_next_cycle(interval):
+                break
 
         except (KeyboardInterrupt, SystemExit):
             print(
                 "\n[GDMAS-Ingestion] Tiến trình đã nhận lệnh dừng an toàn.", flush=True
             )
             break
-        except Exception as e:
-            print(
-                f"[GDMAS-Ingestion] Ngoại lệ không mong muốn: {e}. Thử lại sau {interval} giây...",
-                flush=True,
+        except Exception as exc:  # noqa: BLE001 — biên worker phải tiếp tục sau lỗi chu kỳ chưa dự kiến
+            logger.error(
+                "[GDMAS-Ingestion] Ngoại lệ chu kỳ: %s. Thử lại sau %s giây...",
+                summarize_error(exc),
+                interval,
             )
-            time.sleep(interval)
+            if not _wait_for_next_cycle(interval):
+                break
 
 
 if __name__ == "__main__":

@@ -317,3 +317,5 @@ Chạy từ `apps/api`: `uv run pytest`, `uv run ruff check .` và `uv run ruff 
 
 Ruff chỉ miễn lint/format đúng `alembic/versions/001_initial_gdmas_schema.py` vì I4 cấm sửa migration đã phát hành; migration mới vẫn được kiểm tra. Test `test_quality_boundaries.py` bảo vệ hash chuẩn hóa LF của tệp cũ. FastAPI `Depends` được khai báo là lời gọi mặc định an toàn cho B008; rule vẫn bật cho các lời gọi khác.
 
+Sau đợt 2, fallback DB chỉ bắt `SQLAlchemyError`; đồng bộ nguồn bắt lỗi HTTP/GeoJSON dự kiến, queue SSE chỉ bỏ qua `QueueFull`. Response của các lỗi dự kiến giữ nguyên, lỗi lập trình ngoài dự kiến được phát hiện thay vì bị nuốt. API/SSE ghi ngữ cảnh và loại lỗi, không ghi nguyên văn URL/credential; worker làm sạch thông báo và xử lý ngắt cả lúc chờ retry. Catch-all chỉ giữ tại biên Terminal có giải trình và test. Tệp test API/worker chạy bằng mock, không cần dịch vụ ngoài.
+
