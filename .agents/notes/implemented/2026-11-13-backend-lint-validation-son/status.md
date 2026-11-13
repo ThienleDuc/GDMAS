@@ -5,7 +5,7 @@
 
 ## Metadata
 - ID: 2026-11-13-backend-lint-validation-son
-- Status: validation
+- Status: completed
 - Started: 2026-11-13
 - Last Updated: 2026-11-13
 - Owner: agent | son
@@ -13,8 +13,8 @@
 ---
 
 ## Tiến độ
-Progress: 95%
-Current Phase: Đợt 1 đã merge PR #8; đợt 2 đạt full validation, chuẩn bị PR/merge
+Progress: 100%
+Current Phase: Cả hai đợt đã merge; Task 4 hoàn tất
 
 Completed:
 - Proposal Approved bởi son; thống nhất hai đợt và tạo plan/status/testcase đồng thời.
@@ -22,8 +22,9 @@ Completed:
 - Rule set Ruff giữ nguyên 407 rule; chỉ miễn đúng migration bất biến và nhận diện FastAPI Depends an toàn. Hash AST của mọi nhánh except không đổi.
 - Đợt 2: 149 test offline pass, full Ruff check/format xanh (54 tệp), hợp đồng OpenAPI/ORM/exports/config/migration tiếp tục giữ nguyên.
 - Đã sửa BUG-son-006/007, có 18 test mới ranh giới lỗi API/SSE/worker, gồm retry/ngắt và worker tai/van dừng như cũ.
+- Đợt 2 merge PR #9 tại 34cbb4a4369b073033681d8ec62f600de13adb2b, 0 conflict/checks sạch.
 In Progress:
-- PR #8 đã merge tại 10f82a5; đang chuẩn bị PR đợt 2, kiểm remote/conflict/checks trước merge.
+- none
 Blocked:
 - none
 
@@ -60,9 +61,9 @@ Blocked:
 ---
 
 ## Next Actions
-- Review/commit/update/push, kiểm 0 conflict/checks và merge PR đợt 2; sau merge mới ghi completed/Task 4 hoàn tất.
+- none — cả hai PR đã merge, Task 4 hoàn tất.
 
 ---
 
 ## Last Update
-2026-11-13 — PR #8 đã merge; đợt 2 đạt 149 test offline, full Ruff check/format xanh và hợp đồng nguyên vẹn. Giữ validation chờ PR/merge đợt 2.
+2026-11-13 — Hoàn tất 100%; PR #8 và PR #9 đã merge. Đợt 2 tại 34cbb4a4369b073033681d8ec62f600de13adb2b; 149 test offline, full Ruff check/format và notes/scope đạt, hợp đồng/migration nguyên vẹn.
