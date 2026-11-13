@@ -3,15 +3,18 @@ import sys
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
+
 from alembic import context
 
 # Ensure src/ directory is in sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+)
 
-from gdmas.core.config import settings
-from gdmas.db.base import Base
 # Import all models to ensure metadata registers all tables
 import gdmas.models  # noqa: F401
+from gdmas.core.config import settings
+from gdmas.db.base import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -79,4 +82,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-

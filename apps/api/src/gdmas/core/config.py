@@ -1,5 +1,4 @@
-from typing import List, Union
-from pydantic import AnyHttpUrl, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,16 +20,18 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+psycopg://gdmas_user:gdmas_secure_password_2026@localhost:5432/gdmas_db"
 
     # CORS Settings
-    CORS_ORIGINS: Union[str, List[str]] = "http://localhost:3000,http://127.0.0.1:3000"
+    CORS_ORIGINS: str | list[str] = "http://localhost:3000,http://127.0.0.1:3000"
 
     @field_validator("CORS_ORIGINS", mode="before")
-    def parse_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
     # Worker Settings
-    USGS_FEED_URL: str = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"
+    USGS_FEED_URL: str = (
+        "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"
+    )
     INGESTION_INTERVAL_SECONDS: int = 300
     ANALYSIS_INTERVAL_SECONDS: int = 300
     PREDICTION_INTERVAL_SECONDS: int = 300
@@ -44,4 +45,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
