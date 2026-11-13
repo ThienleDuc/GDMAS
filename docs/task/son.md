@@ -8,8 +8,8 @@ Phạm vi phụ trách: Đường ống thu thập dữ liệu địa chấn t�
 | Task | Trạng thái thực tế | Bằng chứng / phần còn lại |
 |---|---|---|
 | 1 — Ingestion | Hoàn tất, đã merge | PR #4 và #5; upsert, kiểm tra dữ liệu, fallback, 77 unit test offline |
-| 2 — Động cơ 4 Patterns | Đã triển khai, validation đạt; chờ merge Analysis | Temporal/Trend/Seasonality/Correlation từ dữ liệu thật, có test hồi quy cho kỳ dở dang |
-| 3 — Snapshot, nhật ký, Demo | Đã triển khai, validation đạt; chờ merge Analysis | `--once`, ServiceRun, snapshot nguyên tử, rollback giữ kết quả cũ, DB rỗng/phục hồi có test tích hợp |
+| 2 — Động cơ 4 Patterns | Hoàn tất, đã merge PR #6 | Temporal/Trend/Seasonality/Correlation từ dữ liệu thật, có test hồi quy cho kỳ dở dang |
+| 3 — Snapshot, nhật ký, Demo | Hoàn tất, đã merge PR #6 | `--once`, ServiceRun, snapshot nguyên tử, rollback giữ kết quả cũ, DB rỗng/phục hồi có test tích hợp |
 | 4 — Kiểm thử | 126 test offline đạt; còn lint/format nền toàn backend | 121 unit + 5 integration; lint/format sạch trên tệp thay đổi. Toàn backend còn 172 lỗi lint và 28 tệp cần format ngoài diff, cần phạm vi xử lý riêng |
 
 Các phần mô tả bên dưới giữ bối cảnh gốc của task; tra trạng thái hiện tại ở bảng trên và `.agents/notes/implemented/`.
