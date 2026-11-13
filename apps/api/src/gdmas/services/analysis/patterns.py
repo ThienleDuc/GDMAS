@@ -158,17 +158,30 @@ def _period_end(ts: pd.Timestamp, interval: str) -> pd.Timestamp:
 
 
 def complete_period_mask(
-    index: pd.DatetimeIndex, interval: str, df: pd.DataFrame
+    index: pd.DatetimeIndex,
+    interval: str,
+    df: pd.DataFrame,
+    *,
+    as_of: datetime | None = None,
 ) -> np.ndarray:
     """Đánh dấu kỳ nằm trọn trong cửa sổ dữ liệu (từ đầu ngày UTC đầu tiên tới hết ngày UTC cuối cùng).
 
     Kỳ ở hai đầu chỉ được phủ một phần (vd. tháng hiện tại mới qua vài ngày) sẽ làm lệch xu hướng
-    nên bị loại khỏi hồi quy và phân rã mùa vụ.
+    nên bị loại khỏi hồi quy và phân rã mùa vụ. Khi có `as_of`, chỉ nhận kỳ đã kết thúc
+    trước hoặc đúng thời điểm đó; không coi ngày hiện tại còn dở dang là ngày đầy đủ.
     """
     if df.empty or len(index) == 0:
         return np.zeros(len(index), dtype=bool)
     window_start = df["event_time"].min().floor("D")
     window_end = df["event_time"].max().floor("D") + pd.Timedelta(days=1)
+    if as_of is not None:
+        observed_end = pd.Timestamp(as_of)
+        observed_end = (
+            observed_end.tz_localize("UTC")
+            if observed_end.tzinfo is None
+            else observed_end.tz_convert("UTC")
+        )
+        window_end = min(window_end, observed_end)
     return np.array(
         [
             ts >= window_start and _period_end(ts, interval) <= window_end
@@ -268,7 +281,12 @@ _DIRECTION_LABELS = {
 }
 
 
-def compute_trend(df: pd.DataFrame, interval: str | None = None) -> dict[str, Any]:
+def compute_trend(
+    df: pd.DataFrame,
+    interval: str | None = None,
+    *,
+    as_of: datetime | None = None,
+) -> dict[str, Any]:
     interval = interval or choose_trend_interval(df)
     counts = (
         _resample(df, interval)["magnitude"].count()
@@ -280,7 +298,7 @@ def compute_trend(df: pd.DataFrame, interval: str | None = None) -> dict[str, An
         MOVING_AVERAGE_WINDOW, center=True, min_periods=1
     ).mean()
 
-    complete = complete_period_mask(actual.index, interval, df)
+    complete = complete_period_mask(actual.index, interval, df, as_of=as_of)
 
     series = [
         {
@@ -362,7 +380,9 @@ def _interpret_strength(strength: float, cycle_label: str) -> str:
     return f"Chu kỳ yếu, không có bằng chứng mùa vụ rõ rệt theo chu kỳ {cycle_label} (độ mạnh mùa vụ {strength:.2f})."
 
 
-def compute_seasonality(df: pd.DataFrame) -> dict[str, Any]:
+def compute_seasonality(
+    df: pd.DataFrame, *, as_of: datetime | None = None
+) -> dict[str, Any]:
     """Tách thành phần mùa vụ bằng seasonal_decompose khi đủ ≥ 2 chu kỳ; không mặc định có mùa vụ (P-03)."""
     from statsmodels.tsa.seasonal import seasonal_decompose
 
@@ -370,7 +390,7 @@ def compute_seasonality(df: pd.DataFrame) -> dict[str, Any]:
         if df.empty:
             break
         counts = _resample(df, interval)["magnitude"].count().astype(float)
-        counts = counts[complete_period_mask(counts.index, interval, df)]
+        counts = counts[complete_period_mask(counts.index, interval, df, as_of=as_of)]
         if len(counts) < min_points:
             continue
 
@@ -524,7 +544,9 @@ def compute_correlation(df: pd.DataFrame) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def build_analysis_snapshot(df: pd.DataFrame) -> list[dict[str, Any]]:
+def build_analysis_snapshot(
+    df: pd.DataFrame, *, as_of: datetime | None = None
+) -> list[dict[str, Any]]:
     """Tạo danh sách bản ghi analysis_results (chưa gắn service_run_id) cho Pattern 1–4.
 
     Trả [] khi không có sự kiện nào — không sinh số liệu giả.
@@ -550,9 +572,9 @@ def build_analysis_snapshot(df: pd.DataFrame) -> list[dict[str, Any]]:
         item("time_series", interval, compute_temporal(df, interval))
         for interval in TEMPORAL_INTERVALS
     ]
-    trend = compute_trend(df)
+    trend = compute_trend(df, as_of=as_of)
     snapshot.append(item("trend", trend["interval"], trend))
-    seasonality = compute_seasonality(df)
-    snapshot.append(item("seasonality", seasonality["interval"] or "none", seasonality))
+    seasonality = compute_seasonality(df, as_of=as_of)
+    snapshot.append(item("seasonality", seasonality["interval"] or "day", seasonality))
     snapshot.append(item("correlation", "day", compute_correlation(df)))
     return snapshot

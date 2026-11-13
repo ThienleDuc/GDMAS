@@ -8,7 +8,7 @@
 - Status: approved
 - Priority: high
 - Area: apps/api/src/gdmas/services/analysis/
-- Architecture Impact: none
+- Architecture Impact: docs/architecture/SAD.md, docs/workflow.md — mô tả cấu trúc Analysis, snapshot, --once và kỳ đầy đủ; không đổi schema/endpoint/contract
   <!-- Không đổi schema analysis_results/service_runs, không đổi contract API.
        Ghi chú ánh xạ endpoint `temporal` ↔ analysis_type `time_series` vào docstring service; nếu nhóm muốn
        đổi tên analysis_type sang `temporal` thì cần proposal riêng chạm patterns.py (vùng dùng chung). -->
@@ -22,7 +22,7 @@
   - docs/task/son.md (Task 2, Task 3, phần Analysis của Task 4)
 - Related Proposals:
   - .agents/notes/proposed/2026-11-12-ingestion-upsert-validation-son.md (độc lập; T3 chỉ đọc earthquake_events)
-- Related Bugs: none
+- Related Bugs: BUG-son-004, BUG-son-005
 
 ---
 
@@ -135,4 +135,4 @@ Scope of Rejection: -
 ---
 
 ## 10. Next Action
-Chờ thành viên thực hiện / đồng đội xác nhận §9 để bắt đầu `build-implementation` trên nhánh `feat/2026-11-12-analysis-four-patterns-son`.
+Ngày 2026-11-13, người dùng yêu cầu kiểm tra task list và tiếp tục sau Ingestion: hoàn thiện nhánh Analysis đã Approved, test tích hợp offline, sửa finding và chuyển review-pr kiểm tra conflict trước merge. Phạm vi bổ sung được ghi trong plan/status; không cần tạo lại proposal.

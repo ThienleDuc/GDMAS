@@ -88,7 +88,7 @@ class AnalysisService:
 
                 since = start_time - timedelta(days=self.window_days)
                 events = prepare_events(self._load_events(db, since))
-                snapshot = build_analysis_snapshot(events)
+                snapshot = build_analysis_snapshot(events, as_of=start_time)
 
                 # Thay snapshot cũ; DB rỗng thì chỉ xóa, không chèn số liệu giả.
                 db.query(AnalysisResult).delete(synchronize_session=False)

@@ -344,3 +344,72 @@ def test_snapshot_types_and_periods(ten_weeks):
         assert item["period_start"] <= item["period_end"]
         assert item["period_start"].tzinfo == UTC
         assert_json_safe(item["metrics_data"])
+
+
+# TC-16 — BUG-son-004
+def test_trend_excludes_current_partial_day_from_regression():
+    df = make_events([10] * 20 + [1])
+    as_of = START + pd.Timedelta(days=20, hours=12)
+
+    result = compute_trend(df, interval="day", as_of=as_of)
+
+    assert result["series"][-1]["actual_value"] == 1
+    assert result["series"][-1]["is_complete"] is False
+    assert result["complete_periods"] == 20
+    assert result["slope"] == 0.0
+    assert result["trend_direction"] == "stable"
+
+
+def test_seasonality_requires_two_complete_cycles_at_as_of():
+    df = make_events([5, 5, 5, 5, 5, 20, 20] * 2)
+    as_of = START + pd.Timedelta(days=13, hours=23)
+
+    result = compute_seasonality(df, as_of=as_of)
+
+    assert result["status"] == STATUS_INSUFFICIENT
+    assert result["components"]["seasonal_line"] == []
+    assert result["components"]["seasonality_strength"] is None
+
+
+@pytest.mark.parametrize("as_of", ["2026-09-28T00:00:00Z", "2026-09-28T07:00:00+07:00"])
+def test_day_completes_exactly_at_next_utc_midnight(as_of):
+    df = make_events([10] * 20 + [1])
+    result = compute_trend(df, interval="day", as_of=pd.Timestamp(as_of))
+    assert result["series"][-1]["is_complete"] is True
+    assert result["complete_periods"] == 21
+
+
+# TC-17 — BUG-son-005
+def test_insufficient_seasonality_snapshot_uses_supported_interval():
+    snapshot = build_analysis_snapshot(make_events([1]))
+    seasonal = next(item for item in snapshot if item["analysis_type"] == "seasonality")
+    assert seasonal["time_interval"] == "day"
+    assert seasonal["metrics_data"]["status"] == STATUS_INSUFFICIENT
+    assert seasonal["metrics_data"]["interval"] is None
+    assert all(item["time_interval"] in {"day", "week", "month"} for item in snapshot)
+
+
+def test_monthly_trend_aggregates_real_calendar_months():
+    start = pd.Timestamp("2026-01-01", tz="UTC")
+    counts = [(start + pd.Timedelta(days=day)).month for day in range(250)]
+    result = compute_trend(make_events(counts, start=start), interval="month")
+    assert result["resample_freq"] == "M"
+    assert [point["actual_value"] for point in result["series"][:3]] == [31, 56, 93]
+    assert result["complete_periods"] == 8
+    assert result["series"][-1]["is_complete"] is False
+    assert result["trend_direction"] == "increasing"
+
+
+def test_correlation_matches_known_positive_and_negative_relations():
+    df = make_events([1, 2, 3, 4])
+    df["magnitude"] = df["event_time"].dt.day.astype(float)
+    df["depth_km"] = 2 * df["magnitude"] + 1
+    df["latitude"] = -df["magnitude"]
+
+    result = compute_correlation(df)
+
+    assert result["matrix"][0][1] == 1.0
+    assert result["matrix"][0][2] == -1.0
+    assert result["matrix"][0][4] == 1.0
+    assert result["spearman_matrix"][0][1] == 1.0
+    assert result["spearman_matrix"][0][2] == -1.0

@@ -9,6 +9,7 @@ import pytest
 
 from gdmas.models.analysis import AnalysisResult
 from gdmas.models.service_run import ServiceRun
+from gdmas.services.analysis import service as service_module
 from gdmas.services.analysis.patterns import prepare_events
 from gdmas.services.analysis.service import AnalysisService
 
@@ -182,3 +183,21 @@ def test_window_is_passed_to_loader(monkeypatch, window_days):
     ).execute_cycle()
     age_days = (session.run.started_at - seen["since"]).total_seconds() / 86400
     assert age_days == pytest.approx(window_days)
+
+
+def test_cycle_passes_utc_start_time_to_snapshot(monkeypatch):
+    service, session = build_service(monkeypatch, events=fixture_events())
+    captured = {}
+    original = service_module.build_analysis_snapshot
+
+    def capture_snapshot(events, *, as_of=None):
+        captured["as_of"] = as_of
+        return original(events, as_of=as_of)
+
+    monkeypatch.setattr(service_module, "build_analysis_snapshot", capture_snapshot)
+
+    result = service.execute_cycle()
+
+    assert result["success"] is True
+    assert captured["as_of"] == session.run.started_at
+    assert captured["as_of"].utcoffset().total_seconds() == 0
