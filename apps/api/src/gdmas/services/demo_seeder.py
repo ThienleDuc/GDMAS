@@ -44,7 +44,7 @@ def seed_and_compute_all_patterns() -> dict[str, Any]:
                 "[Demo-Seeder] Bảng earthquake_events đang trống. Bắt đầu cào dữ liệu từ USGS..."
             )
             ingestion_svc = IngestionService()
-            res = ingestion_svc.execute_cycle()
+            ingestion_svc.execute_cycle()
             eq_count = db.query(EarthquakeEvent).count()
 
             # Nếu USGS không có mạng hoặc mạng lag, nạp tập dữ liệu địa chấn mẫu thực tế
@@ -155,9 +155,6 @@ def seed_and_compute_all_patterns() -> dict[str, Any]:
 
         # 2.1. Pattern 1: Chuỗi thời gian theo giờ và Histogram
         mags = [e.magnitude for e in events]
-        depths = [e.depth_km for e in events]
-        lats = [e.latitude for e in events]
-        lons = [e.longitude for e in events]
 
         # Phân phối tần suất Histogram
         hist_bins = {"<2.0": 0, "2.0-3.0": 0, "3.0-4.0": 0, "4.0-5.0": 0, ">=5.0": 0}
