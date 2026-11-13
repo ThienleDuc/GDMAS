@@ -29,6 +29,10 @@ và ghi `ServiceRun` `FAILED` khi cả URL chính lẫn fallback của USGS đ�
 - `apps/api/tests/unit/test_ingestion_upsert.py`
 - `apps/api/tests/unit/test_ingestion_service.py`
 - `apps/api/tests/conftest.py` *(bổ sung khi thực thi — thêm `src/` vào `sys.path` để pytest import được `gdmas`)*
+- `docs/architecture/SAD.md` *(đồng bộ cấu trúc parser/upsert và quy tắc kiểm tra đầu vào sau project-review)*
+- `.agents/notes/bugs/BUG-son-001-id-dai-trung-khoa.md`
+- `.agents/notes/bugs/BUG-son-002-do-sau-sai-thanh-khong.md`
+- `.agents/notes/bugs/BUG-son-003-so-nguyen-tran-float.md`
 ### Out of Scope
 - `apps/api/src/gdmas/services/ingestion/runner.py` (giữ nguyên CLI và vòng lặp 5 phút)
 - `apps/api/src/gdmas/services/demo_seeder.py`, `apps/api/src/gdmas/main.py`, `apps/api/src/gdmas/core/**`
@@ -79,3 +83,10 @@ Revert PR (chỉ thêm 2 tệp và sửa `service.py`, không có migration).
 
 ## 8. Ghi chú
 `records_processed` = `inserted + updated`; `new_records` giữ nghĩa "số sự kiện mới chèn" để `runner.py` không phải sửa.
+
+### Bổ sung sau project-review (2026-11-13)
+- Người dùng yêu cầu tiếp tục nhánh tới khi hoàn tất, sửa cả 3 finding trước merge.
+- Loại ID dài hơn 64 ký tự; không rút gọn khóa định danh. Chỉ mặc định độ sâu `0.0` khi không có phần tử thứ ba; loại feature có độ sâu được cung cấp nhưng không hợp lệ.
+- Bắt `OverflowError` khi ép số sang `float`; loại riêng feature có trường số bắt buộc sai, giữ batch hợp lệ và hành vi trường `updated` tùy chọn.
+- Bổ sung TC-17..TC-20 trong các tệp test hiện có; cập nhật test từng kỳ vọng cắt ID theo yêu cầu sửa lỗi, giữ kiểm tra fallback `properties.code`.
+- Đồng bộ SAD và ghi 3 bug log từ template; không thay đổi API, schema, migration hay worker runner.

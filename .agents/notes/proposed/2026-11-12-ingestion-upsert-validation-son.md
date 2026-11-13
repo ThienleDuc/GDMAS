@@ -8,7 +8,7 @@
 - Status: approved
 - Priority: high
 - Area: apps/api/src/gdmas/services/ingestion/
-- Architecture Impact: none
+- Architecture Impact: Tách nội bộ ingestion thành parser/upsert; cập nhật docs/architecture/SAD.md, không đổi schema hay contract API
   <!-- Thực thi đúng chiến lược Upsert đã đặc tả ở docs/architecture/ERD.md §4 và SAD §4.2; không đổi schema, không đổi contract API. -->
 - Related Docs:
   - docs/quyuocchung.md
@@ -17,7 +17,7 @@
   - docs/task/son.md (Task 1, phần Ingestion của Task 4)
 - Related Proposals:
   - .agents/notes/proposed/2026-11-12-analysis-four-patterns-son.md (độc lập, chạy song song được)
-- Related Bugs: none
+- Related Bugs: BUG-son-001, BUG-son-002, BUG-son-003
 
 ---
 
@@ -116,4 +116,4 @@ Scope of Rejection: -
 ---
 
 ## 10. Next Action
-Chờ thành viên thực hiện / đồng đội xác nhận §9 để bắt đầu `build-implementation` trên nhánh `feat/2026-11-12-ingestion-upsert-validation-son`.
+Tiếp tục nhánh `feat/2026-11-12-ingestion-upsert-validation-son`: người dùng yêu cầu ngày 2026-11-13 sửa 3 finding của project-review, bổ sung test hồi quy và hoàn tất PR trước merge. Phạm vi bổ sung được ghi trong `implemented/<id>/plan.md`.

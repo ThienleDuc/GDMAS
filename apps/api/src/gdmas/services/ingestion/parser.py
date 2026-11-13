@@ -24,7 +24,7 @@ def to_finite_float(value: Any) -> float | None:
         return None
     try:
         number = float(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
     return number if math.isfinite(number) else None
 
@@ -70,7 +70,10 @@ def parse_feature(feat: Any) -> dict[str, Any] | None:
     if not event_id:
         _reject(None, "thiếu id sự kiện")
         return None
-    event_id = str(event_id)[:SOURCE_EVENT_ID_MAX_LEN]
+    event_id = str(event_id)
+    if len(event_id) > SOURCE_EVENT_ID_MAX_LEN:
+        _reject(event_id, "id sự kiện vượt quá giới hạn 64 ký tự")
+        return None
 
     coords = geom.get("coordinates")
     if not isinstance(coords, (list, tuple)) or len(coords) < 2:
@@ -88,9 +91,12 @@ def parse_feature(feat: Any) -> dict[str, Any] | None:
         _reject(event_id, f"tọa độ ngoài chuẩn WGS84 (lat={latitude}, lon={longitude})")
         return None
 
-    depth_km = to_finite_float(coords[2]) if len(coords) > 2 else None
-    if depth_km is None:
-        depth_km = 0.0
+    depth_km = 0.0
+    if len(coords) > 2:
+        depth_km = to_finite_float(coords[2])
+        if depth_km is None:
+            _reject(event_id, "độ sâu không phải số hữu hạn")
+            return None
 
     magnitude = to_finite_float(props.get("mag"))
     if magnitude is None:

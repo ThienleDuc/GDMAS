@@ -9,7 +9,7 @@
 - Author: agent | son
 - Created: 2026-11-12
 - Status: passed
-- Related Bugs: none
+- Related Bugs: BUG-son-001, BUG-son-002, BUG-son-003
 
 ---
 
@@ -63,6 +63,10 @@
 | `TC-14` | Feed rỗng hợp lệ | Empty Data | 200 `{"features": []}` ở cả hai URL | `SUCCESS`, 0 bản ghi, không chèn dữ liệu giả | `PASS` |
 | `TC-15` | Payload hỏng | Negative | 200 nhưng body không phải JSON / thiếu `features` | Coi như nguồn lỗi → `FAILED` khi cả hai URL hỏng | `PASS` |
 | `TC-16` | Làm sạch thông báo lỗi | Security | Ngoại lệ chứa `postgresql://user:secret@host`, query string, chuỗi dài | Che `user:secret`, bỏ query string, ≤ 200 ký tự | `PASS` |
+| `TC-17` | Giữ nguyên khóa ID, loại ID quá dài (BUG-son-001) | Regression | ID đúng 64 ký tự, ID 65 ký tự, fallback `code`, hai ID chung tiền tố 64 ký tự | Giữ nguyên ID hợp lệ; loại ID quá dài và đếm skipped, không gộp nhầm sự kiện | `PASS` |
+| `TC-18` | Tách thiếu độ sâu và độ sâu sai (BUG-son-002) | Regression | Không có phần tử độ sâu; giá trị `bad`, bool, `None`, `NaN`, ±inf; số 0, số âm, chuỗi số | Chỉ thiếu phần tử mới mặc định 0.0; loại độ sâu sai; giữ số hữu hạn | `PASS` |
+| `TC-19` | Số nguyên vượt miền float (BUG-son-003) | Regression | `10**400` ở magnitude, time, longitude, latitude, depth và updated | Không ném lỗi; loại riêng feature có trường bắt buộc sai; updated tùy chọn sai thành None | `PASS` |
+| `TC-20` | Chu kỳ có feature lỗi xen giữa dữ liệu hợp lệ | Regression | 2 feature hợp lệ + ID dài + độ sâu sai ở bản cập nhật mới hơn + magnitude vượt miền float | SUCCESS, inserted=2, skipped_invalid=3; chỉ 2 feature hợp lệ tới upsert, không rollback | `PASS` |
 
 ---
 
@@ -72,8 +76,9 @@
 cd apps/api && uv run pytest tests/unit/test_ingestion_parser.py tests/unit/test_ingestion_upsert.py tests/unit/test_ingestion_service.py -v
 ```
 
-- **Ngày chạy cuối:** `2026-11-12`
-- **Kết quả quan sát thật:** `56 passed in 0.88s` (test_ingestion_parser: 33, test_ingestion_upsert: 9, test_ingestion_service: 14). Ruff check/format sạch trên các file đã đụng.
+- **Ngày chạy cuối:** `2026-11-13`
+- **Kết quả quan sát thật:** `77 passed in 0.92s`; toàn bộ test offline, HTTP/DB được mock. Lệnh trên máy Windows: `.venv/Scripts/python.exe -X utf8 -m pytest tests/unit/test_ingestion_parser.py tests/unit/test_ingestion_upsert.py tests/unit/test_ingestion_service.py -q -p no:cacheprovider -o asyncio_default_fixture_loop_scope=function`.
+- **Kiểm chứng trước/sau bản sửa:** test parser/service trước sửa có `17 failed, 52 passed`, tái hiện cả 3 finding; sau sửa toàn bộ 3 tệp ingestion đạt `77 passed`. Test cũ kỳ vọng cắt ID được đổi theo yêu cầu sửa BUG-son-001; vẫn giữ kiểm tra fallback `properties.code`, không bỏ test hay thêm skip.
 - **Kiểm tích hợp thủ công trên PostgreSQL 16 (Docker T1, 2026-11-12):**
   - `alembic upgrade head` → ràng buộc `uq_earthquake_source_event UNIQUE (source, source_event_id)` tồn tại.
   - Lần 1 (USGS `all_month`): `inserted=9847`, `skipped_invalid=0`, 8.5s; `ServiceRun` `SUCCESS` 9847.
@@ -83,4 +88,6 @@ cd apps/api && uv run pytest tests/unit/test_ingestion_parser.py tests/unit/test
 ---
 
 ## 5. Lỗi phát hiện & Bug Logs (`.agents/notes/bugs/`)
-- `none`
+- `BUG-son-001` — ID dài bị cắt gây trùng khóa sự kiện; đã sửa và có TC-17/TC-20.
+- `BUG-son-002` — độ sâu sai bị đổi thành 0.0; đã sửa và có TC-18/TC-20.
+- `BUG-son-003` — số nguyên vượt miền float làm thất bại cả batch; đã sửa và có TC-19/TC-20.

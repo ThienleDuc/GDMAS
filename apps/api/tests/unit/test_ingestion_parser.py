@@ -128,12 +128,38 @@ def test_missing_id_and_code_is_rejected():
     assert parse_feature(feat) is None
 
 
-def test_code_is_used_when_id_missing_and_long_ids_are_truncated():
+def test_code_is_used_when_id_missing():
     row = parse_feature(make_feature(id=None, code="abc123"))
     assert row is not None and row["source_event_id"] == "abc123"
 
-    row = parse_feature(make_feature(id="x" * 100))
-    assert row is not None and len(row["source_event_id"]) == SOURCE_EVENT_ID_MAX_LEN
+
+# TC-17 — BUG-son-001
+def test_id_at_database_length_limit_is_preserved():
+    event_id = "x" * SOURCE_EVENT_ID_MAX_LEN
+    row = parse_feature(make_feature(id=event_id))
+    assert row is not None and row["source_event_id"] == event_id
+
+
+@pytest.mark.parametrize("use_code", [False, True])
+def test_overlong_ids_are_rejected_instead_of_truncated(use_code):
+    event_id = "x" * (SOURCE_EVENT_ID_MAX_LEN + 1)
+    feat = (
+        make_feature(id=None, code=event_id) if use_code else make_feature(id=event_id)
+    )
+    assert parse_feature(feat) is None
+
+
+def test_shared_id_prefix_does_not_merge_distinct_events():
+    prefix = "x" * SOURCE_EVENT_ID_MAX_LEN
+    rows, skipped = parse_features(
+        [
+            make_feature(id=prefix),
+            make_feature(id=prefix + "a"),
+            make_feature(id=prefix + "b", updated=UPDATED_MS + 1),
+        ]
+    )
+    assert [row["raw_data"]["id"] for row in rows] == [prefix]
+    assert skipped == 2
 
 
 @pytest.mark.parametrize(
@@ -147,6 +173,44 @@ def test_non_object_feature_is_rejected(feat):
 def test_missing_depth_defaults_to_zero():
     row = parse_feature(make_feature(coordinates=[142.0, 38.0]))
     assert row is not None and row["depth_km"] == 0.0
+
+
+# TC-18 — BUG-son-002
+@pytest.mark.parametrize(
+    "depth", ["bad", True, False, None, float("nan"), float("inf"), -float("inf")]
+)
+def test_invalid_supplied_depth_is_rejected(depth):
+    assert parse_feature(make_feature(coordinates=[142.0, 38.0, depth])) is None
+
+
+@pytest.mark.parametrize("depth", [0, -1.5, "24.5"])
+def test_finite_supplied_depth_is_preserved(depth):
+    row = parse_feature(make_feature(coordinates=[142.0, 38.0, depth]))
+    assert row is not None and row["depth_km"] == float(depth)
+
+
+# TC-19 — BUG-son-003
+@pytest.mark.parametrize("field", ["mag", "time", "longitude", "latitude", "depth"])
+def test_oversized_numbers_skip_only_the_invalid_feature(field):
+    oversized = 10**400
+    if field in ("mag", "time"):
+        invalid = make_feature(id="bad", **{field: oversized})
+    else:
+        coordinates = [142.0, 38.0, 24.5]
+        coordinates[{"longitude": 0, "latitude": 1, "depth": 2}[field]] = oversized
+        invalid = make_feature(id="bad", coordinates=coordinates)
+
+    rows, skipped = parse_features(
+        [make_feature(id="before"), invalid, make_feature(id="after")]
+    )
+
+    assert [row["source_event_id"] for row in rows] == ["before", "after"]
+    assert skipped == 1
+
+
+def test_oversized_optional_updated_timestamp_is_missing():
+    row = parse_feature(make_feature(updated=10**400))
+    assert row is not None and row["source_updated_at"] is None
 
 
 def test_parse_features_counts_skipped():

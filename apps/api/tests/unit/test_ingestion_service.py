@@ -137,6 +137,38 @@ def test_successful_cycle_records_success_and_counts(captured_rows):
     assert session.closed
 
 
+# TC-20 — BUG-son-001, BUG-son-002, BUG-son-003
+def test_invalid_revisions_do_not_reach_upsert_or_fail_the_cycle(captured_rows):
+    valid = feature("a")
+    invalid_revision = feature("a", coordinates=(142.38, 38.29, "bad"))
+    invalid_revision["properties"]["updated"] += 1
+    payload = {
+        "features": [
+            valid,
+            invalid_revision,
+            feature("x" * 65),
+            feature("overflow", mag=10**400),
+            feature("b"),
+        ]
+    }
+    svc, session, calls = build_service(
+        {PRIMARY_URL: httpx.Response(200, json=payload)}
+    )
+
+    result = svc.execute_cycle()
+
+    assert result["success"] is True
+    assert result["inserted"] == 2
+    assert result["skipped_invalid"] == 3
+    assert [row["source_event_id"] for row in captured_rows["rows"]] == ["a", "b"]
+    assert captured_rows["rows"][0]["depth_km"] == 24.5
+    assert session.run.status == "SUCCESS"
+    assert session.run.records_processed == 2
+    assert session.rollbacks == 0
+    assert calls == [PRIMARY_URL]
+    assert session.closed
+
+
 # TC-11
 def test_http_503_on_both_urls_marks_run_failed(captured_rows):
     svc, session, calls = build_service(
