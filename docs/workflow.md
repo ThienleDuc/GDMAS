@@ -309,3 +309,11 @@ docker exec -t gdmas-postgres pg_dump -U postgres gdmas_db > backups/gdmas_backu
 | **Worker Ingestion bị Crash** | Terminal Ingestion thoát ra dấu nhắc lệnh shell | Ngoại lệ chưa bắt (Unhandled exception) do GeoJSON dị biệt | Kiểm tra log lỗi, chạy lại `python -m gdmas.services.ingestion.runner`. Do có cơ chế Upsert, khi chạy lại worker sẽ tự bù đắp dữ liệu thiếu. |
 | **Chưa đủ dữ liệu Re-sampling** | Trend/mùa vụ trả `status=insufficient_data` | Dữ liệu mới nạp hoặc chưa đủ kỳ đầy đủ | Trend dùng ngày khi dưới 28 ngày dữ liệu, tuần từ 28 ngày và tháng từ 180 ngày; bỏ kỳ dở dang khỏi hồi quy. Mùa vụ cần ≥ 14 ngày hoặc ≥ 24 tháng đầy đủ; nếu chưa đủ thì trả chỉ số `null` và kết luận khách quan. |
 
+## 8. Kiểm tra chất lượng backend
+
+Chạy từ `apps/api`: `uv run pytest`, `uv run ruff check .` và `uv run ruff format --check .`. Unit/integration test dùng mock hoặc database tạm trong bộ nhớ, không gọi USGS/DB ngoài.
+
+Đợt bảo trì Task 4 được chia thành hai PR: format/import/typing trước, ngoại lệ/logging sau. Đợt 1 kiểm hợp đồng OpenAPI, metadata ORM, exports và hash mặc định config trước/sau; các nhánh ngoại lệ giữ nguyên. Full lint còn nhóm lỗi của đợt 2 phải được ghi rõ, không tắt rule để làm xanh đợt 1. Chỉ ghi hoàn tất khi đợt 2 đạt toàn bộ gate.
+
+Ruff chỉ miễn lint/format đúng `alembic/versions/001_initial_gdmas_schema.py` vì I4 cấm sửa migration đã phát hành; migration mới vẫn được kiểm tra. Test `test_quality_boundaries.py` bảo vệ hash chuẩn hóa LF của tệp cũ. FastAPI `Depends` được khai báo là lời gọi mặc định an toàn cho B008; rule vẫn bật cho các lời gọi khác.
+

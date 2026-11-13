@@ -5,11 +5,13 @@ Chu kỳ: 5 phút/lần
 """
 
 import time
-import sys
 
 
 def run() -> None:
-    print("[GDMAS-Prediction] Quantitative & Classification t+1 Runner initialized.", flush=True)
+    print(
+        "[GDMAS-Prediction] Quantitative & Classification t+1 Runner initialized.",
+        flush=True,
+    )
     while True:
         try:
             # Placeholder for scheduled prediction cycle

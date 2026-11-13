@@ -5,11 +5,12 @@ Chu kỳ: 1 ngày/lần
 """
 
 import time
-import sys
 
 
 def run() -> None:
-    print("[GDMAS-Clustering] DBSCAN/K-Means Clustering Runner initialized.", flush=True)
+    print(
+        "[GDMAS-Clustering] DBSCAN/K-Means Clustering Runner initialized.", flush=True
+    )
     while True:
         try:
             # Placeholder for scheduled clustering cycle

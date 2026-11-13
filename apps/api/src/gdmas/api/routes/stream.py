@@ -1,8 +1,8 @@
 import asyncio
 import json
 import logging
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Request
 from sqlalchemy import desc
 from sse_starlette.sse import EventSourceResponse
@@ -33,7 +33,7 @@ async def broadcast_database_cleared():
             "total_events": 0,
             "strong_count": 0,
         },
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
     raw_message = {
         "event": "database_cleared",
@@ -52,12 +52,18 @@ async def broadcast_database_cleared():
     return {"success": True, "clients_notified": count}
 
 
-def get_latest_state(since_event_id: Optional[int] = None, since_run_id: Optional[int] = None):
+def get_latest_state(
+    since_event_id: int | None = None, since_run_id: int | None = None
+):
     """Truy vấn an toàn trạng thái sự kiện mới nhất và chu kỳ chạy worker từ PostgreSQL."""
     try:
         with SessionLocal() as db:
             total = db.query(EarthquakeEvent).count()
-            strong = db.query(EarthquakeEvent).filter(EarthquakeEvent.magnitude >= 5.0).count()
+            strong = (
+                db.query(EarthquakeEvent)
+                .filter(EarthquakeEvent.magnitude >= 5.0)
+                .count()
+            )
 
             latest_query = db.query(EarthquakeEvent).order_by(desc(EarthquakeEvent.id))
             latest = latest_query.first()
@@ -72,19 +78,23 @@ def get_latest_state(since_event_id: Optional[int] = None, since_run_id: Optiona
                     .limit(20)
                 )
                 for ev in new_events_query.all():
-                    new_events.append({
-                        "id": ev.id,
-                        "source": ev.source,
-                        "source_event_id": ev.source_event_id,
-                        "event_time": ev.event_time.isoformat() if ev.event_time else None,
-                        "latitude": ev.latitude,
-                        "longitude": ev.longitude,
-                        "depth_km": ev.depth_km,
-                        "magnitude": ev.magnitude,
-                        "magnitude_type": ev.magnitude_type,
-                        "place": ev.place,
-                        "source_url": ev.source_url,
-                    })
+                    new_events.append(
+                        {
+                            "id": ev.id,
+                            "source": ev.source,
+                            "source_event_id": ev.source_event_id,
+                            "event_time": ev.event_time.isoformat()
+                            if ev.event_time
+                            else None,
+                            "latitude": ev.latitude,
+                            "longitude": ev.longitude,
+                            "depth_km": ev.depth_km,
+                            "magnitude": ev.magnitude,
+                            "magnitude_type": ev.magnitude_type,
+                            "place": ev.place,
+                            "source_url": ev.source_url,
+                        }
+                    )
 
             latest_dict = None
             if latest:
@@ -92,7 +102,9 @@ def get_latest_state(since_event_id: Optional[int] = None, since_run_id: Optiona
                     "id": latest.id,
                     "source": latest.source,
                     "source_event_id": latest.source_event_id,
-                    "event_time": latest.event_time.isoformat() if latest.event_time else None,
+                    "event_time": latest.event_time.isoformat()
+                    if latest.event_time
+                    else None,
                     "latitude": latest.latitude,
                     "longitude": latest.longitude,
                     "depth_km": latest.depth_km,
@@ -116,11 +128,18 @@ def get_latest_state(since_event_id: Optional[int] = None, since_run_id: Optiona
                     "id": latest_run.id,
                     "status": latest_run.status,
                     "records_processed": latest_run.records_processed,
-                    "finished_at": latest_run.finished_at.isoformat() if latest_run.finished_at else None,
+                    "finished_at": latest_run.finished_at.isoformat()
+                    if latest_run.finished_at
+                    else None,
                 }
 
             new_run_info = None
-            if since_run_id is not None and latest_run and latest_run.id > since_run_id and latest_run.status == "SUCCESS":
+            if (
+                since_run_id is not None
+                and latest_run
+                and latest_run.id > since_run_id
+                and latest_run.status == "SUCCESS"
+            ):
                 new_run_info = latest_run_dict
 
             return {
@@ -178,7 +197,7 @@ async def stream_earthquakes(request: Request):
                     "latest_event": initial_state.get("latest"),
                     "latest_run": initial_state.get("latest_run"),
                 },
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             yield {
@@ -225,8 +244,12 @@ async def stream_earthquakes(request: Request):
 
                 # 0. PHÁT HIỆN CSDL BỊ XÓA (Demo Bước 2/3: TRUNCATE CSDL)
                 # Khi số lượng bản ghi rơi về 0 hoặc max_id < last_id và CSDL rỗng
-                if (last_total > 0 and current_total == 0) or (last_id > 0 and current_total == 0):
-                    logger.warning(f"SSE phát hiện CSDL vừa bị xóa trống (total: {last_total} -> 0). Bắn sự kiện database_cleared.")
+                if (last_total > 0 and current_total == 0) or (
+                    last_id > 0 and current_total == 0
+                ):
+                    logger.warning(
+                        f"SSE phát hiện CSDL vừa bị xóa trống (total: {last_total} -> 0). Bắn sự kiện database_cleared."
+                    )
                     last_id = 0
                     last_total = 0
                     last_run_id = 0
@@ -238,7 +261,7 @@ async def stream_earthquakes(request: Request):
                             "total_events": 0,
                             "strong_count": 0,
                         },
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": datetime.now(UTC).isoformat(),
                     }
                     yield {
                         "event": "database_cleared",
@@ -267,11 +290,14 @@ async def stream_earthquakes(request: Request):
                         "records_processed": cnt,
                         "total_events": state.get("total", 0),
                         "new_events": new_events,
-                        "timestamp": new_run_info.get("finished_at") or datetime.now(timezone.utc).isoformat(),
+                        "timestamp": new_run_info.get("finished_at")
+                        or datetime.now(UTC).isoformat(),
                     },
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
-                logger.info(f"SSE dispatching ingestion_cycle_completed: Run #{new_run_info.get('id')} (+{cnt} records)")
+                logger.info(
+                    f"SSE dispatching ingestion_cycle_completed: Run #{new_run_info.get('id')} (+{cnt} records)"
+                )
                 yield {
                     "event": "ingestion_cycle_completed",
                     "data": json.dumps(ingestion_payload),
@@ -290,7 +316,7 @@ async def stream_earthquakes(request: Request):
                         "total_events": state.get("total", 0),
                         "latest_event": state.get("latest"),
                     },
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
                 yield {
                     "event": "earthquake_detected",
@@ -307,7 +333,7 @@ async def stream_earthquakes(request: Request):
                         "latest_event": state.get("latest"),
                         "latest_run": state.get("latest_run"),
                     },
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
                 yield {
                     "event": "heartbeat",

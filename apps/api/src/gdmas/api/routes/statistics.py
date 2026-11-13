@@ -1,14 +1,15 @@
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
+
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from gdmas.db.connection import get_db
 from gdmas.models.earthquake import EarthquakeEvent
 from gdmas.schemas.earthquake import (
     EarthquakeStatistics,
-    StatisticsResponse,
     HourlyTimeSeriesPoint,
+    StatisticsResponse,
 )
 
 router = APIRouter(prefix="/statistics", tags=["Statistics"])
@@ -19,7 +20,7 @@ def get_earthquake_statistics(db: Session = Depends(get_db)):
     """
     Trả về các chỉ số thống kê nhanh phục vụ các thẻ KPI và biểu đồ chuỗi thời gian trên Dashboard.
     """
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
     one_day_ago = now_utc - timedelta(hours=24)
 
     # Dữ liệu chuỗi thời gian phân bố theo khung giờ (Pattern 1 & Pattern 2)
@@ -36,17 +37,37 @@ def get_earthquake_statistics(db: Session = Depends(get_db)):
 
     try:
         total = db.query(func.count(EarthquakeEvent.id)).scalar() or 0
-        strong = db.query(func.count(EarthquakeEvent.id)).filter(EarthquakeEvent.magnitude >= 5.0).scalar() or 0
-        moderate = db.query(func.count(EarthquakeEvent.id)).filter(
-            EarthquakeEvent.magnitude >= 4.0, EarthquakeEvent.magnitude < 5.0
-        ).scalar() or 0
-        minor = db.query(func.count(EarthquakeEvent.id)).filter(EarthquakeEvent.magnitude < 4.0).scalar() or 0
-        recent_24h = db.query(func.count(EarthquakeEvent.id)).filter(
-            EarthquakeEvent.event_time >= one_day_ago
-        ).scalar() or 0
+        strong = (
+            db.query(func.count(EarthquakeEvent.id))
+            .filter(EarthquakeEvent.magnitude >= 5.0)
+            .scalar()
+            or 0
+        )
+        moderate = (
+            db.query(func.count(EarthquakeEvent.id))
+            .filter(EarthquakeEvent.magnitude >= 4.0, EarthquakeEvent.magnitude < 5.0)
+            .scalar()
+            or 0
+        )
+        minor = (
+            db.query(func.count(EarthquakeEvent.id))
+            .filter(EarthquakeEvent.magnitude < 4.0)
+            .scalar()
+            or 0
+        )
+        recent_24h = (
+            db.query(func.count(EarthquakeEvent.id))
+            .filter(EarthquakeEvent.event_time >= one_day_ago)
+            .scalar()
+            or 0
+        )
         avg_mag = db.query(func.avg(EarthquakeEvent.magnitude)).scalar() or 0.0
         max_mag = db.query(func.max(EarthquakeEvent.magnitude)).scalar() or 0.0
-        latest = db.query(EarthquakeEvent.event_time).order_by(EarthquakeEvent.event_time.desc()).first()
+        latest = (
+            db.query(EarthquakeEvent.event_time)
+            .order_by(EarthquakeEvent.event_time.desc())
+            .first()
+        )
 
         return StatisticsResponse(
             success=True,

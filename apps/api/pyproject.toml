@@ -26,3 +26,10 @@ dev = [
     "pytest-asyncio>=0.23.5",
     "ruff>=0.3.0",
 ]
+
+[tool.ruff]
+# I4: giữ nguyên migration đã phát hành; migration mới vẫn được kiểm tra.
+extend-exclude = ["alembic/versions/001_initial_gdmas_schema.py"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends"]
