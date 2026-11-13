@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-12-analysis-four-patterns-son
-- Status: validation
+- Status: completed
 - Started: 2026-11-12
 - Last Updated: 2026-11-13
 - Owner: agent | son
@@ -10,8 +10,8 @@
 ---
 
 ## Tiến độ
-Progress: 95%
-Current Phase: Đã hoàn thiện Analysis và test tích hợp offline — chờ PR / conflict-check / merge
+Progress: 100%
+Current Phase: Analysis đã hoàn tất và merge vào develop; Task 4 còn đợt lint/format toàn backend riêng
 
 Completed:
 - Step 1 — `patterns.py`: Pattern 1 (line/scatter/histogram × day/week/month), Pattern 2 (re-sampling + MA + linregress), Pattern 3 (`seasonal_decompose`, chu kỳ năm/tuần, P-03), Pattern 4 (Pearson + Spearman, chống phương sai 0), `sanitize_for_json`, `build_analysis_snapshot`
@@ -20,8 +20,9 @@ Completed:
 - Step 4 — 36 unit test offline pass
 - Step 5 — Sửa BUG-son-004/005, bổ sung test kỳ dở dang và quy ước interval, 5 test tích hợp offline cùng kiểm chứng số học; toàn backend 126 test pass.
 - Step 6 — Đồng bộ SAD, workflow, testcase và task list; merge-forward develop đã chứa Ingestion hoàn tất, không xung đột.
+- Step 7 — PR #6 đã merge vào develop tại eb9b4f82dbf667bc09f8076c334c653f29b10636; 0 conflict, GitHub MERGEABLE/CLEAN, không cấu hình CI checks.
 In Progress:
-- review-pr Phần B: scope/project-review, commit, update, push và kiểm conflict/checks trước merge.
+- none
 Blocked:
 - none
 
@@ -38,7 +39,7 @@ Blocked:
 | Tích hợp PostgreSQL thật (Docker T1) | PASS | `docker compose up -d postgres` + `alembic upgrade head`; 9847 sự kiện USGS `all_month` → `runner --once` 0.97s, 6 bản ghi gắn `service_run_id`; chạy lại thay snapshot (chỉ còn id 7–12); cửa sổ 0 ngày → 0 bản ghi, run `SUCCESS` 0, `/patterns` báo CSDL trống; chạy lại tự tính đủ |
 | T6 `GET /api/v1/patterns` | PASS | HTTP 200, ~34 ms (lần đầu 152 ms); Pattern 1–4 `COMPUTED` kèm khóa FE (`data_points`, `avg_depth`, `slope`, `direction`, `cycle_hours`, `amplitude`, `corr_mag_depth`, `correlation_strength`) |
 | Tài liệu cập nhật | PASS | SAD, workflow và task list phản ánh Analysis thật, --once, snapshot, dữ liệu rỗng/thưa và kỳ dở dang |
-| Project-review | PASS (local) | I1–I7, OCP, testcase, scope và drift đã đối chiếu; 2 finding có bug log fixed và test hồi quy. Kiểm remote/checks trước merge |
+| Project-review | PASS (local) | I1–I7, OCP, testcase, scope và drift đã đối chiếu; 2 finding có bug log fixed và test hồi quy. Đã kiểm merge-tree/merge --dry-run: 0 conflict; GitHub MERGEABLE/CLEAN trước merge PR #6 |
 
 ---
 
@@ -68,9 +69,9 @@ Blocked:
 ---
 
 ## Next Actions
-- review-pr Phần B: scope → project-review → commit → update → push → kiểm 0 conflict.
+- none cho phạm vi Analysis; phần lint/format nền của Task 4 cần proposal/phạm vi riêng.
 
 ---
 
 ## Last Update
-2026-11-13 — Toàn backend 126 test offline pass; sửa 2 finding, cập nhật tài liệu/task list. Giữ validation chờ PR và merge; lint/format nền của Task 4 để phạm vi riêng.
+2026-11-13 — Analysis hoàn tất 100%, PR https://github.com/ThienleDuc/GDMAS/pull/6 đã merge tại eb9b4f82dbf667bc09f8076c334c653f29b10636. Toàn backend 126 test offline pass, 0 conflict; Task 4 còn tiêu chí lint/format nền ngoài phạm vi PR này.
