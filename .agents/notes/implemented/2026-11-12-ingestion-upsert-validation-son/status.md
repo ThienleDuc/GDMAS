@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-12-ingestion-upsert-validation-son
-- Status: validation
+- Status: completed
 - Started: 2026-11-12
 - Last Updated: 2026-11-13
 - Owner: agent | son
@@ -10,8 +10,8 @@
 ---
 
 ## Tiến độ
-Progress: 95%
-Current Phase: Đã sửa finding và qua validation — hoàn tất PR, kiểm tra conflict và merge
+Progress: 100%
+Current Phase: Đã hoàn tất triển khai, sửa finding, validation và merge PR vào develop
 
 Completed:
 - Step 1 — `parser.py`: `parse_feature`, `parse_features`, kiểm tra WGS84 / magnitude / time, timestamp UTC
@@ -19,8 +19,9 @@ Completed:
 - Step 3 — `service.py`: `FeedUnavailableError`, `_fetch_geojson_strict`, `_fetch_features`, `summarize_error`; `execute_cycle` ghi `FAILED` khi cả 2 URL lỗi; giữ nguyên chữ ký cũ
 - Step 4 — 56 unit test offline pass
 - Step 5 — Sửa BUG-son-001/002/003; bổ sung TC-17..TC-20, tổng 77 unit test offline pass; cập nhật SAD và 3 bug log từ template.
+- Step 6 — PR #4 đã merge vào develop: 8a182c4f21b3ef010900ccc5c8a7758395a9083d; 0 conflict, GitHub MERGEABLE/CLEAN, không có CI checks cấu hình.
 In Progress:
-- review-pr Phần B: commit, merge-forward develop, push, kiểm tra conflict/checks và merge PR.
+- none
 Blocked:
 - none
 
@@ -35,7 +36,7 @@ Blocked:
 | Notes check (`notes_index.py --check`) | PASS | |
 | Tích hợp PostgreSQL thật (Docker T1) | PASS | `alembic upgrade head` có `uq_earthquake_source_event`; USGS `all_month` lần 1: +9847 (8.5s, 20 batch); sửa tay 3 dòng rồi nạp lại: `updated=2`, `unchanged=9844` — dòng `source_updated_at` cũ hơn và dòng NULL được khôi phục, dòng mới hơn giữ nguyên; 0 dòng trùng; cả 2 URL lỗi → run `FAILED`, thông báo ≤ 200 ký tự |
 | Tài liệu cập nhật | PASS | SAD §4.2 và cây mã nguồn phản ánh parser/upsert, quy tắc ID/độ sâu/số tràn; không đổi API/schema |
-| Project-review | PASS (local) | I1–I7, OCP/Churn, testcase, quyết định và scope sạch; 3 finding đã có test hồi quy. Kiểm tra conflict remote thực hiện trước merge |
+| Project-review | PASS (local) | I1–I7, OCP/Churn, testcase, quyết định và scope sạch; 3 finding đã có test hồi quy. Đã merge-forward develop mới nhất, git merge-tree và merge --dry-run đạt 0 conflict; GitHub MERGEABLE/CLEAN trước merge PR #4 |
 
 ---
 
@@ -63,9 +64,9 @@ Blocked:
 ---
 
 ## Next Actions
-- review-pr Phần B: scope → project-review → commit → update → push → kiểm 0 conflict.
+- none — chức năng đã merge; cập nhật trạng thái completed qua PR tài liệu riêng theo review-pr.
 
 ---
 
 ## Last Update
-2026-11-13 — Đã sửa 3 finding, kiểm chứng 77 test offline, cập nhật SAD/testcase/bug logs; giữ `validation` chờ kiểm tra remote và merge.
+2026-11-13 — Hoàn tất 100%; PR https://github.com/ThienleDuc/GDMAS/pull/4 đã merge vào develop tại 8a182c4f21b3ef010900ccc5c8a7758395a9083d. Bản sửa 3 finding có 77 test offline pass; notes/scope/checks cục bộ đạt, 0 conflict. Không có CI checks cấu hình trên GitHub.
