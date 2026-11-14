@@ -5,11 +5,26 @@
   "properties": {
     "event": {
       "type": "string",
-      "enum": ["earthquake_detected", "heartbeat", "alert"]
+      "enum": [
+        "earthquake_detected",
+        "earthquake_alert",
+        "ingestion_cycle_completed",
+        "database_cleared",
+        "heartbeat",
+        "alert"
+      ]
     },
-    "timestamp": { "type": "string", "format": "date-time" },
-    "data": { "type": "object" }
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object"
+    }
   },
-  "required": ["event", "timestamp", "data"]
+  "required": [
+    "event",
+    "timestamp",
+    "data"
+  ]
 }
-
