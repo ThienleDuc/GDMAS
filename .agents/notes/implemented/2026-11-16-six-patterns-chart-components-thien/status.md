@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-16-six-patterns-chart-components-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-16
 - Last Updated: 2026-11-16
 - Owner: agent | thien
@@ -10,8 +10,8 @@
 ---
 
 ## Tiến độ
-Progress: 100% (code + test + docs xong; chưa commit theo yêu cầu người dùng)
-Current Phase: Step 7 — Chờ người dùng kiểm thử trước khi commit
+Progress: 100% (đã merge PR #12 vào `develop`)
+Current Phase: Hoàn tất — `Status: completed`
 
 Completed:
 - Step 1 — `contracts/schemas/patterns.json`, `contracts/examples/patterns_sample.json`, `contracts/README.md` §3.3.
@@ -23,7 +23,7 @@ Completed:
 - Fix kèm theo — bổ sung `apps/web/src/lib/api-client.ts` (module thiếu trên `develop`) + ngoại lệ `!apps/web/src/lib/` trong `.gitignore`.
 
 In Progress:
-- Chờ người dùng tự kiểm thử giao diện trước khi chạy `scope` / `project-review` / commit / push.
+- none
 
 Blocked:
 - none
@@ -68,10 +68,9 @@ Blocked:
 ---
 
 ## Next Actions
-- Người dùng kiểm thử giao diện (`cd apps/web && pnpm dev`) với CSDL rỗng và có dữ liệu.
-- Sau khi người dùng xác nhận: chạy `./scripts/git-ship.sh scope`, `project-review`, commit tiếng Việt, `update`, `push`, tạo PR và merge khi 0 conflict.
+- none — PR [#12](https://github.com/ThienleDuc/GDMAS/pull/12) đã merge vào `develop` (merge commit `4c8d1a7`), nhánh `feat/2026-11-16-six-patterns-chart-components-thien` đã dọn.
 
 ---
 
 ## Last Update
-2026-11-16 — Hoàn tất code + test + hợp đồng + tài liệu; validation PASS; chuyển `Status: validation`, chờ người dùng kiểm thử trước khi commit.
+2026-11-16 — Hoàn tất 100%; PR #12 merge vào `develop` (`Merge pull request #12`, commit `4c8d1a7`, commit nội dung `8faa812`). `pnpm test` 12/12 pass, `pnpm build` PASS, `notes_index.py --check` OK, `merge --dry-run` báo `MERGEABLE/CLEAN` trước khi merge.
