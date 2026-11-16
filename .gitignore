@@ -95,6 +95,11 @@ apps/web/dist-ssr/
 **/*.tsbuildinfo
 .vite/
 
+# Ngoại lệ: thư mục mã nguồn `apps/web/src/lib/` của Frontend
+# (luật `lib/` ở mục Python phía trên vô tình nuốt module HTTP client dùng chung)
+!apps/web/src/lib/
+!apps/web/src/lib/**
+
 # ------------------------------------------------------------------------------
 # 5. DOCKER & DATABASE STORAGE (Persistent Data & Backups)
 # ------------------------------------------------------------------------------

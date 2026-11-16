@@ -1,20 +1,38 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  BarChart3,
-  Info,
-  RefreshCw,
+  Activity,
   AlertTriangle,
+  BarChart3,
+  Calendar,
   CheckCircle2,
   Clock,
-  Layers,
-  TrendingUp,
-  Activity,
   Compass,
-  Calendar,
+  Layers,
+  RefreshCw,
   Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { getPatterns, PatternsResponse } from "../../services/earthquake-api";
 import { useSSE } from "../../hooks/useSSE";
+import {
+  asClassification,
+  asCorrelation,
+  asPrediction,
+  asSeasonality,
+  asTemporal,
+  asTrend,
+  ChartPanel,
+  ClassificationPatternChart,
+  CorrelationHeatmap,
+  ForecastPatternChart,
+  resolvePatternView,
+  SeasonalityPatternChart,
+  TemporalPatternCharts,
+  toObservedFromLineChart,
+  toObservedFromTrend,
+  TrendPatternChart,
+} from "../../components/charts";
+import type { PatternLike, TimeInterval } from "../../components/charts";
 
 // Cấu hình metadata hiển thị cho 6 patterns chuẩn Đồ án
 interface PatternMeta {
@@ -33,8 +51,9 @@ const PATTERNS_META: Record<string, PatternMeta> = {
     order: 1,
     id: "pattern_1",
     vietnameseName: "Pattern 1: Biểu diễn chuỗi thời gian & Phân phối",
-    description: "Biểu đồ Line & Scatter theo mốc thời gian, kết hợp Histogram phân phối độ sâu và cường độ địa chấn.",
-    algorithm: "Time-Series Plotting, Magnitude Distribution Histogram",
+    description:
+      "Line chart biến thiên số lượng/độ lớn, Scatter plot phân tán depth × magnitude và Histogram phân phối tần suất theo khoảng độ lớn; chuyển khung Ngày / Tuần / Tháng.",
+    algorithm: "Time-Series Plotting, Scatter & Magnitude Distribution Histogram",
     icon: Activity,
     colorBorder: "border-cyan-500/30 hover:border-cyan-500/60",
     colorBadge: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
@@ -43,8 +62,9 @@ const PATTERNS_META: Record<string, PatternMeta> = {
     order: 2,
     id: "pattern_2",
     vietnameseName: "Pattern 2: Phân tích đường xu hướng (Trend)",
-    description: "Trích xuất xu hướng biến thiên sau quá trình Re-sampling (theo ngày/tuần) nhằm loại bỏ nhiễu rung lắc ngắn hạn.",
-    algorithm: "Moving Average Re-sampling & Linear Trend Line",
+    description:
+      "So sánh giá trị thực tế với đường xu hướng (trend_value) sau Re-sampling; kéo Brush để zoom khoảng phân tích và đọc độ dốc/ý nghĩa thống kê.",
+    algorithm: "Moving Average Re-sampling & Linear Trend Line (slope, R², p-value)",
     icon: TrendingUp,
     colorBorder: "border-indigo-500/30 hover:border-indigo-500/60",
     colorBadge: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30",
@@ -53,7 +73,8 @@ const PATTERNS_META: Record<string, PatternMeta> = {
     order: 3,
     id: "pattern_3",
     vietnameseName: "Pattern 3: Chu kỳ mùa vụ (Seasonality)",
-    description: "Phát hiện tính chu kỳ tuần hoàn lặp lại của các đợt giải phóng ứng suất địa chất theo các khung giờ hoặc tháng.",
+    description:
+      "Seasonal line sau Re-sampling: hệ số mùa vụ từng kỳ, cường độ mùa vụ, biên độ và phần diễn giải kết quả phân rã.",
     algorithm: "Seasonal Decomposition / Periodic Spectral Peak",
     icon: Calendar,
     colorBorder: "border-emerald-500/30 hover:border-emerald-500/60",
@@ -63,7 +84,8 @@ const PATTERNS_META: Record<string, PatternMeta> = {
     order: 4,
     id: "pattern_4",
     vietnameseName: "Pattern 4: Ma trận tương quan đa biến (Correlation)",
-    description: "Đánh giá mối tương quan tuyến tính Pearson giữa Magnitude (cường độ), Depth (độ sâu) và Tần suất xuất hiện.",
+    description:
+      "Heatmap tương quan Pearson 5 biến (magnitude, depth_km, latitude, longitude, tần suất sự kiện) với thang màu phân kỳ và tooltip hệ số chính xác 4 chữ số.",
     algorithm: "Multivariate Pearson Correlation Matrix",
     icon: Layers,
     colorBorder: "border-amber-500/30 hover:border-amber-500/60",
@@ -73,8 +95,9 @@ const PATTERNS_META: Record<string, PatternMeta> = {
     order: 5,
     id: "pattern_5",
     vietnameseName: "Pattern 5: Dự báo định lượng ngày kế tiếp (t+1)",
-    description: "Dự báo cường độ hoặc số lượng sự kiện địa chấn tại thời điểm t+1 với khoảng tin cậy 95% (Lower / Upper bound).",
-    algorithm: "ARIMA / Exponential Smoothing Time-Series Forecaster",
+    description:
+      "Số sự kiện dự báo ngày t+1 kèm khoảng tin cậy 95%, tên/phiên bản mô hình và sai số kiểm định (MAE, RMSE); phân biệt rõ dữ liệu quan sát và dự báo.",
+    algorithm: "ARIMA / Ridge Time-Series Forecaster (95% Confidence Interval)",
     icon: Compass,
     colorBorder: "border-rose-500/30 hover:border-rose-500/60",
     colorBadge: "bg-rose-500/10 text-rose-400 border-rose-500/30",
@@ -82,8 +105,9 @@ const PATTERNS_META: Record<string, PatternMeta> = {
   pattern_6: {
     order: 6,
     id: "pattern_6",
-    vietnameseName: "Pattern 6: Phân loại rủi ro hoạt động (t+1)",
-    description: "Phân loại xác suất rủi ro địa chấn ngày t+1 thành các mức LOW / MEDIUM / HIGH dựa trên đặc trưng chuỗi lịch sử.",
+    vietnameseName: "Pattern 6: Phân loại mức độ hoạt động (t+1)",
+    description:
+      "Nhãn rủi ro LOW / MEDIUM / HIGH / CRITICAL kèm phân phối xác suất từng lớp; chỉ báo thống kê thử nghiệm, không thay thế cảnh báo thiên tai chính thức.",
     algorithm: "Random Forest Classifier / Multi-class Gradient Boosting",
     icon: Sparkles,
     colorBorder: "border-purple-500/30 hover:border-purple-500/60",
@@ -91,11 +115,23 @@ const PATTERNS_META: Record<string, PatternMeta> = {
   },
 };
 
+function toPanelProps(meta: PatternMeta) {
+  return {
+    order: meta.order,
+    icon: meta.icon,
+    description: meta.description,
+    algorithm: meta.algorithm,
+    accentBorder: meta.colorBorder,
+    accentBadge: meta.colorBadge,
+  };
+}
+
 export const StatisticsPage: React.FC = () => {
   const [data, setData] = useState<PatternsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [temporalInterval, setTemporalInterval] = useState<TimeInterval>("day");
 
   const fetchPatternsData = useCallback(async () => {
     try {
@@ -148,6 +184,38 @@ export const StatisticsPage: React.FC = () => {
 
   const isDbEmpty = !loading && (!data || !data.success || data.total_patterns === 0);
 
+  const patternsById = new Map<string, PatternLike>(
+    (data?.patterns ?? []).map((pattern) => [pattern.id, pattern as PatternLike]),
+  );
+  const getPattern = (id: string): PatternLike | undefined => patternsById.get(id);
+
+  const p1 = getPattern("pattern_1");
+  const p2 = getPattern("pattern_2");
+  const p3 = getPattern("pattern_3");
+  const p4 = getPattern("pattern_4");
+  const p5 = getPattern("pattern_5");
+  const p6 = getPattern("pattern_6");
+
+  const view1 = resolvePatternView(p1);
+  const view2 = resolvePatternView(p2);
+  const view3 = resolvePatternView(p3);
+  const view4 = resolvePatternView(p4);
+  const view5 = resolvePatternView(p5);
+  const view6 = resolvePatternView(p6);
+
+  const temporalMetrics = asTemporal(view1.metrics);
+  const trendMetrics = asTrend(view2.metrics);
+  const seasonalityMetrics = asSeasonality(view3.metrics);
+  const correlationMetrics = asCorrelation(view4.metrics);
+  const predictionMetrics = asPrediction(view5.metrics);
+  const classificationMetrics = asClassification(view6.metrics);
+
+  // Lịch sử quan sát cho biểu đồ dự báo: ưu tiên Pattern 2, fallback Pattern 1.
+  const observedFromTrend = toObservedFromTrend(trendMetrics.series);
+  const observedFromTemporal = toObservedFromLineChart(temporalMetrics.line_chart);
+  const forecastObserved = observedFromTrend.length > 0 ? observedFromTrend : observedFromTemporal;
+  const forecastObservedLabel = observedFromTrend.length > 0 ? "từ Pattern 2" : "từ Pattern 1";
+
   return (
     <div className="space-y-6">
       {/* Tiêu đề & Nút làm mới */}
@@ -158,7 +226,11 @@ export const StatisticsPage: React.FC = () => {
             <span>6 Patterns Phân Tích Chuỗi Thời Gian & Dự Báo</span>
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Yêu cầu bắt buộc Đồ án: Trực quan hóa 6 patterns chuỗi thời gian, phân cụm không gian và dự báo t+1 từ CSDL PostgreSQL.
+            Trực quan hóa 6 patterns chuỗi thời gian từ CSDL PostgreSQL qua Recharts — timestamps UTC, tọa độ WGS84.
+          </p>
+          <p className="mt-1 text-[11px] text-slate-500">
+            Nguồn: <span className="font-mono">GET /api/v1/patterns</span> · Hợp đồng:{" "}
+            <span className="font-mono">contracts/schemas/patterns.json</span>
           </p>
         </div>
 
@@ -189,7 +261,7 @@ export const StatisticsPage: React.FC = () => {
                 </span>
               </div>
               <p className="text-sm text-slate-300">
-                Toàn bộ các bảng kết quả phân tích chuỗi thời gian, phân cụm DBSCAN và dự báo ngày kế tiếp (t+1) hiện đang ở trạng thái rỗng trong PostgreSQL.
+                Toàn bộ các bảng kết quả phân tích chuỗi thời gian, phân cụm DBSCAN và dự báo ngày kế tiếp (t+1) hiện đang ở trạng thái rỗng trong PostgreSQL. Mọi biểu đồ bên dưới hiển thị Empty State, không dùng số liệu dự phòng.
               </p>
               <div className="mt-3 p-3 bg-black/40 rounded-lg border border-slate-800 text-xs font-mono text-slate-300 space-y-1">
                 <div className="text-slate-400 font-sans font-semibold mb-1">
@@ -218,7 +290,7 @@ export const StatisticsPage: React.FC = () => {
           <div className="flex items-center space-x-3">
             <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
             <div className="text-xs sm:text-sm text-emerald-200">
-              <span className="font-semibold text-emerald-400">Đã đồng bộ CSDL:</span> Toàn bộ 6 Patterns chuỗi thời gian và không gian đã được tính toán đầy đủ.
+              <span className="font-semibold text-emerald-400">Đã đồng bộ CSDL:</span> Đã nhận {data?.total_patterns ?? 0}/6 patterns từ PostgreSQL.
             </div>
           </div>
           {data?.last_updated && (
@@ -230,158 +302,81 @@ export const StatisticsPage: React.FC = () => {
         </div>
       )}
 
-      {/* GRID 6 PATTERNS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {Object.entries(PATTERNS_META).map(([key, meta]) => {
-          const livePattern = data?.patterns?.find((p) => p.id === key);
-          const isComputed = livePattern?.status === "COMPUTED";
-          const metrics = livePattern?.metrics || {};
-          const IconComp = meta.icon;
+      {/* 6 PATTERN PANELS */}
+      <div className="space-y-5">
+        <ChartPanel
+          {...toPanelProps(PATTERNS_META.pattern_1)}
+          title={PATTERNS_META.pattern_1.vietnameseName}
+          status={p1?.status}
+          period={p1?.period}
+          available={view1.available}
+          emptyReason={view1.reason}
+        >
+          <TemporalPatternCharts
+            metrics={temporalMetrics}
+            interval={temporalInterval}
+            onIntervalChange={setTemporalInterval}
+          />
+        </ChartPanel>
 
-          return (
-            <div
-              key={key}
-              className={`rounded-xl border bg-slate-900/60 p-5 flex flex-col justify-between transition-all ${
-                isComputed
-                  ? `${meta.colorBorder} bg-gradient-to-b from-slate-900/80 to-slate-950/90 shadow-md`
-                  : "border-slate-800 opacity-70 hover:opacity-100"
-              }`}
-            >
-              <div>
-                {/* Header card: Icon + Badge Status */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    <div className="p-2 bg-slate-800/80 rounded-lg border border-slate-700/60">
-                      <IconComp className="h-4 w-4 text-slate-300" />
-                    </div>
-                    <span className="text-xs font-mono font-semibold text-slate-300">
-                      #{meta.order}
-                    </span>
-                  </div>
+        <ChartPanel
+          {...toPanelProps(PATTERNS_META.pattern_2)}
+          title={PATTERNS_META.pattern_2.vietnameseName}
+          status={p2?.status}
+          period={p2?.period}
+          available={view2.available}
+          emptyReason={view2.reason}
+        >
+          <TrendPatternChart metrics={trendMetrics} />
+        </ChartPanel>
 
-                  {isComputed ? (
-                    <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/30 flex items-center space-x-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                      <span>COMPUTED</span>
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border bg-rose-500/10 text-rose-400 border-rose-500/30">
-                      CHƯA CÓ TRONG CSDL
-                    </span>
-                  )}
-                </div>
+        <ChartPanel
+          {...toPanelProps(PATTERNS_META.pattern_3)}
+          title={PATTERNS_META.pattern_3.vietnameseName}
+          status={p3?.status}
+          period={p3?.period}
+          available={view3.available}
+          emptyReason={view3.reason}
+        >
+          <SeasonalityPatternChart metrics={seasonalityMetrics} />
+        </ChartPanel>
 
-                {/* Tên & Mô tả */}
-                <h3 className="text-base font-semibold text-slate-100 mb-1.5 leading-snug">
-                  {meta.vietnameseName}
-                </h3>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                  {meta.description}
-                </p>
+        <ChartPanel
+          {...toPanelProps(PATTERNS_META.pattern_4)}
+          title={PATTERNS_META.pattern_4.vietnameseName}
+          status={p4?.status}
+          period={p4?.period}
+          available={view4.available}
+          emptyReason={view4.reason}
+        >
+          <CorrelationHeatmap metrics={correlationMetrics} />
+        </ChartPanel>
 
-                {/* Thông số đo đạc từ CSDL (Chỉ hiện khi COMPUTED) */}
-                {isComputed ? (
-                  <div className="bg-slate-950/60 rounded-lg p-3 border border-slate-800/80 space-y-1.5 font-mono text-xs">
-                    <div className="text-[11px] text-cyan-400 font-sans font-semibold border-b border-slate-800 pb-1 flex justify-between">
-                      <span>Chỉ số thực tế (PostgreSQL):</span>
-                      <span className="text-slate-400 font-mono text-[10px]">{livePattern?.period}</span>
-                    </div>
+        <ChartPanel
+          {...toPanelProps(PATTERNS_META.pattern_5)}
+          title={PATTERNS_META.pattern_5.vietnameseName}
+          status={p5?.status}
+          period={p5?.period}
+          available={view5.available}
+          emptyReason={view5.reason}
+        >
+          <ForecastPatternChart
+            metrics={predictionMetrics}
+            observed={forecastObserved}
+            observedLabel={forecastObservedLabel}
+          />
+        </ChartPanel>
 
-                    {key === "pattern_1" && (
-                      <>
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Mẫu thời gian:</span>
-                          <span className="text-cyan-300">{metrics.data_points ?? 100} điểm</span>
-                        </div>
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Độ sâu TB:</span>
-                          <span>{metrics.avg_depth ? `${metrics.avg_depth.toFixed(1)} km` : "24.5 km"}</span>
-                        </div>
-                      </>
-                    )}
-
-                    {key === "pattern_2" && (
-                      <>
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Độ dốc (Slope):</span>
-                          <span className="text-indigo-300">{metrics.slope ? metrics.slope.toFixed(4) : "+0.0125"}</span>
-                        </div>
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Xu hướng:</span>
-                          <span className="text-amber-400">{metrics.direction ?? "Tăng nhẹ (Upward)"}</span>
-                        </div>
-                      </>
-                    )}
-
-                    {key === "pattern_3" && (
-                      <>
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Chu kỳ chính:</span>
-                          <span className="text-emerald-300">{metrics.cycle_hours ?? "24 Giờ (Diurnal)"}</span>
-                        </div>
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Đỉnh biên độ:</span>
-                          <span>{metrics.amplitude ? metrics.amplitude.toFixed(2) : "1.42"}</span>
-                        </div>
-                      </>
-                    )}
-
-                    {key === "pattern_4" && (
-                      <>
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Mag vs Depth:</span>
-                          <span className="text-amber-300">{metrics.corr_mag_depth ? metrics.corr_mag_depth.toFixed(3) : "-0.184"}</span>
-                        </div>
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Mức độ tương quan:</span>
-                          <span>{metrics.correlation_strength ?? "Tuyến tính nghịch yếu"}</span>
-                        </div>
-                      </>
-                    )}
-
-                    {key === "pattern_5" && (
-                      <>
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Dự báo Mag t+1:</span>
-                          <span className="text-rose-400 font-bold">{metrics.predicted_value ? metrics.predicted_value.toFixed(2) : "4.35"}</span>
-                        </div>
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Khoảng 95%:</span>
-                          <span>[{metrics.lower_bound ? metrics.lower_bound.toFixed(2) : "3.80"} - {metrics.upper_bound ? metrics.upper_bound.toFixed(2) : "4.90"}]</span>
-                        </div>
-                      </>
-                    )}
-
-                    {key === "pattern_6" && (
-                      <>
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Mức độ dự báo:</span>
-                          <span className="text-purple-400 font-bold">{metrics.predicted_label ?? "MEDIUM"}</span>
-                        </div>
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Mô hình:</span>
-                          <span className="text-slate-400">{metrics.model_name ?? "Random Forest"}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-slate-950/40 rounded-lg p-3 border border-dashed border-slate-800 text-center py-4">
-                    <span className="text-xs text-slate-500 italic">
-                      Dữ liệu trống trong CSDL (Chưa phân tích)
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer: Thuật toán */}
-              <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-start space-x-2 text-[11px] text-slate-400">
-                <Info className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5" />
-                <span className="line-clamp-2">{meta.algorithm}</span>
-              </div>
-            </div>
-          );
-        })}
+        <ChartPanel
+          {...toPanelProps(PATTERNS_META.pattern_6)}
+          title={PATTERNS_META.pattern_6.vietnameseName}
+          status={p6?.status}
+          period={p6?.period}
+          available={view6.available}
+          emptyReason={view6.reason}
+        >
+          <ClassificationPatternChart metrics={classificationMetrics} />
+        </ChartPanel>
       </div>
     </div>
   );
