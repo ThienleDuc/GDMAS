@@ -1,0 +1,49 @@
+{
+  "success": true,
+  "data": {
+    "algorithm": "DBSCAN",
+    "parameters": { "eps_km": 150, "min_samples": 5, "metric": "haversine" },
+    "clusters_count": 3,
+    "noise_count": 24,
+    "calculated_at": "2026-11-15T11:00:00Z",
+    "clusters": [
+      {
+        "cluster_id": 0,
+        "center_latitude": 37.7749,
+        "center_longitude": 142.4194,
+        "event_count": 48,
+        "avg_magnitude": 4.6,
+        "max_magnitude": 6.1,
+        "radius_km": 150,
+        "name": "Vùng rãnh Nhật Bản - Tonga",
+        "dominant_place": "Off the east coast of Honshu, Japan"
+      },
+      {
+        "cluster_id": 1,
+        "center_latitude": 35.2,
+        "center_longitude": -119.5,
+        "event_count": 45,
+        "avg_magnitude": 2.8,
+        "max_magnitude": 4.4,
+        "radius_km": 96.5,
+        "name": "Đới đứt gãy San Andreas - California",
+        "dominant_place": "Central California"
+      },
+      {
+        "cluster_id": 2,
+        "center_latitude": 2.5,
+        "center_longitude": 98.2,
+        "event_count": 28,
+        "avg_magnitude": 4.9,
+        "max_magnitude": 6.4,
+        "radius_km": 132.8,
+        "name": "Vùng rãnh rạn nứt Indonesia - Sunda Arc",
+        "dominant_place": "Northern Sumatra, Indonesia"
+      }
+    ],
+    "noise_points": [
+      { "event_id": 901, "latitude": -60.1, "longitude": 150.2 }
+    ]
+  },
+  "last_updated": "2026-11-15T11:00:00Z"
+}

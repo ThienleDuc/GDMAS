@@ -14,6 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useSSE } from "../hooks/useSSE";
+import { ConnectionStatusBadge } from "../components/ui/ConnectionStatusBadge";
 import { IngestionToast, ToastData } from "../components/ui/IngestionToast";
 import { formatEventTime } from "../utils/timezone";
 
@@ -44,7 +45,7 @@ export const DashboardLayout: React.FC = () => {
   }, []);
 
   // Kết nối SSE để nhận thông báo cào dữ liệu tự động 5 phút
-  const { data: sseData } = useSSE("/api/v1/stream/earthquakes");
+  const { data: sseData, status: sseStatus, reconnectAttempt } = useSSE("/api/v1/stream/earthquakes");
 
   useEffect(() => {
     if (!sseData) return;
@@ -214,6 +215,7 @@ export const DashboardLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-4">
+            <ConnectionStatusBadge status={sseStatus} reconnectAttempt={reconnectAttempt} />
             <div className="hidden sm:flex items-center space-x-2 rounded-md bg-slate-800/80 px-3 py-1 border border-slate-700/60 text-xs font-mono text-slate-300">
               <Radio className="h-3.5 w-3.5 text-cyan-400 animate-pulse" />
               <span>{currentTimeUtc || "UTC SYNC"}</span>

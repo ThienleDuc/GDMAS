@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gdmas.local/schemas/health.json",
+  "title": "GET /api/v1/health response",
+  "description": "Hợp đồng kiểm tra sức khoẻ Database API (T6) và kết nối PostgreSQL (T1). Timestamp UTC ISO 8601 (hậu tố Z).",
+  "type": "object",
+  "required": ["success", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "success": { "type": "boolean" },
+    "data": {
+      "type": "object",
+      "required": ["status", "database", "timestamp"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["healthy", "degraded", "unhealthy"],
+          "description": "healthy = API + DB bình thường; degraded = API sống nhưng thiếu dữ liệu/worker trễ; unhealthy = không phục vụ được."
+        },
+        "database": { "type": "string", "enum": ["connected", "disconnected"] },
+        "version": { "type": "string", "examples": ["1.0.0"] },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "uptime_seconds": { "type": "number", "minimum": 0 }
+      }
+    },
+    "message": { "type": "string" }
+  }
+}

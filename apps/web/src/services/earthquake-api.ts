@@ -1,4 +1,16 @@
-import { fetchApi } from "../lib/api-client";
+import { ApiError, fetchApi } from "../lib/api-client.ts";
+import type {
+  ClassificationsResponse,
+  ClustersResponse,
+  CorrelationResponse,
+  HealthResponse,
+  OptionalApiResult,
+  PredictionsResponse,
+  SeasonalityResponse,
+  SystemStatusResponse,
+  TemporalResponse,
+  TrendResponse,
+} from "../contracts/index.ts";
 
 export interface EarthquakeItem {
   id: number;
@@ -61,15 +73,35 @@ export interface PatternItem {
   name: string;
   type: string;
   status: "COMPUTED" | "PENDING";
-  metrics: Record<string, any>;
+  /** Chưa siết type theo từng pattern ở tầng service; component dùng typed view. */
+  metrics: Record<string, unknown>;
   period: string;
+}
+
+/**
+ * Payload legacy của `clustering_summary` (do T4/demo_seeder sinh) — xem
+ * `contracts/schemas/clusters.json#/$defs/legacyCluster`. Adapter `normalizeClusters()`
+ * trong `components/map/map-data.ts` ánh xạ sang canonical `ClusterSummary`.
+ */
+export interface LegacyClusterItem {
+  id: number;
+  name?: string | null;
+  lat: number;
+  lon: number;
+  events_count: number;
+  avg_mag?: number | null;
+}
+
+export interface ClusteringSummary {
+  clusters?: LegacyClusterItem[];
+  [key: string]: unknown;
 }
 
 export interface PatternsResponse {
   success: boolean;
   total_patterns: number;
   patterns: PatternItem[];
-  clustering_summary?: any;
+  clustering_summary?: ClusteringSummary | null;
   message?: string;
   last_updated?: string;
 }
@@ -84,39 +116,74 @@ export interface QueryEarthquakeParams {
   search?: string;
   sort_by?: "event_time" | "magnitude" | "depth_km";
   order?: "asc" | "desc";
+  /** ISO 8601 UTC (hậu tố Z). */
+  start_time?: string;
+  /** ISO 8601 UTC (hậu tố Z). */
+  end_time?: string;
+  /** Bounding box WGS84. */
+  min_lat?: number;
+  max_lat?: number;
+  min_lon?: number;
+  max_lon?: number;
+}
+
+function buildQuery(params: Record<string, string | number | undefined>): string {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue;
+    if (typeof value === "string" && !value.trim()) continue;
+    query.set(key, String(value));
+  }
+  const qs = query.toString();
+  return qs ? `?${qs}` : "";
 }
 
 /**
- * Lấy danh sách sự kiện địa chấn với bộ lọc và phân trang
+ * Lấy danh sách sự kiện địa chấn với bộ lọc và phân trang.
+ * Hỗ trợ khoảng thời gian UTC (`start_time`/`end_time`) và bounding box WGS84.
  */
-export async function getEarthquakes(params: QueryEarthquakeParams = {}): Promise<EarthquakeListResponse> {
-  const query = new URLSearchParams();
-  if (params.page) query.set("page", params.page.toString());
-  if (params.limit) query.set("limit", params.limit.toString());
-  if (params.min_magnitude !== undefined) query.set("min_magnitude", params.min_magnitude.toString());
-  if (params.max_magnitude !== undefined) query.set("max_magnitude", params.max_magnitude.toString());
-  if (params.min_depth !== undefined) query.set("min_depth", params.min_depth.toString());
-  if (params.max_depth !== undefined) query.set("max_depth", params.max_depth.toString());
-  if (params.search?.trim()) query.set("search", params.search.trim());
-  if (params.sort_by) query.set("sort_by", params.sort_by);
-  if (params.order) query.set("order", params.order);
+export async function getEarthquakes(
+  params: QueryEarthquakeParams = {},
+  signal?: AbortSignal,
+): Promise<EarthquakeListResponse> {
+  const qs = buildQuery({
+    page: params.page,
+    limit: params.limit,
+    min_magnitude: params.min_magnitude,
+    max_magnitude: params.max_magnitude,
+    min_depth: params.min_depth,
+    max_depth: params.max_depth,
+    search: params.search?.trim(),
+    sort_by: params.sort_by,
+    order: params.order,
+    start_time: params.start_time,
+    end_time: params.end_time,
+    min_lat: params.min_lat,
+    max_lat: params.max_lat,
+    min_lon: params.min_lon,
+    max_lon: params.max_lon,
+  });
 
-  const endpoint = `/api/v1/earthquakes${query.toString() ? `?${query.toString()}` : ""}`;
-  return fetchApi<EarthquakeListResponse>(endpoint);
+  return fetchApi<EarthquakeListResponse>(`/api/v1/earthquakes${qs}`, { signal });
 }
 
 /**
  * Lấy thông tin chi tiết một sự kiện địa chấn
  */
-export async function getEarthquakeDetail(eventId: string | number): Promise<EarthquakeItem> {
-  return fetchApi<EarthquakeItem>(`/api/v1/earthquakes/${eventId}`);
+export async function getEarthquakeDetail(
+  eventId: string | number,
+  signal?: AbortSignal,
+): Promise<EarthquakeItem> {
+  return fetchApi<EarthquakeItem>(`/api/v1/earthquakes/${eventId}`, { signal });
 }
 
 /**
  * Lấy dữ liệu thống kê KPI và chuỗi thời gian tổng quan
  */
-export async function getEarthquakeStatistics(): Promise<StatisticsResponse> {
-  return fetchApi<StatisticsResponse>("/api/v1/statistics/earthquakes");
+export async function getEarthquakeStatistics(
+  signal?: AbortSignal,
+): Promise<StatisticsResponse> {
+  return fetchApi<StatisticsResponse>("/api/v1/statistics/earthquakes", { signal });
 }
 
 /**
@@ -131,7 +198,146 @@ export async function syncUsgsData(): Promise<SyncResponse> {
 /**
  * Lấy danh sách và kết quả 6 Patterns phân tích chuỗi thời gian từ CSDL
  */
-export async function getPatterns(): Promise<PatternsResponse> {
-  return fetchApi<PatternsResponse>("/api/v1/patterns");
+export async function getPatterns(signal?: AbortSignal): Promise<PatternsResponse> {
+  return fetchApi<PatternsResponse>("/api/v1/patterns", { signal });
 }
 
+/**
+ * Gọi một endpoint "có thể chưa tồn tại" trên Backend.
+ *
+ * - 200 → `{ data, unavailable: false }`
+ * - 404 → `{ data: null, unavailable: true }` (UI hiển thị "BE chưa triển khai endpoint",
+ *   **không** thay bằng mock — quy tắc §3.8 contracts/README.md)
+ * - lỗi khác (0/500/…) → ném `ApiError` để trang hiển thị Error State.
+ */
+export async function getOptionalApi<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<OptionalApiResult<T>> {
+  try {
+    const data = await fetchApi<T>(path, init);
+    return { data, unavailable: false, status: 200 };
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return { data: null, unavailable: true, status: 404, message: error.message };
+    }
+    throw error;
+  }
+}
+
+/** GET /api/v1/health — Database API + kết nối PostgreSQL (T6 + T1). */
+export async function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
+  return fetchApi<HealthResponse>("/api/v1/health", { signal });
+}
+
+/** GET /api/v1/health nhưng chịu được 404 (endpoint chưa triển khai). */
+export async function getHealthOptional(
+  signal?: AbortSignal,
+): Promise<OptionalApiResult<HealthResponse>> {
+  return getOptionalApi<HealthResponse>("/api/v1/health", { signal });
+}
+
+/** GET /api/v1/system/status — trạng thái 7 Terminals + `last_run`. */
+export async function getSystemStatus(
+  signal?: AbortSignal,
+): Promise<SystemStatusResponse> {
+  return fetchApi<SystemStatusResponse>("/api/v1/system/status", { signal });
+}
+
+/** GET /api/v1/system/status nhưng chịu được 404. */
+export async function getSystemStatusOptional(
+  signal?: AbortSignal,
+): Promise<OptionalApiResult<SystemStatusResponse>> {
+  return getOptionalApi<SystemStatusResponse>("/api/v1/system/status", { signal });
+}
+
+/** Pattern 1 — `GET /api/v1/analysis/temporal`. */
+export async function getTemporalAnalysis(
+  params: { interval?: "day" | "week" | "month"; start_time?: string; end_time?: string } = {},
+  signal?: AbortSignal,
+): Promise<TemporalResponse> {
+  const qs = buildQuery({
+    interval: params.interval,
+    start_time: params.start_time,
+    end_time: params.end_time,
+  });
+  return fetchApi<TemporalResponse>(`/api/v1/analysis/temporal${qs}`, { signal });
+}
+
+/** Pattern 2 — `GET /api/v1/analysis/trend`. */
+export async function getTrendAnalysis(
+  params: {
+    resample_freq?: "D" | "W" | "M";
+    metric?: "count" | "avg_magnitude" | "max_magnitude";
+    start_time?: string;
+    end_time?: string;
+  } = {},
+  signal?: AbortSignal,
+): Promise<TrendResponse> {
+  const qs = buildQuery({
+    resample_freq: params.resample_freq,
+    metric: params.metric,
+    start_time: params.start_time,
+    end_time: params.end_time,
+  });
+  return fetchApi<TrendResponse>(`/api/v1/analysis/trend${qs}`, { signal });
+}
+
+/** Pattern 3 — `GET /api/v1/analysis/seasonality`. */
+export async function getSeasonalityAnalysis(
+  params: {
+    resample_freq?: "D" | "W" | "M";
+    start_time?: string;
+    end_time?: string;
+  } = {},
+  signal?: AbortSignal,
+): Promise<SeasonalityResponse> {
+  const qs = buildQuery({
+    resample_freq: params.resample_freq,
+    start_time: params.start_time,
+    end_time: params.end_time,
+  });
+  return fetchApi<SeasonalityResponse>(`/api/v1/analysis/seasonality${qs}`, { signal });
+}
+
+/** Pattern 4 — `GET /api/v1/analysis/correlation`. */
+export async function getCorrelationAnalysis(
+  params: { start_time?: string; end_time?: string } = {},
+  signal?: AbortSignal,
+): Promise<CorrelationResponse> {
+  const qs = buildQuery({
+    start_time: params.start_time,
+    end_time: params.end_time,
+  });
+  return fetchApi<CorrelationResponse>(`/api/v1/analysis/correlation${qs}`, { signal });
+}
+
+/** Pattern 5 — `GET /api/v1/predictions`. */
+export async function getPredictions(
+  signal?: AbortSignal,
+): Promise<PredictionsResponse> {
+  return fetchApi<PredictionsResponse>("/api/v1/predictions", { signal });
+}
+
+/** Pattern 6 — `GET /api/v1/classifications`. */
+export async function getClassifications(
+  signal?: AbortSignal,
+): Promise<ClassificationsResponse> {
+  return fetchApi<ClassificationsResponse>("/api/v1/classifications", { signal });
+}
+
+/** Kết quả DBSCAN mới nhất — `GET /api/v1/clusters`. */
+export async function getClusters(signal?: AbortSignal): Promise<ClustersResponse> {
+  return fetchApi<ClustersResponse>("/api/v1/clusters", { signal });
+}
+
+/**
+ * Lấy cụm DBSCAN theo hướng "chịu được 404": ưu tiên `/api/v1/clusters`, nếu Backend
+ * chưa triển khai thì trả `unavailable` để nơi gọi fallback sang `clustering_summary`
+ * của `/api/v1/patterns` (dữ liệu thật đang có).
+ */
+export async function getClustersOptional(
+  signal?: AbortSignal,
+): Promise<OptionalApiResult<ClustersResponse>> {
+  return getOptionalApi<ClustersResponse>("/api/v1/clusters", { signal });
+}
