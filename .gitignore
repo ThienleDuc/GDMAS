@@ -1,0 +1,143 @@
+# ==============================================================================
+# GDMAS - GLOBAL DISASTER MONITORING & ANALYSIS SYSTEM (.gitignore)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. AGENT NOTES, LOCAL IDENTITY & TEMPORARY ARTIFACTS
+# ------------------------------------------------------------------------------
+# BẮT BUỘC THEO DÕI VÀ PUSH: Toàn bộ 4 thư mục bugs, implemented, proposed, testcase trong .agents/notes/
+!.agents/notes/bugs/**
+!.agents/notes/implemented/**
+!.agents/notes/proposed/**
+!.agents/notes/testcase/**
+!.claude/notes/README.md
+
+# Nhận diện cá nhân cục bộ và artifact MR/PR tạm
+.agents/me
+.claude/me
+.artifacts/
+
+# Thư mục tham khảo cục bộ (không đẩy lên GitHub)
+/template/
+
+# ------------------------------------------------------------------------------
+# 2. BIẾN MÔI TRƯỜNG & DỮ LIỆU BẢO MẬT (Security & Secrets)
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+!apps/web/.env.example
+!GDMAS/.env.example
+!GDMAS/apps/web/.env.example
+
+# ------------------------------------------------------------------------------
+# 3. PYTHON BACKEND & MÔI TRƯỜNG ẢO (apps/api)
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Testing & Linting Caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+
+# ------------------------------------------------------------------------------
+# 4. NODEJS & FRONTEND WEB CLIENT (apps/web)
+# ------------------------------------------------------------------------------
+node_modules/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Vite / React Build Artifacts
+apps/web/dist/
+apps/web/dist-ssr/
+*.tsbuildinfo
+*.local
+*.tsbuildinfo
+**/*.tsbuildinfo
+.vite/
+
+# Ngoại lệ: thư mục mã nguồn `apps/web/src/lib/` của Frontend
+# (luật `lib/` ở mục Python phía trên vô tình nuốt module HTTP client dùng chung)
+!apps/web/src/lib/
+!apps/web/src/lib/**
+
+# ------------------------------------------------------------------------------
+# 5. DOCKER & DATABASE STORAGE (Persistent Data & Backups)
+# ------------------------------------------------------------------------------
+postgres_data/
+pgdata/
+backups/*.dump
+backups/*.sql
+backups/*.tar.gz
+!backups/.gitkeep
+
+# ------------------------------------------------------------------------------
+# 6. OPERATING SYSTEM & IDE ARTIFACTS
+# ------------------------------------------------------------------------------
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+
+# IDEs
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo

@@ -1,0 +1,298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gdmas.local/schemas/patterns.json",
+  "title": "GET /api/v1/patterns response",
+  "description": "Hợp đồng dữ liệu 6 Patterns chuỗi thời gian giữa Database API (T6) và Frontend (T7). Timestamp dùng UTC ISO 8601 (hậu tố Z); tọa độ dùng WGS84.",
+  "type": "object",
+  "required": ["success", "total_patterns", "patterns"],
+  "additionalProperties": false,
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "description": "false khi CSDL trống (Demo Bước 3) — FE bắt buộc hiển thị Empty State, không dùng số liệu dự phòng."
+    },
+    "total_patterns": { "type": "integer", "minimum": 0, "maximum": 6 },
+    "patterns": {
+      "type": "array",
+      "maxItems": 6,
+      "items": { "$ref": "#/$defs/pattern" }
+    },
+    "clustering_summary": {
+      "type": ["object", "null"],
+      "description": "Kết quả DBSCAN mới nhất (T4); không dùng trong trang Thống kê 6 Patterns."
+    },
+    "message": { "type": "string" },
+    "last_updated": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "patternStatus": { "type": "string", "enum": ["COMPUTED", "PENDING"] },
+    "metricStatus": { "type": "string", "enum": ["computed", "insufficient_data"] },
+    "timeInterval": { "type": "string", "enum": ["day", "week", "month"] },
+    "nullableNumber": { "type": ["number", "null"] },
+    "nullableString": { "type": ["string", "null"] },
+    "lineChartPoint": {
+      "type": "object",
+      "required": ["date", "event_count"],
+      "additionalProperties": false,
+      "properties": {
+        "date": { "type": "string", "description": "Nhãn kỳ theo UTC: YYYY-MM-DD (day/week) hoặc YYYY-MM (month)." },
+        "event_count": { "type": "integer", "minimum": 0 },
+        "max_magnitude": { "$ref": "#/$defs/nullableNumber" },
+        "avg_magnitude": { "$ref": "#/$defs/nullableNumber" }
+      }
+    },
+    "scatterPoint": {
+      "type": "object",
+      "required": ["timestamp", "magnitude", "depth_km"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "integer" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "magnitude": { "type": "number" },
+        "depth_km": { "type": "number", "minimum": 0 }
+      }
+    },
+    "magnitudeBin": {
+      "type": "object",
+      "required": ["bin", "count"],
+      "additionalProperties": false,
+      "properties": {
+        "bin": { "type": "string", "examples": ["< 2.0", "2.0 - 3.0", ">= 5.0"] },
+        "count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "temporalMetrics": {
+      "type": "object",
+      "required": ["line_chart", "scatter_plot", "histogram"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "$ref": "#/$defs/metricStatus" },
+        "interval": { "$ref": "#/$defs/timeInterval" },
+        "line_chart": { "type": "array", "items": { "$ref": "#/$defs/lineChartPoint" } },
+        "scatter_plot": { "type": "array", "items": { "$ref": "#/$defs/scatterPoint" } },
+        "histogram": {
+          "type": "object",
+          "required": ["magnitude_bins"],
+          "additionalProperties": false,
+          "properties": {
+            "magnitude_bins": { "type": "array", "items": { "$ref": "#/$defs/magnitudeBin" } }
+          }
+        },
+        "data_points": { "type": "integer", "minimum": 0 },
+        "avg_magnitude": { "$ref": "#/$defs/nullableNumber" },
+        "max_magnitude": { "$ref": "#/$defs/nullableNumber" },
+        "avg_depth": { "$ref": "#/$defs/nullableNumber" }
+      }
+    },
+    "trendSeriesPoint": {
+      "type": "object",
+      "required": ["period", "actual_value"],
+      "additionalProperties": false,
+      "properties": {
+        "period": { "type": "string" },
+        "actual_value": { "type": "number" },
+        "trend_value": { "$ref": "#/$defs/nullableNumber" },
+        "is_complete": { "type": "boolean" }
+      }
+    },
+    "trendMetrics": {
+      "type": "object",
+      "required": ["series"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "$ref": "#/$defs/metricStatus" },
+        "resample_freq": { "type": "string", "enum": ["D", "W", "M"] },
+        "interval": { "$ref": "#/$defs/timeInterval" },
+        "metric": { "type": "string" },
+        "series": { "type": "array", "items": { "$ref": "#/$defs/trendSeriesPoint" } },
+        "moving_average_window": { "type": "integer", "minimum": 1 },
+        "slope": { "$ref": "#/$defs/nullableNumber" },
+        "intercept": { "$ref": "#/$defs/nullableNumber" },
+        "relative_slope": { "$ref": "#/$defs/nullableNumber" },
+        "p_value": { "$ref": "#/$defs/nullableNumber" },
+        "r_squared": { "$ref": "#/$defs/nullableNumber" },
+        "trend_direction": { "type": "string", "enum": ["increasing", "decreasing", "stable"] },
+        "direction": { "type": "string" },
+        "data_points": { "type": "integer", "minimum": 0 },
+        "complete_periods": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "seasonalLinePoint": {
+      "type": "object",
+      "required": ["cycle_index", "period_label", "seasonal_factor"],
+      "additionalProperties": false,
+      "properties": {
+        "cycle_index": { "type": "integer", "minimum": 1 },
+        "period_label": { "type": "string", "examples": ["Tháng 1", "Thứ 2"] },
+        "seasonal_factor": { "type": "number" },
+        "seasonal_effect": { "$ref": "#/$defs/nullableNumber" }
+      }
+    },
+    "seasonalityMetrics": {
+      "type": "object",
+      "required": ["components"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "$ref": "#/$defs/metricStatus" },
+        "resample_freq": { "type": ["string", "null"] },
+        "interval": { "type": ["string", "null"], "enum": ["day", "week", "month", null] },
+        "period": { "type": ["integer", "null"] },
+        "components": {
+          "type": "object",
+          "required": ["seasonal_line", "interpretation"],
+          "additionalProperties": false,
+          "properties": {
+            "seasonal_line": { "type": "array", "items": { "$ref": "#/$defs/seasonalLinePoint" } },
+            "residual_variance": { "$ref": "#/$defs/nullableNumber" },
+            "seasonality_strength": { "$ref": "#/$defs/nullableNumber" },
+            "interpretation": { "type": "string" }
+          }
+        },
+        "cycle_hours": { "$ref": "#/$defs/nullableString" },
+        "amplitude": { "$ref": "#/$defs/nullableNumber" },
+        "data_points": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "correlationVariable": {
+      "type": "string",
+      "enum": ["magnitude", "depth_km", "latitude", "longitude", "daily_event_count"]
+    },
+    "correlationMetrics": {
+      "type": "object",
+      "required": ["variables", "matrix", "method"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "$ref": "#/$defs/metricStatus" },
+        "variables": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/correlationVariable" } },
+        "matrix": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": ["number", "null"],
+              "minimum": -1,
+              "maximum": 1
+            }
+          }
+        },
+        "spearman_matrix": {
+          "type": "array",
+          "items": { "type": "array", "items": { "type": ["number", "null"] } }
+        },
+        "method": { "type": "string", "const": "pearson" },
+        "sample_size": { "type": "integer", "minimum": 0 },
+        "undefined_pairs": {
+          "type": "array",
+          "items": { "type": "array", "items": { "type": "string" }, "minItems": 2, "maxItems": 2 }
+        },
+        "note": { "type": "string" },
+        "corr_mag_depth": { "$ref": "#/$defs/nullableNumber" },
+        "correlation_strength": { "type": "string" }
+      }
+    },
+    "evaluationMetrics": {
+      "type": "object",
+      "description": "Các khóa optional: BE hiện chưa trả đầy đủ cho Pattern 5 — FE phải hiển thị 'chưa có dữ liệu', không bịa số.",
+      "additionalProperties": true,
+      "properties": {
+        "mae": { "type": "number", "minimum": 0 },
+        "rmse": { "type": "number", "minimum": 0 },
+        "baseline_mae": { "type": "number", "minimum": 0 },
+        "confidence_level": { "type": "number", "minimum": 0, "maximum": 1 },
+        "accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "f1_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "f1_macro": { "type": "number", "minimum": 0, "maximum": 1 },
+        "classes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "predictionMetrics": {
+      "type": "object",
+      "required": ["predicted_value", "lower_bound", "upper_bound"],
+      "additionalProperties": false,
+      "properties": {
+        "target_date": { "$ref": "#/$defs/nullableString" },
+        "predicted_value": { "type": "number" },
+        "lower_bound": { "type": "number" },
+        "upper_bound": { "type": "number" },
+        "model_name": { "$ref": "#/$defs/nullableString" },
+        "metric_name": {
+          "$ref": "#/$defs/nullableString",
+          "description": "Optional — BE hiện chưa trả; ví dụ daily_earthquake_count."
+        },
+        "model_version": { "$ref": "#/$defs/nullableString" },
+        "evaluation_metrics": {
+          "oneOf": [{ "$ref": "#/$defs/evaluationMetrics" }, { "type": "null" }],
+          "description": "Optional — BE hiện chưa trả cho /patterns; FE hiển thị 'chưa có dữ liệu kiểm định'."
+        },
+        "generated_at": { "$ref": "#/$defs/nullableString" }
+      }
+    },
+    "classificationMetrics": {
+      "type": "object",
+      "required": ["predicted_label", "probability_scores"],
+      "additionalProperties": false,
+      "properties": {
+        "target_date": { "$ref": "#/$defs/nullableString" },
+        "predicted_label": {
+          "type": "string",
+          "description": "LOW | MEDIUM | NORMAL | HIGH | CRITICAL (hoặc nhãn dài kiểu 'Normal Activity' — FE chuẩn hóa)."
+        },
+        "probability_scores": {
+          "type": "object",
+          "description": "Xác suất từng lớp, giá trị trong [0, 1] (FE chuẩn hóa nếu BE trả phần trăm).",
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        },
+        "model_name": { "$ref": "#/$defs/nullableString" },
+        "model_version": { "$ref": "#/$defs/nullableString" },
+        "evaluation_metrics": {
+          "oneOf": [{ "$ref": "#/$defs/evaluationMetrics" }, { "type": "null" }]
+        }
+      }
+    },
+    "pattern": {
+      "type": "object",
+      "required": ["id", "name", "type", "status", "metrics", "period"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "enum": ["pattern_1", "pattern_2", "pattern_3", "pattern_4", "pattern_5", "pattern_6"]
+        },
+        "name": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["time_series", "trend", "seasonality", "correlation", "prediction", "classification"]
+        },
+        "status": { "$ref": "#/$defs/patternStatus" },
+        "metrics": { "type": "object" },
+        "period": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "id": { "const": "pattern_1" }, "status": { "const": "COMPUTED" } }, "required": ["id", "status"] },
+          "then": { "properties": { "metrics": { "$ref": "#/$defs/temporalMetrics" } } }
+        },
+        {
+          "if": { "properties": { "id": { "const": "pattern_2" }, "status": { "const": "COMPUTED" } }, "required": ["id", "status"] },
+          "then": { "properties": { "metrics": { "$ref": "#/$defs/trendMetrics" } } }
+        },
+        {
+          "if": { "properties": { "id": { "const": "pattern_3" }, "status": { "const": "COMPUTED" } }, "required": ["id", "status"] },
+          "then": { "properties": { "metrics": { "$ref": "#/$defs/seasonalityMetrics" } } }
+        },
+        {
+          "if": { "properties": { "id": { "const": "pattern_4" }, "status": { "const": "COMPUTED" } }, "required": ["id", "status"] },
+          "then": { "properties": { "metrics": { "$ref": "#/$defs/correlationMetrics" } } }
+        },
+        {
+          "if": { "properties": { "id": { "const": "pattern_5" }, "status": { "const": "COMPUTED" } }, "required": ["id", "status"] },
+          "then": { "properties": { "metrics": { "$ref": "#/$defs/predictionMetrics" } } }
+        },
+        {
+          "if": { "properties": { "id": { "const": "pattern_6" }, "status": { "const": "COMPUTED" } }, "required": ["id", "status"] },
+          "then": { "properties": { "metrics": { "$ref": "#/$defs/classificationMetrics" } } }
+        }
+      ]
+    }
+  }
+}

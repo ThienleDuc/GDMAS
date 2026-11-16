@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Pre-push hook cho GDMAS:
+# 1. Chặn push raw trực tiếp lên develop / main (phải kiểm tra không xung đột và merge qua PR hoặc ./scripts/git-ship.sh merge)
+# 2. Chặn xóa nhánh dùng chung trên remote
+# 3. Chạy python3 scripts/notes_index.py --check nếu repo có notes
+
+set -euo pipefail
+
+zero_sha="0000000000000000000000000000000000000000"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ -z "${remote_ref:-}" ] && continue
+
+    if [ "$remote_ref" = "refs/heads/main" ] || [ "$remote_ref" = "refs/heads/develop" ]; then
+        echo "BỊ CHẶN [pre-push]: Không được phép push trực tiếp lên nhánh '$remote_ref'." >&2
+        echo "Hãy push nhánh tính năng, kiểm tra không xung đột và merge qua PR hoặc ./scripts/git-ship.sh merge (không bắt buộc riêng @ThienleDuc)." >&2
+        exit 1
+    fi
+
+    if [ "$local_sha" = "$zero_sha" ]; then
+        echo "BỊ CHẶN [pre-push]: Không cho phép xóa nhánh remote '$remote_ref' bằng hook này." >&2
+        exit 1
+    fi
+done
+
+if [ -f "scripts/notes_index.py" ]; then
+    python3 scripts/notes_index.py --check >/dev/null
+fi

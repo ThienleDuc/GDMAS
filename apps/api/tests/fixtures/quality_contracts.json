@@ -1,0 +1,1492 @@
+{
+  "config_defaults_sha256": "c1bd3fd190be16a33ac4f6bf2aa2b2ff49084f5c35632861e5bebf896bb83d75",
+  "exports": {
+    "models": [
+      "AnalysisResult",
+      "Base",
+      "ClassificationResult",
+      "ClusteringEventMapping",
+      "ClusteringResult",
+      "EarthquakeEvent",
+      "PredictionResult",
+      "ServiceRun"
+    ],
+    "schemas": [
+      "EarthquakeBase",
+      "EarthquakeListResponse",
+      "EarthquakeMetadata",
+      "EarthquakeResponse",
+      "EarthquakeStatistics",
+      "StatisticsResponse"
+    ]
+  },
+  "migration_sha256": "0be5da1e803e1ce26fb919f1d88932c5143ab79af03fc9949896c6bf0e1e973d",
+  "openapi": {
+    "components": {
+      "schemas": {
+        "EarthquakeListResponse": {
+          "properties": {
+            "data": {
+              "items": {
+                "$ref": "#/components/schemas/EarthquakeResponse"
+              },
+              "title": "Data",
+              "type": "array"
+            },
+            "metadata": {
+              "$ref": "#/components/schemas/EarthquakeMetadata"
+            },
+            "success": {
+              "default": true,
+              "title": "Success",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "data",
+            "metadata"
+          ],
+          "title": "EarthquakeListResponse",
+          "type": "object"
+        },
+        "EarthquakeMetadata": {
+          "properties": {
+            "last_updated": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Last Updated"
+            },
+            "limit": {
+              "title": "Limit",
+              "type": "integer"
+            },
+            "page": {
+              "title": "Page",
+              "type": "integer"
+            },
+            "total": {
+              "title": "Total",
+              "type": "integer"
+            },
+            "total_pages": {
+              "title": "Total Pages",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "total",
+            "page",
+            "limit",
+            "total_pages"
+          ],
+          "title": "EarthquakeMetadata",
+          "type": "object"
+        },
+        "EarthquakeResponse": {
+          "properties": {
+            "depth_km": {
+              "title": "Depth Km",
+              "type": "number"
+            },
+            "event_time": {
+              "format": "date-time",
+              "title": "Event Time",
+              "type": "string"
+            },
+            "id": {
+              "title": "Id",
+              "type": "integer"
+            },
+            "ingested_at": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ingested At"
+            },
+            "latitude": {
+              "title": "Latitude",
+              "type": "number"
+            },
+            "longitude": {
+              "title": "Longitude",
+              "type": "number"
+            },
+            "magnitude": {
+              "title": "Magnitude",
+              "type": "number"
+            },
+            "magnitude_type": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Magnitude Type"
+            },
+            "place": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Place"
+            },
+            "raw_data": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Raw Data"
+            },
+            "source": {
+              "default": "USGS",
+              "title": "Source",
+              "type": "string"
+            },
+            "source_event_id": {
+              "title": "Source Event Id",
+              "type": "string"
+            },
+            "source_url": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Url"
+            }
+          },
+          "required": [
+            "source_event_id",
+            "event_time",
+            "latitude",
+            "longitude",
+            "depth_km",
+            "magnitude",
+            "id"
+          ],
+          "title": "EarthquakeResponse",
+          "type": "object"
+        },
+        "EarthquakeStatistics": {
+          "properties": {
+            "avg_magnitude": {
+              "title": "Avg Magnitude",
+              "type": "number"
+            },
+            "latest_event_time": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Latest Event Time"
+            },
+            "max_magnitude": {
+              "title": "Max Magnitude",
+              "type": "number"
+            },
+            "minor_events_count": {
+              "default": 0,
+              "title": "Minor Events Count",
+              "type": "integer"
+            },
+            "moderate_events_count": {
+              "title": "Moderate Events Count",
+              "type": "integer"
+            },
+            "recent_24h_count": {
+              "title": "Recent 24H Count",
+              "type": "integer"
+            },
+            "strong_events_count": {
+              "title": "Strong Events Count",
+              "type": "integer"
+            },
+            "time_series_preview": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/HourlyTimeSeriesPoint"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Time Series Preview"
+            },
+            "total_events": {
+              "title": "Total Events",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "total_events",
+            "strong_events_count",
+            "moderate_events_count",
+            "recent_24h_count",
+            "avg_magnitude",
+            "max_magnitude"
+          ],
+          "title": "EarthquakeStatistics",
+          "type": "object"
+        },
+        "HTTPValidationError": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ValidationError"
+              },
+              "title": "Detail",
+              "type": "array"
+            }
+          },
+          "title": "HTTPValidationError",
+          "type": "object"
+        },
+        "HourlyTimeSeriesPoint": {
+          "properties": {
+            "avg_mag": {
+              "title": "Avg Mag",
+              "type": "number"
+            },
+            "count": {
+              "title": "Count",
+              "type": "integer"
+            },
+            "time": {
+              "title": "Time",
+              "type": "string"
+            }
+          },
+          "required": [
+            "time",
+            "count",
+            "avg_mag"
+          ],
+          "title": "HourlyTimeSeriesPoint",
+          "type": "object"
+        },
+        "StatisticsResponse": {
+          "properties": {
+            "data": {
+              "$ref": "#/components/schemas/EarthquakeStatistics"
+            },
+            "success": {
+              "default": true,
+              "title": "Success",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "data"
+          ],
+          "title": "StatisticsResponse",
+          "type": "object"
+        },
+        "SyncResponse": {
+          "properties": {
+            "message": {
+              "title": "Message",
+              "type": "string"
+            },
+            "source": {
+              "default": "USGS",
+              "title": "Source",
+              "type": "string"
+            },
+            "success": {
+              "default": true,
+              "title": "Success",
+              "type": "boolean"
+            },
+            "synced_count": {
+              "title": "Synced Count",
+              "type": "integer"
+            },
+            "timestamp": {
+              "format": "date-time",
+              "title": "Timestamp",
+              "type": "string"
+            }
+          },
+          "required": [
+            "message",
+            "synced_count",
+            "timestamp"
+          ],
+          "title": "SyncResponse",
+          "type": "object"
+        },
+        "ValidationError": {
+          "properties": {
+            "ctx": {
+              "title": "Context",
+              "type": "object"
+            },
+            "input": {
+              "title": "Input"
+            },
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "title": "Location",
+              "type": "array"
+            },
+            "msg": {
+              "title": "Message",
+              "type": "string"
+            },
+            "type": {
+              "title": "Error Type",
+              "type": "string"
+            }
+          },
+          "required": [
+            "loc",
+            "msg",
+            "type"
+          ],
+          "title": "ValidationError",
+          "type": "object"
+        }
+      }
+    },
+    "info": {
+      "title": "GDMAS API",
+      "version": "0.1.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {
+      "/": {
+        "get": {
+          "operationId": "root__get",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              },
+              "description": "Successful Response"
+            }
+          },
+          "summary": "Root"
+        }
+      },
+      "/api/v1/earthquakes": {
+        "get": {
+          "description": "Truy vấn danh sách các sự kiện địa chấn có hỗ trợ phân trang, lọc theo độ lớn, độ sâu và tìm kiếm.",
+          "operationId": "list_earthquakes_api_v1_earthquakes_get",
+          "parameters": [
+            {
+              "description": "Số trang hiện tại",
+              "in": "query",
+              "name": "page",
+              "required": false,
+              "schema": {
+                "default": 1,
+                "description": "Số trang hiện tại",
+                "minimum": 1,
+                "title": "Page",
+                "type": "integer"
+              }
+            },
+            {
+              "description": "Số bản ghi mỗi trang",
+              "in": "query",
+              "name": "limit",
+              "required": false,
+              "schema": {
+                "default": 20,
+                "description": "Số bản ghi mỗi trang",
+                "maximum": 100,
+                "minimum": 1,
+                "title": "Limit",
+                "type": "integer"
+              }
+            },
+            {
+              "description": "Lọc theo độ lớn tối thiểu",
+              "in": "query",
+              "name": "min_magnitude",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo độ lớn tối thiểu",
+                "title": "Min Magnitude"
+              }
+            },
+            {
+              "description": "Lọc theo độ lớn tối đa",
+              "in": "query",
+              "name": "max_magnitude",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo độ lớn tối đa",
+                "title": "Max Magnitude"
+              }
+            },
+            {
+              "description": "Lọc theo độ sâu tối thiểu (km)",
+              "in": "query",
+              "name": "min_depth",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo độ sâu tối thiểu (km)",
+                "title": "Min Depth"
+              }
+            },
+            {
+              "description": "Lọc theo độ sâu tối đa (km)",
+              "in": "query",
+              "name": "max_depth",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo độ sâu tối đa (km)",
+                "title": "Max Depth"
+              }
+            },
+            {
+              "description": "Tìm kiếm theo khu vực hoặc mã sự kiện",
+              "in": "query",
+              "name": "search",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Tìm kiếm theo khu vực hoặc mã sự kiện",
+                "title": "Search"
+              }
+            },
+            {
+              "in": "query",
+              "name": "sort_by",
+              "required": false,
+              "schema": {
+                "default": "event_time",
+                "pattern": "^(event_time|magnitude|depth_km)$",
+                "title": "Sort By",
+                "type": "string"
+              }
+            },
+            {
+              "in": "query",
+              "name": "order",
+              "required": false,
+              "schema": {
+                "default": "desc",
+                "pattern": "^(asc|desc)$",
+                "title": "Order",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/EarthquakeListResponse"
+                  }
+                }
+              },
+              "description": "Successful Response"
+            },
+            "422": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              },
+              "description": "Validation Error"
+            }
+          },
+          "summary": "List Earthquakes",
+          "tags": [
+            "Earthquakes"
+          ]
+        }
+      },
+      "/api/v1/earthquakes/sync": {
+        "post": {
+          "description": "Kích hoạt đồng bộ hóa dữ liệu trực tiếp từ USGS GeoJSON API Feed.\nLưu vào CSDL PostgreSQL nếu khả dụng hoặc cập nhật bộ nhớ đệm thời gian thực.",
+          "operationId": "sync_usgs_earthquakes_api_v1_earthquakes_sync_post",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SyncResponse"
+                  }
+                }
+              },
+              "description": "Successful Response"
+            }
+          },
+          "summary": "Sync Usgs Earthquakes",
+          "tags": [
+            "Earthquakes"
+          ]
+        }
+      },
+      "/api/v1/earthquakes/{event_id}": {
+        "get": {
+          "description": "Lấy thông tin chi tiết một sự kiện địa chấn theo id hoặc source_event_id.",
+          "operationId": "get_earthquake_api_v1_earthquakes__event_id__get",
+          "parameters": [
+            {
+              "in": "path",
+              "name": "event_id",
+              "required": true,
+              "schema": {
+                "title": "Event Id",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/EarthquakeResponse"
+                  }
+                }
+              },
+              "description": "Successful Response"
+            },
+            "422": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              },
+              "description": "Validation Error"
+            }
+          },
+          "summary": "Get Earthquake",
+          "tags": [
+            "Earthquakes"
+          ]
+        }
+      },
+      "/api/v1/patterns": {
+        "get": {
+          "description": "Trả về dữ liệu chi tiết của 6 Patterns chuỗi thời gian & không gian từ CSDL.\nNếu CSDL bị xóa trống (Bước 2 Demo), trả về trạng thái rỗng để Web phản hồi lỗi chính xác.",
+          "operationId": "get_all_patterns_api_v1_patterns_get",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              },
+              "description": "Successful Response"
+            }
+          },
+          "summary": "Get All Patterns",
+          "tags": [
+            "Patterns"
+          ]
+        }
+      },
+      "/api/v1/statistics/earthquakes": {
+        "get": {
+          "description": "Trả về các chỉ số thống kê nhanh phục vụ các thẻ KPI và biểu đồ chuỗi thời gian trên Dashboard.",
+          "operationId": "get_earthquake_statistics_api_v1_statistics_earthquakes_get",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/StatisticsResponse"
+                  }
+                }
+              },
+              "description": "Successful Response"
+            }
+          },
+          "summary": "Get Earthquake Statistics",
+          "tags": [
+            "Statistics"
+          ]
+        }
+      },
+      "/api/v1/stream/broadcast-cleared": {
+        "post": {
+          "description": "Endpoint kích hoạt thông báo CSDL đã bị xóa trống (Demo Bước 2)\nngay lập tức tới toàn bộ các tab trình duyệt đang mở qua kết nối SSE.",
+          "operationId": "broadcast_database_cleared_api_v1_stream_broadcast_cleared_post",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              },
+              "description": "Successful Response"
+            }
+          },
+          "summary": "Broadcast Database Cleared",
+          "tags": [
+            "Streaming"
+          ]
+        }
+      },
+      "/api/v1/stream/earthquakes": {
+        "get": {
+          "description": "Kênh SSE (Server-Sent Events) phát luồng dữ liệu địa chấn thời gian thực.\nĐẩy thông báo khi:\n1. Hoàn tất chu kỳ cào USGS 5 phút (ingestion_cycle_completed).\n2. Phát hiện có động đất mới nạp vào CSDL (earthquake_detected).\n3. CSDL bị xóa trống (database_cleared).\n4. Nhịp tim định kỳ mỗi 3 giây (heartbeat).",
+          "operationId": "stream_earthquakes_api_v1_stream_earthquakes_get",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              },
+              "description": "Successful Response"
+            }
+          },
+          "summary": "Stream Earthquakes",
+          "tags": [
+            "Streaming"
+          ]
+        }
+      },
+      "/health": {
+        "get": {
+          "operationId": "health_health_get",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              },
+              "description": "Successful Response"
+            }
+          },
+          "summary": "Health"
+        }
+      }
+    }
+  },
+  "orm": {
+    "analysis_results": {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "server_default": null,
+          "type": "BIGINT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "analysis_type",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(32)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "time_interval",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(16)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "period_start",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "TIMESTAMP WITH TIME ZONE"
+        },
+        {
+          "foreign_keys": [],
+          "name": "period_end",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "TIMESTAMP WITH TIME ZONE"
+        },
+        {
+          "foreign_keys": [],
+          "name": "metrics_data",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "JSONB"
+        },
+        {
+          "foreign_keys": [],
+          "name": "calculated_at",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": "now()",
+          "type": "TIMESTAMP WITH TIME ZONE"
+        },
+        {
+          "foreign_keys": [
+            "service_runs.id"
+          ],
+          "name": "service_run_id",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "BIGINT"
+        }
+      ],
+      "constraints": [
+        [
+          "ForeignKeyConstraint",
+          "",
+          [
+            "service_run_id"
+          ]
+        ],
+        [
+          "PrimaryKeyConstraint",
+          "",
+          [
+            "id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_analysis_results_type_period",
+          false,
+          [
+            "analysis_results.analysis_type",
+            "analysis_results.period_end"
+          ]
+        ]
+      ]
+    },
+    "classification_results": {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "server_default": null,
+          "type": "BIGINT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "target_date",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "DATE"
+        },
+        {
+          "foreign_keys": [],
+          "name": "predicted_label",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(32)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "probability_scores",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "JSONB"
+        },
+        {
+          "foreign_keys": [],
+          "name": "actual_label",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(32)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "model_name",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(64)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "model_version",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(16)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "evaluation_metrics",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "JSONB"
+        },
+        {
+          "foreign_keys": [],
+          "name": "generated_at",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": "now()",
+          "type": "TIMESTAMP WITH TIME ZONE"
+        },
+        {
+          "foreign_keys": [
+            "service_runs.id"
+          ],
+          "name": "service_run_id",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "BIGINT"
+        }
+      ],
+      "constraints": [
+        [
+          "ForeignKeyConstraint",
+          "",
+          [
+            "service_run_id"
+          ]
+        ],
+        [
+          "PrimaryKeyConstraint",
+          "",
+          [
+            "id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_classification_results_target_date",
+          false,
+          [
+            "classification_results.target_date"
+          ]
+        ],
+        [
+          "ix_classification_results_target_date",
+          false,
+          [
+            "classification_results.target_date"
+          ]
+        ]
+      ]
+    },
+    "clustering_event_mapping": {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "server_default": null,
+          "type": "BIGINT"
+        },
+        {
+          "foreign_keys": [
+            "clustering_results.id"
+          ],
+          "name": "cluster_result_id",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "BIGINT"
+        },
+        {
+          "foreign_keys": [
+            "earthquake_events.id"
+          ],
+          "name": "event_id",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "BIGINT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "cluster_label",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "INTEGER"
+        }
+      ],
+      "constraints": [
+        [
+          "ForeignKeyConstraint",
+          "",
+          [
+            "cluster_result_id"
+          ]
+        ],
+        [
+          "ForeignKeyConstraint",
+          "",
+          [
+            "event_id"
+          ]
+        ],
+        [
+          "PrimaryKeyConstraint",
+          "",
+          [
+            "id"
+          ]
+        ]
+      ],
+      "indexes": []
+    },
+    "clustering_results": {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "server_default": null,
+          "type": "BIGINT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "algorithm",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(32)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "parameters",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "JSONB"
+        },
+        {
+          "foreign_keys": [],
+          "name": "total_clusters",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "INTEGER"
+        },
+        {
+          "foreign_keys": [],
+          "name": "noise_count",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "INTEGER"
+        },
+        {
+          "foreign_keys": [],
+          "name": "summary_clusters",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "JSONB"
+        },
+        {
+          "foreign_keys": [],
+          "name": "calculated_at",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": "now()",
+          "type": "TIMESTAMP WITH TIME ZONE"
+        },
+        {
+          "foreign_keys": [
+            "service_runs.id"
+          ],
+          "name": "service_run_id",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "BIGINT"
+        }
+      ],
+      "constraints": [
+        [
+          "ForeignKeyConstraint",
+          "",
+          [
+            "service_run_id"
+          ]
+        ],
+        [
+          "PrimaryKeyConstraint",
+          "",
+          [
+            "id"
+          ]
+        ]
+      ],
+      "indexes": []
+    },
+    "earthquake_events": {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "server_default": null,
+          "type": "BIGINT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "source",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(32)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "source_event_id",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(64)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "event_time",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "TIMESTAMP WITH TIME ZONE"
+        },
+        {
+          "foreign_keys": [],
+          "name": "source_updated_at",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "TIMESTAMP WITH TIME ZONE"
+        },
+        {
+          "foreign_keys": [],
+          "name": "ingested_at",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": "now()",
+          "type": "TIMESTAMP WITH TIME ZONE"
+        },
+        {
+          "foreign_keys": [],
+          "name": "latitude",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "FLOAT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "longitude",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "FLOAT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "depth_km",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "FLOAT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "magnitude",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "FLOAT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "magnitude_type",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(16)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "place",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "TEXT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "source_url",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "TEXT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "raw_data",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "JSONB"
+        }
+      ],
+      "constraints": [
+        [
+          "PrimaryKeyConstraint",
+          "",
+          [
+            "id"
+          ]
+        ],
+        [
+          "UniqueConstraint",
+          "uq_earthquake_source_event",
+          [
+            "source",
+            "source_event_id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_earthquake_events_coordinates",
+          false,
+          [
+            "earthquake_events.latitude",
+            "earthquake_events.longitude"
+          ]
+        ],
+        [
+          "idx_earthquake_events_time_mag",
+          false,
+          [
+            "earthquake_events.event_time",
+            "earthquake_events.magnitude"
+          ]
+        ],
+        [
+          "ix_earthquake_events_event_time",
+          false,
+          [
+            "earthquake_events.event_time"
+          ]
+        ],
+        [
+          "ix_earthquake_events_magnitude",
+          false,
+          [
+            "earthquake_events.magnitude"
+          ]
+        ]
+      ]
+    },
+    "prediction_results": {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "server_default": null,
+          "type": "BIGINT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "target_date",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "DATE"
+        },
+        {
+          "foreign_keys": [],
+          "name": "metric_name",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(32)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "predicted_value",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "FLOAT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "lower_bound",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "FLOAT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "upper_bound",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "FLOAT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "actual_value",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "FLOAT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "model_name",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(64)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "model_version",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(16)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "evaluation_metrics",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "JSONB"
+        },
+        {
+          "foreign_keys": [],
+          "name": "generated_at",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": "now()",
+          "type": "TIMESTAMP WITH TIME ZONE"
+        },
+        {
+          "foreign_keys": [
+            "service_runs.id"
+          ],
+          "name": "service_run_id",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "BIGINT"
+        }
+      ],
+      "constraints": [
+        [
+          "ForeignKeyConstraint",
+          "",
+          [
+            "service_run_id"
+          ]
+        ],
+        [
+          "PrimaryKeyConstraint",
+          "",
+          [
+            "id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_prediction_results_target_date",
+          false,
+          [
+            "prediction_results.target_date"
+          ]
+        ],
+        [
+          "ix_prediction_results_target_date",
+          false,
+          [
+            "prediction_results.target_date"
+          ]
+        ]
+      ]
+    },
+    "service_runs": {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "server_default": null,
+          "type": "BIGINT"
+        },
+        {
+          "foreign_keys": [],
+          "name": "service_name",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(32)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "started_at",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": "now()",
+          "type": "TIMESTAMP WITH TIME ZONE"
+        },
+        {
+          "foreign_keys": [],
+          "name": "finished_at",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "TIMESTAMP WITH TIME ZONE"
+        },
+        {
+          "foreign_keys": [],
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "VARCHAR(16)"
+        },
+        {
+          "foreign_keys": [],
+          "name": "records_processed",
+          "nullable": false,
+          "primary_key": false,
+          "server_default": null,
+          "type": "INTEGER"
+        },
+        {
+          "foreign_keys": [],
+          "name": "error_message",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "type": "TEXT"
+        }
+      ],
+      "constraints": [
+        [
+          "PrimaryKeyConstraint",
+          "",
+          [
+            "id"
+          ]
+        ]
+      ],
+      "indexes": []
+    }
+  }
+}
