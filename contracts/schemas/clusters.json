@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gdmas.local/schemas/clusters.json",
+  "title": "GET /api/v1/clusters response (DBSCAN / K-Means)",
+  "description": "Kết quả phân cụm không gian (T4 Clustering) dùng cho lớp cụm trên bản đồ (T7). Toạ độ WGS84; timestamp UTC ISO 8601 (Z). Frontend phải chấp nhận cả payload canonical (cluster_id/center_latitude/...) và payload legacy từ /patterns -> clustering_summary (id/name/lat/lon/events_count/avg_mag) — xem $defs.legacyCluster.",
+  "type": "object",
+  "required": ["success", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "success": { "type": "boolean" },
+    "data": {
+      "type": "object",
+      "required": ["clusters"],
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": { "type": "string", "examples": ["DBSCAN", "K-Means"] },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "eps_km": { "type": "number", "minimum": 0 },
+            "eps_degrees": { "type": "number", "minimum": 0 },
+            "min_samples": { "type": "integer", "minimum": 1 },
+            "metric": { "type": "string", "examples": ["euclidean", "haversine"] }
+          }
+        },
+        "clusters_count": { "type": "integer", "minimum": 0 },
+        "noise_count": { "type": "integer", "minimum": 0 },
+        "calculated_at": { "type": "string", "format": "date-time" },
+        "clusters": { "type": "array", "items": { "$ref": "#/$defs/cluster" } },
+        "noise_points": {
+          "type": "array",
+          "description": "Optional — các sự kiện không thuộc cụm nào (DBSCAN label -1).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "event_id": { "type": "integer" },
+              "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+              "longitude": { "type": "number", "minimum": -180, "maximum": 180 }
+            }
+          }
+        }
+      }
+    },
+    "message": { "type": "string" },
+    "last_updated": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "cluster": {
+      "type": "object",
+      "required": ["cluster_id", "center_latitude", "center_longitude", "event_count"],
+      "additionalProperties": false,
+      "properties": {
+        "cluster_id": { "type": "integer", "minimum": 0 },
+        "center_latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+        "center_longitude": { "type": "number", "minimum": -180, "maximum": 180 },
+        "event_count": { "type": "integer", "minimum": 0 },
+        "avg_magnitude": { "type": ["number", "null"] },
+        "max_magnitude": { "type": ["number", "null"] },
+        "radius_km": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Bán kính phạm vi cụm (km). Thiếu → FE dùng parameters.eps_km làm fallback khi vẽ vòng tròn."
+        },
+        "name": { "type": ["string", "null"], "description": "Tên gợi nhớ (đới đứt gãy / khu vực)." },
+        "dominant_place": { "type": ["string", "null"], "description": "Địa danh xuất hiện nhiều nhất trong cụm." }
+      }
+    },
+    "legacyCluster": {
+      "type": "object",
+      "description": "Payload legacy lấy từ /api/v1/patterns -> clustering_summary.clusters[]. FE adapter normalizeClusters() ánh xạ: id -> cluster_id, lat -> center_latitude, lon -> center_longitude, events_count -> event_count, avg_mag -> avg_magnitude. max_magnitude/radius_km không có trong payload này.",
+      "required": ["id", "lat", "lon", "events_count"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "integer", "minimum": 0 },
+        "name": { "type": ["string", "null"] },
+        "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+        "lon": { "type": "number", "minimum": -180, "maximum": 180 },
+        "events_count": { "type": "integer", "minimum": 0 },
+        "avg_mag": { "type": ["number", "null"] }
+      }
+    }
+  }
+}

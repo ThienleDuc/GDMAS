@@ -1,8 +1,12 @@
 import React from "react";
 import { Outlet, Link } from "react-router-dom";
-import { ArrowLeft, Globe, Radio, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Globe, ShieldAlert } from "lucide-react";
+import { useSSE } from "../hooks/useSSE";
+import { ConnectionStatusBadge } from "../components/ui/ConnectionStatusBadge";
 
 export const FullscreenMapLayout: React.FC = () => {
+  const { status, reconnectAttempt } = useSSE();
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 font-sans select-none">
       {/* Floating Header Overlay */}
@@ -28,12 +32,7 @@ export const FullscreenMapLayout: React.FC = () => {
 
         {/* Right: Live SSE Stream Indicators & Quick Controls */}
         <div className="flex items-center space-x-3 pointer-events-auto">
-          <div className="flex items-center space-x-2 rounded-lg bg-slate-900/90 px-3.5 py-2 border border-slate-700/80 shadow-lg backdrop-blur-md text-xs font-mono">
-            <Radio className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
-            <span className="text-emerald-400 font-medium">SSE STREAM LIVE</span>
-            <span className="hidden md:inline text-slate-400">|</span>
-            <span className="hidden md:inline text-slate-300">Ingestion 5m</span>
-          </div>
+          <ConnectionStatusBadge status={status} reconnectAttempt={reconnectAttempt} />
 
           <div className="hidden sm:flex items-center space-x-1.5 rounded-lg bg-rose-500/10 px-3 py-2 border border-rose-500/30 text-xs text-rose-300 backdrop-blur-md shadow-lg">
             <ShieldAlert className="h-3.5 w-3.5 text-rose-400" />

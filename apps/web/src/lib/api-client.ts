@@ -6,9 +6,12 @@
  * không đổi chữ ký `fetchApi` mà các service đang dùng.
  */
 
-const API_BASE_URL = (
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "http://localhost:8000"
-).replace(/\/+$/, "");
+const envBase =
+  typeof import.meta !== "undefined" && import.meta.env
+    ? (import.meta.env.VITE_API_BASE_URL as string | undefined)
+    : undefined;
+
+const API_BASE_URL = (envBase ?? "http://localhost:8000").replace(/\/+$/, "");
 
 export class ApiError extends Error {
   readonly status: number;

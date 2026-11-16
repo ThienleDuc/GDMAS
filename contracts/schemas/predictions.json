@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gdmas.local/schemas/predictions.json",
+  "title": "GET /api/v1/predictions response (Pattern 5)",
+  "description": "Dự báo định lượng ngày t+1 do T5 sinh. Timestamp UTC ISO 8601 (Z). Chấp nhận cả dạng lồng `confidence_interval{lower,upper}` (chuẩn API.md §3.3) và dạng phẳng `lower_bound`/`upper_bound` (payload /patterns hiện tại) — FE chuẩn hoá qua adapter.",
+  "type": "object",
+  "required": ["success", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "success": { "type": "boolean" },
+    "data": {
+      "type": "object",
+      "required": ["target_date", "predicted_value"],
+      "additionalProperties": false,
+      "properties": {
+        "target_date": { "type": "string", "description": "Ngày dự báo theo UTC, dạng YYYY-MM-DD." },
+        "forecasted_metric": { "type": "string", "enum": ["event_count", "avg_magnitude", "max_magnitude"] },
+        "predicted_value": { "type": "number" },
+        "confidence_interval": {
+          "type": "object",
+          "required": ["lower", "upper"],
+          "additionalProperties": false,
+          "properties": {
+            "lower": { "type": "number" },
+            "upper": { "type": "number" }
+          }
+        },
+        "lower_bound": { "type": "number", "description": "Alias phẳng của confidence_interval.lower." },
+        "upper_bound": { "type": "number", "description": "Alias phẳng của confidence_interval.upper." },
+        "confidence_level": { "type": "number", "minimum": 0, "maximum": 1 },
+        "model_name": { "type": "string" },
+        "model_version": { "type": "string" },
+        "evaluation_metrics": { "$ref": "#/$defs/evaluationMetrics" },
+        "generated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "message": { "type": "string" }
+  },
+  "$defs": {
+    "evaluationMetrics": {
+      "type": "object",
+      "description": "Khoá optional: BE có thể chưa trả đủ — FE hiển thị 'chưa có dữ liệu kiểm định', không bịa số.",
+      "additionalProperties": true,
+      "properties": {
+        "mae": { "type": "number", "minimum": 0 },
+        "rmse": { "type": "number", "minimum": 0 },
+        "baseline_mae": { "type": "number", "minimum": 0 },
+        "confidence_level": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}
