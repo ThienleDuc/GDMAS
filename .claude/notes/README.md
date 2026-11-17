@@ -1,6 +1,6 @@
 # Nguyên tắc tham chiếu từ `.claude/` sang `.agents/`
 
-Thư mục `.claude/notes/` chỉ giữ duy nhất tệp hướng dẫn này để điều hướng Claude Code và các agent tương thích về nguồn sự thật thống nhất của dự án **GDMAS**:
+Thư mục `.claude/notes/` chỉ giữ duy nhất tệp hướng dẫn này để điều hướng Claude Code, **OpenCode** và các agent tương thích về nguồn sự thật thống nhất của dự án **GDMAS**:
 
 1. **Bộ kỹ năng duy nhất (`.agents/skills/`):**
    - Không lưu bản sao kỹ năng trong `.claude/skills/`. Mọi thao tác đều đọc và thực thi trực tiếp **5 skill cốt lõi** tại:

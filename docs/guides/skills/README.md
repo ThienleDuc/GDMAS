@@ -2,7 +2,7 @@
 
 Tài liệu này định nghĩa bộ **5 kỹ năng cốt lõi (`.agents/skills/`)** của AI Agent trong dự án **GDMAS** (Global Disaster Monitoring & Analysis System). Toàn bộ năng lực từ các kỹ năng phụ trợ trước đây (`source-guard`, `propose-branch`, `git-branch-push`, `generate-commit`, `git-commit-push`, `generate-planning`) đã được **hợp nhất và tự động hóa trực tiếp** vào 5 kỹ năng cốt lõi này và hai tài liệu quy trình [agent-workflow.md](../../agent-workflow.md), [git-workflow.md](../../git-workflow.md).
 
-> **Vị trí lưu trữ duy nhất:** Chỉ đặt tại **`.agents/skills/`** (không nhân bản ở `.claude/skills/`). Mọi agent (Antigravity, Claude Code qua [CLAUDE.md](../../../CLAUDE.md), Codex, Cursor…) đều đọc và gọi từ `.agents/skills/`.
+> **Vị trí lưu trữ duy nhất:** Chỉ đặt tại **`.agents/skills/`** (không nhân bản ở `.claude/skills/`). Mọi agent (Antigravity, Claude Code qua [CLAUDE.md](../../../CLAUDE.md), **OpenCode**, Codex, Cursor…) đều đọc và gọi từ `.agents/skills/`.
 
 ---
 
