@@ -2,10 +2,12 @@
 
 ## Metadata
 - ID: 2026-11-18-workflow-checkpoints-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-18
 - Last Updated: 2026-11-18
 - Owner: agent | thien
+- Merged At: 2026-11-18
+- Merge Commit: 174e9facca082a489370ba79b41145ee017f3fa4 (PR #23 → develop)
 
 ---
 
@@ -56,9 +58,9 @@ Blocked:
 ---
 
 ## Next Actions
-- **CHECKPOINT 1** — chờ người dùng: (a) `tiếp tục workflow` → commit + push + tạo PR; (b) `dừng lại` → giữ working tree; (c) `sửa thêm` → quay lại implement. Chưa xác nhận → không commit/push.
+- none — CHECKPOINT 1 và 2 đều đã xác nhận qua cụm `tiếp tục workflow`; PR #23 đã merge vào develop, local đã sync. Không còn hành động tiếp theo.
 
 ---
 
 ## Last Update
-2026-11-18 — Implement xong 9 tệp, 7/7 test mới + 18/18 scripts tests pass; dừng CHECKPOINT 1 chờ người dùng quyết định commit/push (cụm khởi động `tiếp tục workflow`).
+2026-11-18 — Hoàn tất: 13 tệp, 7/7 test mới + 18/18 scripts tests pass. CHECKPOINT 1 và 2 xác nhận qua `tiếp tục workflow`; commit 08435b3, PR #23 merge vào develop (174e9fa), local sync xong.
