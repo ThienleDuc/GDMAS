@@ -23,7 +23,10 @@ Thành viên giao việc                   AI Agent (5 skill cốt lõi)        
                                        implement code + viết unit test offline + validation nhẹ
 2b. Nếu test 1 file cụ thể         ──► write-testcase (Mode: single-file-test): viết unit test offline
                                        chạy test → nếu ra lỗi ghi ngay vào .agents/notes/bugs/BUG-<handle>-NNN-*.md
-3. Ngay khi hoàn tất validation    ──► review-pr (Phần B):
+3. Sau validation xanh              ──► CHECKPOINT 1 — DỪNG, hỏi người dùng (1 câu):
+                                          (a) tiếp tục workflow → commit+push  |  (b) dừng giữ working tree  |  (c) sửa thêm
+                                          Chưa xác nhận → KHÔNG commit/push. Resume bằng `tiếp tục workflow`.
+4. Sau CHECKPOINT 1 xác nhận        ──► review-pr (Phần B1):
                                          ./scripts/git-ship.sh scope <id>         (khớp In Scope / test/<id>)
                                          secret guard (gỡ .env, .agents/me, .artifacts/)
                                          project-review (OCP/Churn + I1-I7 + testcase/<id>.md + bugs/)
@@ -32,10 +35,13 @@ Thành viên giao việc                   AI Agent (5 skill cốt lõi)        
                                          ./scripts/git-ship.sh update             (merge-forward develop, không rebase)
                                          ./scripts/git-ship.sh push               (đẩy nhánh / tạo PR)
                                          ./scripts/git-ship.sh merge --dry-run    (kiểm tra 0 conflicts)
-Kiểm tra 0 xung đột & merge        ─────────────────────────────────────────────────► Bất kỳ thành viên nào (hoặc ./scripts/git-ship.sh merge)
+5. Sau push/PR + dry-run            ──► CHECKPOINT 2 — DỪNG, hỏi người dùng (1 câu):
+                                          (a) tiếp tục workflow → gửi yêu cầu merge / merge PR vào develop
+                                          (b) dừng → giữ PR mở, chưa merge. Resume bằng `tiếp tục workflow`.
+6. Sau CHECKPOINT 2 xác nhận        ──► merge qua bất kỳ thành viên nào (hoặc ./scripts/git-ship.sh merge)
                                                                                       ├─ CÓ CONFLICT → DỪNG MERGE & giải quyết / gom hỏi cuối phiên
                                                                                       └─ 0 CONFLICT + checks OK → Cho phép Merge vào develop
-Sau khi đã merge                   ──► ./scripts/git-ship.sh sync (về develop mới, dọn nhánh local đã merge)
+Sau khi đã merge                   ──► ./scripts/git-ship.sh sync (về develop mới, dọn nhánh local đã merge) → status.md completed
 ```
 
 ---
