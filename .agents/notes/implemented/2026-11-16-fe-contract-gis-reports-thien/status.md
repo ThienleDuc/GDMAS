@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-16-fe-contract-gis-reports-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-16
 - Last Updated: 2026-11-17
 - Owner: agent | thien
@@ -11,7 +11,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: Validation & Sẵn sàng cho review-pr Phần B
+Current Phase: Hoàn tất & đã merge vào develop
 
 Completed:
 - Proposal §9 `Approved` (Reviewer: thien), nhánh `feat/2026-11-16-fe-contract-gis-reports-thien` đã tạo.
@@ -24,9 +24,10 @@ Completed:
 - Step 6: Rà soát Loading/Error/Empty, `useDatabaseReset`, triệt tiêu mock tĩnh.
 - Step 7: Bộ 34 unit tests offline (`tests/*.test.ts`) — giữ nguyên 12/12 test cũ và bổ sung 22 test mới, 100% pass.
 - Step 8: `tsc -b` và `vite build` sạch lỗi, `notes_index.py --check` OK.
+- Đã merge nhánh tính năng vào develop không có xung đột.
 
 In Progress:
-- Chuyển giao sang `review-pr` Phần B.
+- none
 
 Blocked:
 - none
