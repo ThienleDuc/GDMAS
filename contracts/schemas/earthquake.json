@@ -1,17 +1,26 @@
 {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gdmas.local/schemas/earthquake.json",
+  "title": "Earthquake event",
   "type": "object",
-  "description": "Hợp đồng dữ liệu một bản ghi địa chấn đơn lẻ",
+  "description": "Canonical earthquake payload from docs/api/API.md §3.2 and apps/api/src/gdmas/schemas/earthquake.py. Legacy aliases remain optional for backward compatibility.",
   "properties": {
-    "id": { "type": "string", "example": "us7000m8v8" },
-    "time": { "type": "string", "format": "date-time" },
+    "id": { "type": "integer", "minimum": 1, "description": "Internal database id" },
+    "source": { "type": "string", "default": "USGS" },
+    "source_event_id": { "type": "string", "minLength": 1, "description": "USGS source event identifier" },
+    "event_time": { "type": "string", "format": "date-time", "description": "UTC ISO 8601 timestamp" },
     "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
     "longitude": { "type": "number", "minimum": -180, "maximum": 180 },
-    "depth": { "type": "number", "description": "Độ sâu chấn tiêu (km)" },
-    "magnitude": { "type": "number", "description": "Độ lớn Richter" },
-    "place": { "type": "string" },
-    "status": { "type": "string", "enum": ["reviewed", "automatic"] }
+    "depth_km": { "type": "number", "description": "Hypocenter depth in km" },
+    "magnitude": { "type": "number" },
+    "magnitude_type": { "type": ["string", "null"] },
+    "place": { "type": ["string", "null"] },
+    "source_url": { "type": ["string", "null"], "format": "uri" },
+    "ingested_at": { "type": ["string", "null"], "format": "date-time", "description": "UTC ISO 8601 ingestion time" },
+    "raw_data": { "type": ["object", "null"], "description": "Optional original source payload" },
+    "time": { "type": "string", "format": "date-time", "description": "Legacy alias for event_time; do not use in new payloads" },
+    "depth": { "type": "number", "description": "Legacy alias for depth_km; do not use in new payloads" },
+    "status": { "type": "string", "enum": ["reviewed", "automatic"], "description": "Legacy USGS review state; optional" }
   },
-  "required": ["id", "time", "latitude", "longitude", "depth", "magnitude", "place"]
+  "required": ["id", "source", "source_event_id", "event_time", "latitude", "longitude", "depth_km", "magnitude"]
 }
-

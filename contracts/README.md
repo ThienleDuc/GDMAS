@@ -48,27 +48,14 @@ contracts/
 ## 3. Danh Mục Các Hợp Đồng Cốt Lõi
 
 ### 3.1 Thực thể Động đất (`schemas/earthquake.json`)
-Mô tả một sự kiện địa chấn đơn lẻ được nạp từ USGS và lưu trong bảng `earthquakes`:
-```json
-{
-  "$id": "https://gdmas.local/schemas/earthquake.json",
-  "type": "object",
-  "properties": {
-    "id": { "type": "string", "example": "us7000m8v8" },
-    "time": { "type": "string", "format": "date-time" },
-    "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
-    "longitude": { "type": "number", "minimum": -180, "maximum": 180 },
-    "depth": { "type": "number", "description": "Độ sâu chấn tiêu tính bằng km" },
-    "magnitude": { "type": "number", "description": "Độ lớn theo thang Richter" },
-    "place": { "type": "string" },
-    "status": { "type": "string", "enum": ["reviewed", "automatic"] }
-  },
-  "required": ["id", "time", "latitude", "longitude", "depth", "magnitude", "place"]
-}
-```
+Mô tả một sự kiện địa chấn đơn lẻ theo shape canonical từ `docs/api/API.md` §3.2 và BE `apps/api/src/gdmas/schemas/earthquake.py`. ID nội bộ là integer; `source_event_id` là mã USGS. Timestamp dùng UTC ISO 8601 `Z`, tọa độ WGS84.
+
+- Trường canonical: `id`, `source`, `source_event_id`, `event_time`, `latitude`, `longitude`, `depth_km`, `magnitude`, `magnitude_type?`, `place?`, `source_url?`, `ingested_at?`, `raw_data?`.
+- Alias legacy (`time`, `depth`, `status`) chỉ optional để tương thích payload cũ; test/mock mới chỉ dùng canonical.
+- Sample payload: [`examples/earthquake_sample.json`](examples/earthquake_sample.json).
 
 ### 3.2 Hợp đồng Luồng Sự kiện Realtime (`schemas/sse-event.json`)
-Mô tả cấu trúc gói tin đẩy qua `GET /api/v1/stream/earthquakes` (mặc định) và `GET /api/v1/events/stream`:
+Mô tả cấu trúc gói tin đẩy qua `GET /api/v1/stream/earthquakes` (mặc định) và `GET /api/v1/events/stream`. Fixture mẫu nằm tại [`examples/sse-event_sample.json`](examples/sse-event_sample.json) và chỉ dùng cho test/offline, không import runtime.
 - `event ∈ {earthquake_detected, earthquake_alert, heartbeat, alert, ingestion_cycle_completed, database_cleared}`.
 - `earthquake_detected` (route hiện có) và `earthquake_alert` (đặc tả `docs/api/API.md` §3.5) là **hai tên của cùng một loại sự kiện** → FE lắng nghe hợp của cả hai.
 - Optional: `id` (header `id:`, chống trùng khi reconnect), `retry` (ms, gợi ý backoff).

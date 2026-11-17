@@ -1,11 +1,15 @@
 {
-  "id": "us7000m8v8",
-  "time": "2026-11-06T15:30:00Z",
+  "id": 1042,
+  "source": "USGS",
+  "source_event_id": "us7000m8v8",
+  "event_time": "2026-11-06T15:30:00Z",
   "latitude": 37.7749,
   "longitude": -122.4194,
-  "depth": 10.5,
+  "depth_km": 10.5,
   "magnitude": 4.2,
-  "place": "12km NE of San Francisco, CA",
-  "status": "reviewed"
+  "magnitude_type": "mw",
+  "place": "12 km NE of San Francisco, CA",
+  "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000m8v8",
+  "ingested_at": "2026-11-06T15:35:00Z",
+  "raw_data": null
 }
-
