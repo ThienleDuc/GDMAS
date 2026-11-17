@@ -87,16 +87,20 @@ Mục tiêu: **Người dùng không cần bấm xác nhận/submit nhiều lầ
 | Soạn proposal; sửa proposal sau `Changes Requested` | Tự ý điền §9 `Approved` khi người dùng chưa xác nhận (im lặng không phải duyệt) |
 | Ghi §9 `Approved` theo xác nhận rõ trong chat của thành viên đang thao tác (`thien`/`son`/`van`/`tai`, không cần `ThienleDuc`) | Implement tác vụ không-tầm-thường khi §9 chưa `Approved` |
 | Tạo đồng thời `implemented/<id>/` + `testcase/<id>.md` khi §9 là `Approved`; chạy luồng `test/<id>` ghi `.agents/notes/bugs/` | Tự ý xóa file/thư mục hoặc ép ghi đè conflict mà không gom hỏi người dùng ở cuối phiên |
-| Tự chạy `review-pr`: `start`, commit tiếng Việt, `update`, `push` nhánh, tạo PR và **merge khi đã kiểm tra không xung đột** (không bắt buộc riêng `ThienleDuc`) | Push raw thẳng lên `develop` hoặc `main` bỏ qua PR/conflict-check, `--force`, `--no-verify`, tắt `.githooks/`, `git reset --hard`, `git clean -f`, `git branch -D` |
+| Chạy `review-pr` **sau khi qua CHECKPOINT 1/2**: `start`, commit tiếng Việt, `update`, `push` nhánh, tạo PR và **merge khi đã kiểm tra không xung đột** (không bắt buộc riêng `ThienleDuc`) | Commit/push hoặc merge PR **khi người dùng chưa xác nhận CHECKPOINT tương ứng**; push raw thẳng lên `develop`/`main`, `--force`, `--no-verify`, tắt `.githooks/`, `git reset --hard`, `git clean -f`, `git branch -D` |
 | Đề xuất sửa `AGENTS.md`, `contracts/`, `docs/quyuocchung.md` (qua danh sách câu hỏi cuối phiên nếu ngoài scope) | Tự ý sửa `AGENTS.md`, `contracts/`, migration cũ như tác dụng phụ |
 
 ## Git & Pull Request
 
 - Remote: GitHub `https://github.com/ThienleDuc/GDMAS.git`. Nhánh tích hợp: **`develop`**. Nhánh phát hành: **`main`** (hạn chế đụng trừ `hotfix/*` hoặc release).
-- Agent **tự động chạy `review-pr`** theo trạng thái công việc (cho Spec-Driven, Fast-Track <= 1 file, và kiểm thử 1 file `test/<id>`):
+- Agent chạy `review-pr` theo trạng thái công việc (cho Spec-Driven, Fast-Track <= 1 file, và kiểm thử 1 file `test/<id>`) **với 2 checkpoint bắt buộc**:
   - **Phần A (bắt đầu việc có sửa file hoặc kiểm thử 1 file):** trước khi sửa/tạo file đầu tiên, chạy `./scripts/git-ship.sh start <type>/<id>`.
-  - **Phần B (khi qua validation & đã tạo `testcase/<id>.md` + test):** chạy `scope`, `project-review`, tổng hợp Conventional Commit tiếng Việt, `update` (merge-forward `origin/develop`, không rebase), `push`, xuất PR + Implementation Report.
-- **Điều kiện Merge (Conflict-Free Gate):** **Không bắt buộc riêng `ThienleDuc`** — bất kỳ thành viên nào (hoặc `./scripts/git-ship.sh merge` khi được yêu cầu merge) đều được phép merge PR khi **kiểm tra không có xung đột (`0 conflicts`), qua `notes_index.py --check` và validation đạt chuẩn**. Chi tiết: [docs/git-workflow.md](docs/git-workflow.md).
+  - **CHECKPOINT 1 (sau validation xanh & đã có `testcase/<id>.md` + test pass):** DỪNG, xuất Implementation Report, hỏi người dùng commit/push hay dừng hay sửa thêm. Chưa xác nhận → giữ working tree, không commit/push. Cụm khởi động để tiếp tục: **`tiếp tục workflow`** (chấp nhận `continue workflow`).
+  - **Phần B1 (sau CHECKPOINT 1):** chạy `scope`, `project-review`, tổng hợp Conventional Commit tiếng Việt, `update` (merge-forward `origin/develop`, không rebase), `push`, xuất PR + Implementation Report, `merge --dry-run`.
+  - **CHECKPOINT 2 (sau push/PR + dry-run 0 conflict, trước merge):** DỪNG, báo link PR + checks, hỏi người dùng gửi yêu cầu merge hay giữ PR mở. Chưa xác nhận → không merge.
+  - **Phần B2 (sau CHECKPOINT 2):** merge PR → `git-ship.sh sync` → `status.md` completed.
+  - Mỗi lần dừng agent **in rõ tên checkpoint + cụm khởi động** để người dùng chỉ cần copy; checkpoint là 1 câu hỏi gom lựa chọn, không hỏi từng lệnh (giữ Anti-Interrupt).
+- **Điều kiện Merge (Conflict-Free Gate):** **Không bắt buộc riêng `ThienleDuc`** — bất kỳ thành viên nào (hoặc `./scripts/git-ship.sh merge` sau CHECKPOINT 2) đều được phép merge PR khi **kiểm tra không có xung đột (`0 conflicts`), qua `notes_index.py --check` và validation đạt chuẩn**. Chi tiết: [docs/git-workflow.md](docs/git-workflow.md).
 - Hook local `.githooks/` (kích hoạt qua `bash scripts/git-setup.sh` hoặc `SessionStart`) chặn commit trực tiếp lên `develop`/`main`, chặn `.env`/secret, kiểm format commit, chặn push raw `develop`/`main` và chạy `notes_index.py --check`.
 
 ## 5 Skill cốt lõi (chỉ lưu tại `.agents/skills/`)
@@ -104,7 +108,7 @@ Mục tiêu: **Người dùng không cần bấm xác nhận/submit nhiều lầ
 Mọi AI Agent (Antigravity, Claude Code qua [CLAUDE.md](CLAUDE.md), **OpenCode**, Codex, Cursor…) đọc và gọi trực tiếp 5 skill duy nhất tại `.agents/skills/`:
 
 1. [`write-proposal`](.agents/skills/write-proposal/SKILL.md) — Pha 1+2: đọc bối cảnh (`docs/`, `notes_index.py`), kiểm conflict, sinh ID qua Slug Engine, viết `proposed/<id>.md` (kèm tệp test dự kiến), dừng chờ xác nhận §9 (thả lỏng, không cần `ThienleDuc`).
-2. [`build-implementation`](.agents/skills/build-implementation/SKILL.md) — Pha 4: kiểm §9 `Approved`, tạo **đồng thời** `implemented/<id>/{plan.md,status.md}` và gọi `write-testcase` tạo `testcase/<id>.md`, gọi `review-pr` Phần A rẽ nhánh, code theo RULE-03 & I1–I7, validation nhẹ, đặt `Status: validation` rồi chuyển giao `review-pr` Phần B.
+2. [`build-implementation`](.agents/skills/build-implementation/SKILL.md) — Pha 4: kiểm §9 `Approved`, tạo **đồng thời** `implemented/<id>/{plan.md,status.md}` và gọi `write-testcase` tạo `testcase/<id>.md`, gọi `review-pr` Phần A rẽ nhánh, code theo RULE-03 & I1–I7, validation nhẹ, đặt `Status: validation` rồi **dừng CHECKPOINT 1** chờ người dùng (cụm khởi động `tiếp tục workflow`).
 3. [`write-testcase`](.agents/skills/write-testcase/SKILL.md) — Tạo biên bản `.agents/notes/testcase/<id>.md` (từ `_TEMPLATE.md`) + viết unit/integration test offline cho **2 luồng**: (1) `proposal-paired` sinh đồng thời với `implemented/<id>/`, và (2) `single-file-test` kiểm thử riêng 1 file trên nhánh `test/<id>` mới và ghi lỗi vào `.agents/notes/bugs/`.
 4. [`project-review`](.agents/skills/project-review/SKILL.md) — Lớp thẩm định & bảo vệ mã nguồn (tích hợp OCP/Churn + 7 Invariants I1–I7 + kiểm tra `testcase/<id>.md` & offline test + drift tài liệu + lan phạm vi `plan.md`).
-5. [`review-pr`](.agents/skills/review-pr/SKILL.md) — Tự động hóa Git toàn phần (tích hợp Slug Engine, bảng Type/Scope tiếng Việt, `git-ship.sh`, `.githooks/`, nhánh `test/<id>`, merge-forward `develop`, tạo PR, kiểm tra không xung đột & `merge` không bắt buộc riêng `ThienleDuc`, `sync` sau merge).
+5. [`review-pr`](.agents/skills/review-pr/SKILL.md) — Tự động hóa Git toàn phần (Slug Engine, bảng Type/Scope tiếng Việt, `git-ship.sh`, `.githooks/`, nhánh `test/<id>`, merge-forward `develop`, tạo PR, kiểm tra không xung đột & `merge` không bắt buộc riêng `ThienleDuc`, `sync` sau merge); tách B1 (đến push+PR+dry-run) và B2 (merge+sync), với **CHECKPOINT 2** ở giữa — chỉ merge sau người dùng gõ `tiếp tục workflow`.
