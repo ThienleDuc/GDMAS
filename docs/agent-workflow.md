@@ -31,7 +31,7 @@ Quy trình làm việc người + AI Agent tối giản hóa với **5 skill c�
 ## 2. Cây file quy trình (chỉ 1 thư mục skill duy nhất)
 
 ```text
-AGENTS.md                                  # luật chung cho mọi agent (Antigravity, Claude Code qua CLAUDE.md, Codex…)
+AGENTS.md                                  # luật chung cho mọi agent (Antigravity, Claude Code qua CLAUDE.md, OpenCode, Codex…)
 CLAUDE.md                                  # import @AGENTS.md và gọi lại 5 skill tại .agents/skills/
 .agents/
 ├── team.md                                # bảng thành viên & handle (`thien`, `son`, `van`, `tai`)
@@ -43,7 +43,7 @@ CLAUDE.md                                  # import @AGENTS.md và gọi lại 5
 │   └── review-pr/SKILL.md                 # Tự động Git (start/scope/commit tiếng Việt/update/push PR) cho Spec, Fast-Track & test/<id>
 └── notes/                                 # CHỈ giữ 4 thư mục quyết định + README.md
     ├── README.md                          # công thức grep + lệnh notes_index.py (--testcases, --bugs, --check)
-    ├── proposed/{_TEMPLATE.md, yyyy-mm-dd-<slug>-<handle>.md}
+    ├── proposed/{README.md, _TEMPLATE.md, yyyy-mm-dd-<slug>-<handle>.md}
     ├── implemented/{_TEMPLATE/{plan,status}.md, yyyy-mm-dd-<slug>-<handle>/}
     ├── testcase/{README.md, _TEMPLATE.md, yyyy-mm-dd-<slug>-<handle>.md}
     └── bugs/{README.md, INDEX.md, _TEMPLATE.md, BUG-<handle>-NNN-<slug>.md}
@@ -58,6 +58,15 @@ docs/
 ├── git-workflow.md                        # tự động hóa Git, bảng Type/Scope, Slug Engine, kiểm tra 0 conflict trước khi merge
 └── coding-rules.md                        # 7 Bất biến cứng I1–I7 kèm dấu hiệu vi phạm
 ```
+
+### 2.1. Dùng chung giữa các tool AI (trong đó có OpenCode)
+
+Repo **không** lưu cấu hình riêng cho từng tool (không có `opencode.json`/`.opencode/`, không có `.cursorrules`, không có `.github/copilot-instructions.md`). Cơ chế "đọc skill" là **quy ước bằng văn bản + cấu trúc chuẩn**, dùng chung cho mọi agent:
+
+- **Discovery:** tool tự nạp `AGENTS.md` (OpenCode nạp tự động mỗi phiên; Claude Code qua `CLAUDE.md` → `@AGENTS.md`), rồi đọc trực tiếp `.agents/skills/<name>/SKILL.md`. Mỗi skill chỉ có đúng 1 file `SKILL.md` — **không nhân bản** sang `.claude/skills/`, `.opencode/skills/` hay thư mục riêng của tool.
+- **Script & template dùng chung:** skill gọi `scripts/git-ship.sh`, `scripts/notes_index.py`, `scripts/git-setup.sh` và template tại `.agents/notes/*/_TEMPLATE*` — đều nằm ngoài thư mục skill, nên mọi tool chạy cùng một bộ lệnh, cùng một đầu ra.
+- **Guardrail khác nhau theo tool:** `.claude/settings.json` (allow/ask/deny) chỉ có hiệu lực với Claude Code. Với OpenCode và các tool khác, hàng rào chặn thật là [`.githooks/`](.githooks/) + `scripts/git-ship.sh` (tool-agnostic): chặn commit/push trực tiếp `develop`/`main`, chặn secret, kiểm format commit và `notes_index.py --check`. Vì vậy **không được** dựa vào `settings.json` để thay thế hook, cũng không dùng `--no-verify` / tắt hook khi gặp chặn.
+- **Ngôn ngữ & quy tắc:** mọi tool đọc chung `AGENTS.md` (luật I1–I7, Anti-Interrupt, ngôn ngữ tài liệu/commit tiếng Việt, khóa máy tiếng Anh) — không có bản dịch riêng cho từng tool.
 
 ## 3. Bốn tầng note & Khuôn mẫu testcase
 

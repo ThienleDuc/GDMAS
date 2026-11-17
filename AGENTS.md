@@ -101,7 +101,7 @@ Mục tiêu: **Người dùng không cần bấm xác nhận/submit nhiều lầ
 
 ## 5 Skill cốt lõi (chỉ lưu tại `.agents/skills/`)
 
-Mọi AI Agent (Antigravity, Claude Code qua [CLAUDE.md](CLAUDE.md), Codex, Cursor…) đọc và gọi trực tiếp 5 skill duy nhất tại `.agents/skills/`:
+Mọi AI Agent (Antigravity, Claude Code qua [CLAUDE.md](CLAUDE.md), **OpenCode**, Codex, Cursor…) đọc và gọi trực tiếp 5 skill duy nhất tại `.agents/skills/`:
 
 1. [`write-proposal`](.agents/skills/write-proposal/SKILL.md) — Pha 1+2: đọc bối cảnh (`docs/`, `notes_index.py`), kiểm conflict, sinh ID qua Slug Engine, viết `proposed/<id>.md` (kèm tệp test dự kiến), dừng chờ xác nhận §9 (thả lỏng, không cần `ThienleDuc`).
 2. [`build-implementation`](.agents/skills/build-implementation/SKILL.md) — Pha 4: kiểm §9 `Approved`, tạo **đồng thời** `implemented/<id>/{plan.md,status.md}` và gọi `write-testcase` tạo `testcase/<id>.md`, gọi `review-pr` Phần A rẽ nhánh, code theo RULE-03 & I1–I7, validation nhẹ, đặt `Status: validation` rồi chuyển giao `review-pr` Phần B.
