@@ -197,4 +197,4 @@ Scope of Rejection: -
   - §7 rủi ro và §8 kiểm chứng: bổ sung các ca kiểm tra cấu hình.
   - Sau xác nhận rõ của người dùng ngày 2026-11-18, mở rộng `implemented/<id>/plan.md` + testcase, ghim packageManager (đổi 11 → 10.20.0 vì Node ≥18.18), sửa `.env.example`, thêm Vite dev-only middleware + resolver, test offline, cập nhật `docs/setup.md` §1.4 và ignore `.vscode/` trong `.gitignore`.
 - **Giữ nguyên §9 `Decision: Approved` (thien, 2026-11-17)**; phần mở rộng scope được người dùng xác nhận rõ trong chat ngày 2026-11-18.
-- **Trạng thái cuối:** `Approved` / implementation `validation` / testcase `passed`; 49 FE tests pass, build pass, `notes_index --check` OK. Working tree giữ nguyên, không commit/push.
+- **Trạng thái cuối:** `Approved` / implementation `completed` / testcase `passed`; 49 FE tests pass, build pass, `notes_index --check` OK. Đã commit `ced450f`, merge PR #19 vào develop (`d8732d7`) và sync local.

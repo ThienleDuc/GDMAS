@@ -2,9 +2,11 @@
 
 ## Metadata
 - ID: 2026-11-17-fe-contract-mock-tests-thien
-- Status: in_progress
+- Status: completed
 - Started: 2026-11-17
 - Last Updated: 2026-11-18
+- Merged At: 2026-11-18
+- Merge Commit: d8732d7f7c7f0d33074df30973b8fa88271ef2c3 (PR #19 → develop)
 - Owner: agent | thien
 
 ---
@@ -63,9 +65,9 @@ Blocked:
 ---
 
 ## Next Actions
-- Giữ ở working tree cho người dùng rà soát; không commit/push/merge.
+- none — đã merge PR #19 vào develop và sync local; không còn hành động tiếp theo.
 
 ---
 
 ## Last Update
-2026-11-18 — Hoàn tất cấu hình chạy riêng FE, dev-only mock và pin pnpm 10.20.0 tương thích Node ≥18.18 (§1.4); 49 test, build, Corepack và smoke validation pass. Giữ working tree theo yêu cầu.
+2026-11-18 — Hoàn tất cấu hình chạy riêng FE, dev-only mock và pin pnpm 10.20.0 tương thích Node ≥18.18 (§1.4); 49 test, build, Corepack và smoke validation pass. Đã commit ced450f, push nhánh, merge PR #19 vào develop (d8732d7) và sync local.
