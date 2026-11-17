@@ -1,0 +1,53 @@
+{
+  "success": true,
+  "data": {
+    "services": {
+      "postgres": {
+        "status": "running",
+        "cycle": null,
+        "last_run": null
+      },
+      "ingestion": {
+        "status": "active",
+        "last_run": "2026-11-16T10:00:00Z",
+        "cycle": "5m",
+        "records_processed": 42
+      },
+      "analysis": {
+        "status": "active",
+        "last_run": "2026-11-16T09:58:00Z",
+        "cycle": "5m",
+        "records_processed": 6
+      },
+      "clustering": {
+        "status": "idle",
+        "last_run": "2026-11-15T11:00:00Z",
+        "cycle": "1d",
+        "records_processed": 8
+      },
+      "prediction": {
+        "status": "active",
+        "last_run": "2026-11-16T09:59:00Z",
+        "cycle": "5m",
+        "records_processed": 1
+      },
+      "api": {
+        "status": "running",
+        "last_run": "2026-11-16T10:05:00Z",
+        "cycle": null,
+        "uptime_seconds": 86400
+      },
+      "frontend": {
+        "status": "running",
+        "last_run": "2026-11-16T10:05:00Z",
+        "cycle": null
+      }
+    },
+    "data_feed": {
+      "source": "USGS",
+      "total_events": 1248,
+      "latest_event_time": "2026-11-16T09:55:00Z"
+    },
+    "generated_at": "2026-11-16T10:05:00Z"
+  }
+}

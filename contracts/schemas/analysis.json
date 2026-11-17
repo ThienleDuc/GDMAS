@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gdmas.local/schemas/analysis.json",
+  "title": "GET /api/v1/analysis/{temporal,trend,seasonality,correlation} responses",
+  "description": "Một tệp cho 4 route Pattern 1–4 (T3 Analysis). Dùng $ref tới $defs tương ứng: analysis.json#/$defs/temporalResponse | trendResponse | seasonalityResponse | correlationResponse. Timestamp UTC ISO 8601 (Z); toạ độ WGS84. success=false hoặc status=insufficient_data → FE hiển thị Empty State, không dùng số liệu dự phòng.",
+  "type": "object",
+  "anyOf": [
+    { "$ref": "#/$defs/temporalResponse" },
+    { "$ref": "#/$defs/trendResponse" },
+    { "$ref": "#/$defs/seasonalityResponse" },
+    { "$ref": "#/$defs/correlationResponse" }
+  ],
+  "$defs": {
+    "nullableNumber": { "type": ["number", "null"] },
+    "timeInterval": { "type": "string", "enum": ["day", "week", "month"] },
+    "metricStatus": { "type": "string", "enum": ["computed", "insufficient_data"] },
+    "temporalPoint": {
+      "type": "object",
+      "required": ["date", "event_count"],
+      "additionalProperties": false,
+      "properties": {
+        "date": { "type": "string", "description": "Nhãn kỳ theo UTC: YYYY-MM-DD (day/week) hoặc YYYY-MM (month)." },
+        "event_count": { "type": "integer", "minimum": 0 },
+        "max_magnitude": { "$ref": "#/$defs/nullableNumber" },
+        "avg_magnitude": { "$ref": "#/$defs/nullableNumber" }
+      }
+    },
+    "scatterPoint": {
+      "type": "object",
+      "required": ["timestamp", "magnitude", "depth_km"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "integer" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "magnitude": { "type": "number" },
+        "depth_km": { "type": "number", "minimum": 0 }
+      }
+    },
+    "magnitudeBin": {
+      "type": "object",
+      "required": ["bin", "count"],
+      "additionalProperties": false,
+      "properties": {
+        "bin": { "type": "string", "examples": ["< 2.0", "2.0 - 3.0", ">= 5.0"] },
+        "count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "temporalResponse": {
+      "type": "object",
+      "required": ["success", "data"],
+      "additionalProperties": false,
+      "properties": {
+        "success": { "type": "boolean" },
+        "data": {
+          "type": "object",
+          "required": ["interval", "line_chart", "scatter_plot", "histogram"],
+          "additionalProperties": false,
+          "properties": {
+            "status": { "$ref": "#/$defs/metricStatus" },
+            "interval": { "$ref": "#/$defs/timeInterval" },
+            "line_chart": { "type": "array", "items": { "$ref": "#/$defs/temporalPoint" } },
+            "scatter_plot": { "type": "array", "items": { "$ref": "#/$defs/scatterPoint" } },
+            "histogram": {
+              "type": "object",
+              "required": ["magnitude_bins"],
+              "additionalProperties": false,
+              "properties": {
+                "magnitude_bins": { "type": "array", "items": { "$ref": "#/$defs/magnitudeBin" } }
+              }
+            },
+            "stats": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "data_points": { "type": "integer", "minimum": 0 },
+                "avg_magnitude": { "$ref": "#/$defs/nullableNumber" },
+                "max_magnitude": { "$ref": "#/$defs/nullableNumber" },
+                "avg_depth": { "$ref": "#/$defs/nullableNumber" }
+              }
+            }
+          }
+        },
+        "message": { "type": "string" }
+      }
+    },
+    "trendPoint": {
+      "type": "object",
+      "required": ["period", "actual_value"],
+      "additionalProperties": false,
+      "properties": {
+        "period": { "type": "string", "examples": ["2026-11-01", "2026-11"] },
+        "actual_value": { "type": "number" },
+        "trend_value": { "$ref": "#/$defs/nullableNumber" },
+        "is_complete": { "type": "boolean" }
+      }
+    },
+    "trendResponse": {
+      "type": "object",
+      "required": ["success", "data"],
+      "additionalProperties": false,
+      "properties": {
+        "success": { "type": "boolean" },
+        "data": {
+          "type": "object",
+          "required": ["resample_freq", "metric", "series"],
+          "additionalProperties": false,
+          "properties": {
+            "status": { "$ref": "#/$defs/metricStatus" },
+            "resample_freq": { "type": "string", "enum": ["D", "W", "M"] },
+            "metric": { "type": "string", "enum": ["count", "avg_magnitude", "max_magnitude"] },
+            "series": { "type": "array", "items": { "$ref": "#/$defs/trendPoint" } },
+            "slope": { "$ref": "#/$defs/nullableNumber" },
+            "intercept": { "$ref": "#/$defs/nullableNumber" },
+            "r_squared": { "$ref": "#/$defs/nullableNumber" },
+            "p_value": { "$ref": "#/$defs/nullableNumber" },
+            "trend_direction": { "type": "string", "enum": ["increasing", "decreasing", "stable"] },
+            "sample_size": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "message": { "type": "string" }
+      }
+    },
+    "seasonalPoint": {
+      "type": "object",
+      "required": ["cycle_index", "period_label", "seasonal_factor"],
+      "additionalProperties": false,
+      "properties": {
+        "cycle_index": { "type": "integer", "minimum": 1 },
+        "period_label": { "type": "string", "examples": ["Tháng 1", "Thứ 2"] },
+        "seasonal_factor": { "type": "number" }
+      }
+    },
+    "seasonalityResponse": {
+      "type": "object",
+      "required": ["success", "data"],
+      "additionalProperties": false,
+      "properties": {
+        "success": { "type": "boolean" },
+        "data": {
+          "type": "object",
+          "required": ["components"],
+          "additionalProperties": false,
+          "properties": {
+            "status": { "$ref": "#/$defs/metricStatus" },
+            "resample_freq": { "type": ["string", "null"] },
+            "period": { "type": ["integer", "null"] },
+            "components": {
+              "type": "object",
+              "required": ["seasonal_line"],
+              "additionalProperties": false,
+              "properties": {
+                "seasonal_line": { "type": "array", "items": { "$ref": "#/$defs/seasonalPoint" } },
+                "residual_variance": { "$ref": "#/$defs/nullableNumber" },
+                "seasonality_strength": { "$ref": "#/$defs/nullableNumber" },
+                "interpretation": { "type": "string" }
+              }
+            },
+            "data_points": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "message": { "type": "string" }
+      }
+    },
+    "correlationVariable": {
+      "type": "string",
+      "enum": ["magnitude", "depth_km", "latitude", "longitude", "daily_event_count"]
+    },
+    "correlationResponse": {
+      "type": "object",
+      "required": ["success", "data"],
+      "additionalProperties": false,
+      "properties": {
+        "success": { "type": "boolean" },
+        "data": {
+          "type": "object",
+          "required": ["variables", "matrix", "method"],
+          "additionalProperties": false,
+          "properties": {
+            "status": { "$ref": "#/$defs/metricStatus" },
+            "variables": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/correlationVariable" } },
+            "matrix": {
+              "type": "array",
+              "description": "Ma trận vuông kích thước variables.length × variables.length.",
+              "items": {
+                "type": "array",
+                "items": { "type": ["number", "null"], "minimum": -1, "maximum": 1 }
+              }
+            },
+            "method": { "type": "string", "enum": ["pearson", "spearman"] },
+            "sample_size": { "type": "integer", "minimum": 0 },
+            "note": { "type": "string" }
+          }
+        },
+        "message": { "type": "string" }
+      }
+    }
+  }
+}
