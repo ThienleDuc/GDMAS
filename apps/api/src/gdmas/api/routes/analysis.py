@@ -37,7 +37,7 @@ def _utc(raw: str | None) -> datetime | None:
     if raw is None:
         return None
     try:
-        dt = datetime.fromisoformat(raw.strip().replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(raw.strip())
     except ValueError:
         return None
     return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)

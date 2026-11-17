@@ -7,7 +7,7 @@
 - Type: feature
 - Status: approved
 - Priority: high
-- Area: apps/api/src/gdmas/services/prediction/ và scripts/
+- Area: apps/api/src/gdmas/services/prediction/ (3 script `scripts/*.py` không có trên nhánh `feature/tai-terminal5-6-full`)
 - Architecture Impact: docs/architecture/ERD.md, docs/api/API.md
   <!-- Chỉ phát sinh nếu nhóm chốt dùng thang 4 mức Low/Moderate/High/Critical:
        - ERD.md §2.5: giá trị `predicted_label` (đang ghi Low Activity, Normal Activity, High Activity)
@@ -43,7 +43,7 @@ Hệ thống GDMAS cần hai Pattern bắt buộc cuối cùng của đồ án: 
 ---
 
 ## 2. Hiện trạng
-- `apps/api/src/gdmas/services/prediction/runner.py`: tệp khung 23 dòng, chưa làm gì.
+- `apps/api/src/gdmas/services/prediction/runner.py`: lúc lập proposal là tệp khung 23 dòng; trên nhánh hiện tại đã có chu kỳ 5 phút, `--once`, gọi `PredictionService`.
 - `apps/api/src/gdmas/services/demo_seeder.py` (Bước 4–5): ghi dự báo và phân loại giả vào `prediction_results`, `classification_results`.
 - `apps/api/src/gdmas/models/prediction.py`: ORM `PredictionResult` (`predicted_value`, `lower_bound`, `upper_bound`, `actual_value`, `evaluation_metrics`...) và `ClassificationResult` (`predicted_label`, `probability_scores`, `actual_label`...). Đã đủ cột, **không cần migration**.
 - `apps/api/src/gdmas/api/routes/patterns.py`: `/api/v1/patterns` đã đọc hai bảng này; giao diện `StatisticsPage.tsx` đã gọi endpoint đó.
@@ -84,7 +84,7 @@ Tuân thủ **I1** (worker độc lập, không nhúng vào `main.py`), **I2 / R
 - `apps/api/src/gdmas/services/prediction/service.py` *(mới)*: đọc DB, gọi inference, ghi kết quả, điền giá trị thực tế, ghi `service_runs`.
 - `apps/api/src/gdmas/services/prediction/runner.py` *(thay tệp khung)*: vòng lặp 5 phút và cờ `--once`.
 - `apps/api/src/gdmas/services/prediction/models/` *(mới)*: `forecast_model.joblib`, `risk_classifier.joblib`, `recent_history.json`, `training_report.json`.
-- `scripts/download_usgs_history.py`, `scripts/eda_daily_counts.py`, `scripts/train_models.py` *(mới)*: tải dữ liệu lịch sử, khảo sát, huấn luyện.
+- `scripts/download_usgs_history.py`, `scripts/eda_daily_counts.py`, `scripts/train_models.py` *(có trên `0f32163`, chưa checkout vào `feature/tai-terminal5-6-full`)*: tải dữ liệu lịch sử, khảo sát, huấn luyện.
 
 **Pattern 5:** ARIMA(2,0,1) trên `log1p(số trận)` (bậc chọn theo AIC, d=0 vì chuỗi dừng). Khoảng tin cậy 95% lấy từ phân vị 2.5% và 97.5% của sai số một bước thực tế, rồi biến đổi ngược `expm1`.
 
@@ -163,10 +163,10 @@ Nhược: vi phạm yêu cầu Demo §4 (không train nặng khi demo). Không c
 Decision: Approved
 Reviewer: tai
 Review Date: 2026-11-14
-Comments: Tác giả tự duyệt theo docs/agent-workflow.md. Phần triển khai đã chạy và kiểm chứng trước khi ký; 44 test prediction đạt, ruff sạch trên các tệp của Task 1.
+Comments: Tác giả tự duyệt theo docs/agent-workflow.md. Phần triển khai đã chạy và kiểm chứng trước khi ký; 44 test prediction đạt (toàn bộ `apps/api` pytest 272 passed, 2026-11-17), ruff sạch trên các tệp của Task 1.
 Scope of Rejection: -
 
 ---
 
 ## 10. Next Action
-Đã triển khai và kiểm thử tự động. Còn lại: đồng bộ tên nhãn với Frontend (`thien`), xác nhận ngày dự báo (hôm nay UTC hay ngày mai), commit/push và mở PR. Xem `implemented/2026-11-12-seismic-prediction-worker-tai/plan.md` và `status.md`.
+Đã triển khai và kiểm thử tự động trên nhánh `feature/tai-terminal5-6-full`. Còn lại: đồng bộ tên nhãn với Frontend (`thien`), xác nhận ngày dự báo (hôm nay UTC hay ngày mai). Ba script huấn luyện chưa đưa vào nhánh này. Xem `implemented/2026-11-12-seismic-prediction-worker-tai/plan.md` và `status.md`.

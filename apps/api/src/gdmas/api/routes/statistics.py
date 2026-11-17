@@ -100,9 +100,12 @@ def get_earthquake_statistics(db: Session = Depends(get_db)):
         )
         series = _time_series_24h(db, now_utc) if total > 0 else []
     except SQLAlchemyError as exc:
-        logger.error("Lỗi CSDL khi thống kê: %s", exc)
+        logger.error("Lỗi CSDL khi thống kê: %s", type(exc).__name__)
         return error_response(
-            "DATABASE_ERROR", "Không thể truy vấn cơ sở dữ liệu.", 500, str(exc)
+            "DATABASE_ERROR",
+            "Không thể truy vấn cơ sở dữ liệu.",
+            500,
+            type(exc).__name__,
         )
 
     return StatisticsResponse(

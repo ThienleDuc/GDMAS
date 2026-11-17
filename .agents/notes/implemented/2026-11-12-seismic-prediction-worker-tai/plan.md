@@ -21,7 +21,7 @@ Xây động cơ dự báo định lượng (Pattern 5) và phân loại rủi r
 - `apps/api/src/gdmas/services/prediction/service.py` *(mới)*
 - `apps/api/src/gdmas/services/prediction/runner.py` *(thay tệp khung)*
 - `apps/api/src/gdmas/services/prediction/models/` *(4 tệp: forecast_model.joblib, risk_classifier.joblib, recent_history.json, training_report.json)*
-- `scripts/download_usgs_history.py`, `scripts/eda_daily_counts.py`, `scripts/train_models.py` *(mới)*
+- `scripts/download_usgs_history.py`, `scripts/eda_daily_counts.py`, `scripts/train_models.py` *(có trên `0f32163`; không checkout vào `feature/tai-terminal5-6-full`)*
 - `.agents/notes/testcase/2026-11-12-seismic-prediction-worker-tai.md`
 - `apps/api/tests/unit/test_prediction_inference.py`, `apps/api/tests/unit/test_prediction_service.py`
 ### Out of Scope
@@ -62,7 +62,7 @@ Không có Alembic migration mới (ORM đã đủ cột). Không đổi endpoin
 ## 5. Validation (nhẹ) & Kiểm chứng Testcase bắt buộc
 - [x] **Đã tạo đặc tả testcase** tại `.agents/notes/testcase/2026-11-12-seismic-prediction-worker-tai.md`
 - [x] **Đã tạo và chạy pass file unit test offline** (`apps/api/tests/unit/test_prediction_inference.py`, `test_prediction_service.py`)
-- [x] Backend test liên quan: `cd apps/api && uv run pytest tests/unit -q` → 44 passed
+- [x] Backend test liên quan: `cd apps/api && uv run pytest` → 272 passed (trong đó 44 test prediction)
 - [x] Backend lint/format: `uv run ruff check src/gdmas/services/prediction` → All checks passed!; `ruff format --check` → 3 files already formatted
 - [ ] Frontend typecheck & build: N/A (không đụng `apps/web`)
 - [ ] Notes check (`notes_index.py --check`): chạy khi hoàn tất bộ tài liệu

@@ -4,13 +4,12 @@ Lệnh chạy: python -m gdmas.services.ingestion.runner
 Chu kỳ: 5 phút/lần (300 giây)
 """
 
-import time
-import sys
 import logging
-from datetime import datetime, timezone
+import time
+from datetime import UTC, datetime
 
 from gdmas.core.config import settings
-from gdmas.services.ingestion.service import IngestionService
+from gdmas.services.ingestion.service import IngestionService, summarize_error
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,22 +19,46 @@ logging.basicConfig(
 logger = logging.getLogger("gdmas.services.ingestion.runner")
 
 
+def _wait_for_next_cycle(interval: int) -> bool:
+    """Chờ chu kỳ kế; xử lý ngắt cả trong nhánh retry sau lỗi."""
+    try:
+        time.sleep(interval)
+    except (KeyboardInterrupt, SystemExit):
+        print("\n[GDMAS-Ingestion] Tiến trình đã nhận lệnh dừng an toàn.", flush=True)
+        return False
+    return True
+
+
 def run() -> None:
     interval = getattr(settings, "INGESTION_INTERVAL_SECONDS", 300)
     minutes = interval // 60
 
-    print("==========================================================================", flush=True)
-    print(f"[GDMAS-Ingestion] Terminal 2: USGS Data Ingestion Service Active", flush=True)
-    print(f"[GDMAS-Ingestion] Chu kỳ nạp tự động: {interval} giây ({minutes} phút / lần)", flush=True)
+    print(
+        "==========================================================================",
+        flush=True,
+    )
+    print(
+        "[GDMAS-Ingestion] Terminal 2: USGS Data Ingestion Service Active", flush=True
+    )
+    print(
+        f"[GDMAS-Ingestion] Chu kỳ nạp tự động: {interval} giây ({minutes} phút / lần)",
+        flush=True,
+    )
     print(f"[GDMAS-Ingestion] USGS Feed URL: {settings.USGS_FEED_URL}", flush=True)
-    print("==========================================================================", flush=True)
+    print(
+        "==========================================================================",
+        flush=True,
+    )
 
     service = IngestionService()
 
     while True:
         try:
-            now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-            print(f"\n[GDMAS-Ingestion] [{now_str}] Bắt đầu chu kỳ quét dữ liệu USGS mới...", flush=True)
+            now_str = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+            print(
+                f"\n[GDMAS-Ingestion] [{now_str}] Bắt đầu chu kỳ quét dữ liệu USGS mới...",
+                flush=True,
+            )
 
             res = service.execute_cycle()
 
@@ -52,15 +75,26 @@ def run() -> None:
                 err = res.get("error", "Không rõ nguyên nhân")
                 print(f"[GDMAS-Ingestion] Cảnh báo trong chu kỳ: {err}", flush=True)
 
-            print(f"[GDMAS-Ingestion] Đang chờ {interval} giây ({minutes} phút) cho chu kỳ tiếp theo...\n", flush=True)
-            time.sleep(interval)
+            print(
+                f"[GDMAS-Ingestion] Đang chờ {interval} giây ({minutes} phút) cho chu kỳ tiếp theo...\n",
+                flush=True,
+            )
+            if not _wait_for_next_cycle(interval):
+                break
 
         except (KeyboardInterrupt, SystemExit):
-            print("\n[GDMAS-Ingestion] Tiến trình đã nhận lệnh dừng an toàn.", flush=True)
+            print(
+                "\n[GDMAS-Ingestion] Tiến trình đã nhận lệnh dừng an toàn.", flush=True
+            )
             break
-        except Exception as e:
-            print(f"[GDMAS-Ingestion] Ngoại lệ không mong muốn: {e}. Thử lại sau {interval} giây...", flush=True)
-            time.sleep(interval)
+        except Exception as exc:  # noqa: BLE001 — biên worker phải tiếp tục sau lỗi chu kỳ chưa dự kiến
+            logger.error(
+                "[GDMAS-Ingestion] Ngoại lệ chu kỳ: %s. Thử lại sau %s giây...",
+                summarize_error(exc),
+                interval,
+            )
+            if not _wait_for_next_cycle(interval):
+                break
 
 
 if __name__ == "__main__":

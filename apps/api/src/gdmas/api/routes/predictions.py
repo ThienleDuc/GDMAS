@@ -1,12 +1,12 @@
 import logging
 
 from fastapi import APIRouter, Depends
-from gdmas.api.routes.system import _iso
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from gdmas.api.errors import error_response
+from gdmas.api.routes.system import _iso
 from gdmas.db.connection import get_db
 from gdmas.models.prediction import ClassificationResult, PredictionResult
 

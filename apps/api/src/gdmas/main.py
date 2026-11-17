@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from gdmas.core.config import settings
+
 from gdmas.api.router import api_router
+from gdmas.core.config import settings
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

@@ -159,8 +159,13 @@ def get_latest_state(
                 "latest_run": latest_run_dict,
             }
     except Exception as exc:  # noqa: BLE001 - mọi lỗi DB đều chỉ bỏ qua chu kỳ
-        logger.warning("Lỗi khi truy vấn SSE data: %s", exc)
-        return {"success": False}
+        logger.warning("Lỗi khi truy vấn SSE data: %s", type(exc).__name__)
+        return {
+            "success": False,
+            "max_id": since_event_id,
+            "latest_run_id": since_run_id,
+            "new_events": [],
+        }
 
 
 def _drain_queue(client_queue: asyncio.Queue) -> dict[str, str] | None:

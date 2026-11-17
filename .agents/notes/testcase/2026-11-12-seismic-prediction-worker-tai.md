@@ -86,8 +86,8 @@ cd apps/api && uv run ruff check tests/unit
 cd apps/api && uv run ruff format --check tests/unit
 ```
 
-- **Ngày chạy cuối:** `2026-11-14`
-- **Kết quả quan sát thật:** `44 passed (28 inference + 16 service); ruff check All checks passed!; ruff format --check 3 files already formatted.`
+- **Ngày chạy cuối:** `2026-11-17`
+- **Kết quả quan sát thật:** 44 passed (28 inference + 16 service); toàn bộ `cd apps/api && uv run pytest` → 272 passed; ruff check All checks passed!; ruff format --check đạt.
 - **Hạn chế:** Các test dùng session giả, nên câu SQL riêng của PostgreSQL (`func.timezone`, nhóm theo ngày) chưa được chạy thật; đã kiểm chứng thủ công trên DB thật qua runner.
 
 ---

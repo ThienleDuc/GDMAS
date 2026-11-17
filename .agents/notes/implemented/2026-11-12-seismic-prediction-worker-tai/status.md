@@ -4,20 +4,21 @@
 - ID: 2026-11-12-seismic-prediction-worker-tai
 - Status: completed
 - Started: 2026-11-09
-- Last Updated: 2026-11-14
+- Last Updated: 2026-11-17
 - Owner: agent | tai
 
 ---
 
 ## Tiến độ
 Progress: 100%
-Current Phase: Hoàn tất; chờ commit/push và đồng bộ nhãn với Frontend
+Current Phase: Hoàn tất trên `feature/tai-terminal5-6-full`; chờ đồng bộ nhãn với Frontend
 
 Completed:
 - Tải 730 ngày USGS (281.601 sự kiện), EDA, chọn ngưỡng phân vị 375/425/475.
 - Huấn luyện offline: ARIMA(2,0,1)_log (MAE 37.42, tốt hơn baseline ~9%, coverage 97.2%); Pattern 6 Phân phối dự báo (accuracy 0.514, within-1 0.861).
 - Viết `inference.py`, `service.py`, `runner.py` (có `--once`).
-- 44 test offline đạt; ruff sạch trên tệp của Task 1.
+- 44 test prediction offline đạt; toàn bộ `apps/api` pytest 272 passed (2026-11-17); ruff sạch trên tệp của Task 1.
+- Ba script `scripts/*.py` chưa có trên nhánh hiện tại.
 - Chạy thật: `/api/v1/patterns` trả pattern_5, pattern_6 = COMPUTED; lặp 6 chu kỳ không trùng; xóa bảng thì tái sinh.
 In Progress:
 - none
@@ -30,7 +31,7 @@ Blocked:
 | Kiểm tra | Kết quả | Ghi chú |
 |---|---|---|
 | Testcase & file test (`.agents/notes/testcase/` + `test_*.py`) | DONE | `testcase/2026-11-12-seismic-prediction-worker-tai.md`, `test_prediction_inference.py`, `test_prediction_service.py` |
-| Test liên quan (`pytest`) | PASS | `uv run pytest tests/unit -q` → 44 passed |
+| Test liên quan (`pytest`) | PASS | `uv run pytest` (apps/api) → 272 passed; 44 test prediction |
 | Lint / Build (`ruff` / `pnpm build`) | PASS | `ruff check src/gdmas/services/prediction` + `format --check` đạt |
 | Notes check (`notes_index.py --check`) | NOT_RUN | chạy khi hoàn tất bộ tài liệu |
 | Tài liệu cập nhật | N/A | ERD/API.md chỉ đổi nếu nhóm chốt 4 nhãn |
@@ -65,10 +66,10 @@ Blocked:
 
 ## Next Actions
 - Đồng bộ tên nhãn và ngày dự báo với `thien`.
-- Commit/push nhánh `feature/feat-05-prediction`, mở PR vào `develop`.
-- (Tùy chọn) Tạo route `/prediction/latest` và `/classification/latest` theo đặc tả gốc.
+- Nhánh hiện tại: `feature/tai-terminal5-6-full` (không còn `feature/feat-05-prediction`).
+- (Tùy chọn) Checkout 3 script huấn luyện từ `0f32163` nếu cần train lại.
 
 ---
 
 ## Last Update
-2026-11-14 — Hoàn tất Task 1, 44 test đạt, ruff sạch.
+2026-11-17 — Đồng bộ ghi chú với nhánh `feature/tai-terminal5-6-full`; pytest 272 passed; 3 script huấn luyện chưa checkout.

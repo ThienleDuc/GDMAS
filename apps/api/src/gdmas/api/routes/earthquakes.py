@@ -28,16 +28,19 @@ USGS_FEED_URL = (
 
 
 def _db_error(exc: Exception):
-    logger.error("Lỗi CSDL: %s", exc)
+    logger.error("Lỗi CSDL: %s", type(exc).__name__)
     return error_response(
-        "DATABASE_ERROR", "Không thể truy vấn cơ sở dữ liệu.", 500, details=str(exc)
+        "DATABASE_ERROR",
+        "Không thể truy vấn cơ sở dữ liệu.",
+        500,
+        details=type(exc).__name__,
     )
 
 
 def _parse_utc(value: str) -> datetime | None:
     """Phân tích chuỗi ISO 8601; không có múi giờ thì coi là UTC."""
     try:
-        dt = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(value.strip())
     except ValueError:
         return None
     return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
@@ -163,19 +166,20 @@ def sync_usgs_earthquakes(db: Session = Depends(get_db)):
             resp.raise_for_status()
             features = resp.json().get("features", [])
     except (httpx.HTTPError, ValueError) as exc:
-        logger.warning("Lỗi khi gọi USGS Feed: %s", exc)
+        logger.warning("Lỗi khi gọi USGS Feed: %s", type(exc).__name__)
         return error_response(
             "DATA_SOURCE_UNAVAILABLE",
             "Không thể kết nối tới nguồn dữ liệu USGS.",
             503,
-            details=str(exc),
+            details=type(exc).__name__,
         )
 
     synced_items = 0
     try:
         for feat in features:
-            props = feat.get("properties", {})
-            coords = feat.get("geometry", {}).get("coordinates", [0, 0, 0])
+            props = feat.get("properties") or {}
+            geom = feat.get("geometry") or {}
+            coords = geom.get("coordinates") or [0, 0, 0]
 
             event_id = feat.get("id") or props.get("code")
             mag = props.get("mag")
@@ -213,7 +217,8 @@ def sync_usgs_earthquakes(db: Session = Depends(get_db)):
                 )
             )
             synced_items += 1
-        db.commit()
+        if synced_items:
+            db.commit()
     except SQLAlchemyError as exc:
         db.rollback()
         return _db_error(exc)

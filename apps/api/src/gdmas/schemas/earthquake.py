@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import List, Optional, Any, Dict
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict
 
 
 class EarthquakeBase(BaseModel):
@@ -11,15 +12,15 @@ class EarthquakeBase(BaseModel):
     longitude: float
     depth_km: float
     magnitude: float
-    magnitude_type: Optional[str] = None
-    place: Optional[str] = None
-    source_url: Optional[str] = None
+    magnitude_type: str | None = None
+    place: str | None = None
+    source_url: str | None = None
 
 
 class EarthquakeResponse(EarthquakeBase):
     id: int
-    ingested_at: Optional[datetime] = None
-    raw_data: Optional[Dict[str, Any]] = None
+    ingested_at: datetime | None = None
+    raw_data: dict[str, Any] | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -29,12 +30,12 @@ class EarthquakeMetadata(BaseModel):
     page: int
     limit: int
     total_pages: int
-    last_updated: Optional[datetime] = None
+    last_updated: datetime | None = None
 
 
 class EarthquakeListResponse(BaseModel):
     success: bool = True
-    data: List[EarthquakeResponse]
+    data: list[EarthquakeResponse]
     metadata: EarthquakeMetadata
 
 
@@ -52,8 +53,8 @@ class EarthquakeStatistics(BaseModel):
     recent_24h_count: int
     avg_magnitude: float
     max_magnitude: float
-    latest_event_time: Optional[datetime] = None
-    time_series_preview: Optional[List[HourlyTimeSeriesPoint]] = None
+    latest_event_time: datetime | None = None
+    time_series_preview: list[HourlyTimeSeriesPoint] | None = None
 
 
 class StatisticsResponse(BaseModel):

@@ -1,0 +1,197 @@
+{
+  "success": true,
+  "total_patterns": 6,
+  "patterns": [
+    {
+      "id": "pattern_1",
+      "name": "Biểu diễn theo thời gian (Line, Scatter, Histogram)",
+      "type": "time_series",
+      "status": "COMPUTED",
+      "period": "Hourly / Daily / Monthly",
+      "metrics": {
+        "status": "computed",
+        "interval": "day",
+        "line_chart": [
+          { "date": "2026-11-05", "event_count": 14, "max_magnitude": 4.6, "avg_magnitude": 2.9 },
+          { "date": "2026-11-06", "event_count": 18, "max_magnitude": 5.1, "avg_magnitude": 3.1 },
+          { "date": "2026-11-07", "event_count": 11, "max_magnitude": 3.8, "avg_magnitude": 2.5 },
+          { "date": "2026-11-08", "event_count": 22, "max_magnitude": 5.8, "avg_magnitude": 3.4 },
+          { "date": "2026-11-09", "event_count": 17, "max_magnitude": 4.9, "avg_magnitude": 3.0 },
+          { "date": "2026-11-10", "event_count": 25, "max_magnitude": 5.4, "avg_magnitude": 3.6 },
+          { "date": "2026-11-11", "event_count": 21, "max_magnitude": 5.0, "avg_magnitude": 3.2 }
+        ],
+        "scatter_plot": [
+          { "id": 101, "timestamp": "2026-11-05T04:12:00Z", "magnitude": 4.6, "depth_km": 20.1 },
+          { "id": 102, "timestamp": "2026-11-06T08:33:00Z", "magnitude": 3.4, "depth_km": 10.0 },
+          { "id": 103, "timestamp": "2026-11-06T19:05:00Z", "magnitude": 5.1, "depth_km": 35.2 },
+          { "id": 104, "timestamp": "2026-11-08T02:47:00Z", "magnitude": 5.8, "depth_km": 48.7 },
+          { "id": 105, "timestamp": "2026-11-08T16:20:00Z", "magnitude": 4.1, "depth_km": 12.4 },
+          { "id": 106, "timestamp": "2026-11-09T07:10:00Z", "magnitude": 4.9, "depth_km": 88.3 },
+          { "id": 107, "timestamp": "2026-11-10T01:55:00Z", "magnitude": 5.4, "depth_km": 26.5 },
+          { "id": 108, "timestamp": "2026-11-10T12:36:00Z", "magnitude": 2.8, "depth_km": 6.1 },
+          { "id": 109, "timestamp": "2026-11-11T05:41:00Z", "magnitude": 5.0, "depth_km": 31.0 },
+          { "id": 110, "timestamp": "2026-11-11T22:18:00Z", "magnitude": 3.6, "depth_km": 15.8 }
+        ],
+        "histogram": {
+          "magnitude_bins": [
+            { "bin": "< 2.0", "count": 6 },
+            { "bin": "2.0 - 3.0", "count": 34 },
+            { "bin": "3.0 - 4.0", "count": 52 },
+            { "bin": "4.0 - 5.0", "count": 29 },
+            { "bin": ">= 5.0", "count": 7 }
+          ]
+        },
+        "data_points": 128,
+        "avg_magnitude": 3.42,
+        "max_magnitude": 5.8,
+        "avg_depth": 24.5
+      }
+    },
+    {
+      "id": "pattern_2",
+      "name": "Trend Analysis (Đường xu hướng sau Re-sampling)",
+      "type": "trend",
+      "status": "COMPUTED",
+      "period": "Weekly / Monthly",
+      "metrics": {
+        "status": "computed",
+        "resample_freq": "M",
+        "interval": "month",
+        "metric": "count",
+        "series": [
+          { "period": "2026-06", "actual_value": 1120, "trend_value": 1105.4, "is_complete": true },
+          { "period": "2026-07", "actual_value": 1240, "trend_value": 1180.2, "is_complete": true },
+          { "period": "2026-08", "actual_value": 1188, "trend_value": 1205.7, "is_complete": true },
+          { "period": "2026-09", "actual_value": 1215, "trend_value": 1214.7, "is_complete": true },
+          { "period": "2026-10", "actual_value": 1268, "trend_value": 1241.0, "is_complete": true },
+          { "period": "2026-11", "actual_value": 1284, "trend_value": 1258.3, "is_complete": false }
+        ],
+        "moving_average_window": 3,
+        "slope": 0.045,
+        "intercept": 1089.4,
+        "relative_slope": 0.0004,
+        "p_value": 0.021,
+        "r_squared": 0.81,
+        "trend_direction": "increasing",
+        "direction": "Tăng (Upward)",
+        "data_points": 6,
+        "complete_periods": 5
+      }
+    },
+    {
+      "id": "pattern_3",
+      "name": "Seasonality (Tính chu kỳ mùa vụ)",
+      "type": "seasonality",
+      "status": "COMPUTED",
+      "period": "Monthly",
+      "metrics": {
+        "status": "computed",
+        "resample_freq": "M",
+        "interval": "month",
+        "period": 12,
+        "components": {
+          "seasonal_line": [
+            { "cycle_index": 1, "period_label": "Tháng 1", "seasonal_factor": 1.05, "seasonal_effect": 62.4 },
+            { "cycle_index": 2, "period_label": "Tháng 2", "seasonal_factor": 0.98, "seasonal_effect": -24.8 },
+            { "cycle_index": 3, "period_label": "Tháng 3", "seasonal_factor": 1.02, "seasonal_effect": 24.7 },
+            { "cycle_index": 4, "period_label": "Tháng 4", "seasonal_factor": 0.96, "seasonal_effect": -49.6 },
+            { "cycle_index": 5, "period_label": "Tháng 5", "seasonal_factor": 1.01, "seasonal_effect": 12.4 },
+            { "cycle_index": 6, "period_label": "Tháng 6", "seasonal_factor": 0.94, "seasonal_effect": -74.3 },
+            { "cycle_index": 7, "period_label": "Tháng 7", "seasonal_factor": 1.03, "seasonal_effect": 37.1 },
+            { "cycle_index": 8, "period_label": "Tháng 8", "seasonal_factor": 1.06, "seasonal_effect": 74.3 },
+            { "cycle_index": 9, "period_label": "Tháng 9", "seasonal_factor": 1.00, "seasonal_effect": 0 },
+            { "cycle_index": 10, "period_label": "Tháng 10", "seasonal_factor": 0.97, "seasonal_effect": -37.1 },
+            { "cycle_index": 11, "period_label": "Tháng 11", "seasonal_factor": 0.99, "seasonal_effect": -12.4 },
+            { "cycle_index": 12, "period_label": "Tháng 12", "seasonal_factor": 1.01, "seasonal_effect": 12.4 }
+          ],
+          "residual_variance": 0.12,
+          "seasonality_strength": 0.35,
+          "interpretation": "Dữ liệu thể hiện tính chu kỳ yếu theo tháng; chưa đủ bằng chứng mùa vụ rõ rệt."
+        },
+        "cycle_hours": "8760 giờ (chu kỳ năm)",
+        "amplitude": 0.12,
+        "data_points": 24
+      }
+    },
+    {
+      "id": "pattern_4",
+      "name": "Correlation Matrix (Ma trận tương quan đa biến)",
+      "type": "correlation",
+      "status": "COMPUTED",
+      "period": "Daily",
+      "metrics": {
+        "status": "computed",
+        "variables": ["magnitude", "depth_km", "latitude", "longitude", "daily_event_count"],
+        "matrix": [
+          [1.0, -0.15, 0.02, 0.05, 0.28],
+          [-0.15, 1.0, -0.08, -0.03, -0.05],
+          [0.02, -0.08, 1.0, 0.12, 0.01],
+          [0.05, -0.03, 0.12, 1.0, 0.04],
+          [0.28, -0.05, 0.01, 0.04, 1.0]
+        ],
+        "spearman_matrix": [
+          [1.0, -0.14, 0.03, 0.04, 0.26],
+          [-0.14, 1.0, -0.07, -0.02, -0.04],
+          [0.03, -0.07, 1.0, 0.11, 0.02],
+          [0.04, -0.02, 0.11, 1.0, 0.03],
+          [0.26, -0.04, 0.02, 0.03, 1.0]
+        ],
+        "method": "pearson",
+        "sample_size": 128,
+        "undefined_pairs": [],
+        "note": "Tương quan chỉ đo mức liên hệ tuyến tính/thứ hạng, không hàm ý quan hệ nhân quả.",
+        "corr_mag_depth": -0.15,
+        "correlation_strength": "Tuyến tính nghịch yếu"
+      }
+    },
+    {
+      "id": "pattern_5",
+      "name": "Dự báo định lượng ngày kế tiếp (t+1)",
+      "type": "prediction",
+      "status": "COMPUTED",
+      "period": "Day t+1",
+      "metrics": {
+        "target_date": "2026-11-12",
+        "predicted_value": 46.2,
+        "lower_bound": 38.0,
+        "upper_bound": 54.4,
+        "model_name": "Ridge-TimeSeries-Forecaster",
+        "metric_name": "daily_earthquake_count",
+        "model_version": "1.0.0",
+        "evaluation_metrics": {
+          "mae": 4.12,
+          "rmse": 5.84,
+          "baseline_mae": 6.2,
+          "confidence_level": 0.95
+        },
+        "generated_at": "2026-11-11T11:00:00Z"
+      }
+    },
+    {
+      "id": "pattern_6",
+      "name": "Phân loại mức độ hoạt động ngày kế tiếp (t+1)",
+      "type": "classification",
+      "status": "COMPUTED",
+      "period": "Day t+1",
+      "metrics": {
+        "target_date": "2026-11-12",
+        "predicted_label": "MEDIUM",
+        "probability_scores": {
+          "LOW": 0.15,
+          "MEDIUM": 0.65,
+          "HIGH": 0.15,
+          "CRITICAL": 0.05
+        },
+        "model_name": "RandomForest-Seismic-Classifier",
+        "model_version": "1.0.0",
+        "evaluation_metrics": {
+          "accuracy": 0.82,
+          "f1_score": 0.78,
+          "classes": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+        }
+      }
+    }
+  ],
+  "clustering_summary": null,
+  "last_updated": "2026-11-11T12:00:00Z"
+}
