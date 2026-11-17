@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "database": "connected",
+    "version": "1.0.0",
+    "timestamp": "2026-11-16T10:05:00Z",
+    "uptime_seconds": 86400
+  }
+}

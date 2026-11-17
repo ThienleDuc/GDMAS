@@ -14,6 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useSSE } from "../hooks/useSSE";
+import { ConnectionStatusBadge } from "../components/ui/ConnectionStatusBadge";
 import { IngestionToast, ToastData } from "../components/ui/IngestionToast";
 import { formatEventTime } from "../utils/timezone";
 
@@ -44,7 +45,7 @@ export const DashboardLayout: React.FC = () => {
   }, []);
 
   // Kết nối SSE để nhận thông báo cào dữ liệu tự động 5 phút
-  const { data: sseData } = useSSE("/api/v1/stream/earthquakes");
+  const { data: sseData, status: sseStatus, reconnectAttempt } = useSSE("/api/v1/stream/earthquakes");
 
   useEffect(() => {
     if (!sseData) return;
@@ -107,23 +108,21 @@ export const DashboardLayout: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 font-sans">
+    <div className="layout layout--dashboard app-layout">
       {/* Sidebar */}
       <aside
-        className={`flex flex-col border-r border-slate-800 bg-slate-900/95 backdrop-blur transition-all duration-300 z-30 ${
-          sidebarOpen ? "w-64" : "w-20"
-        }`}
+        className={`layout__sidebar app-sidebar ${sidebarOpen ? "" : "is-collapsed"}`}
       >
         {/* Brand / Logo */}
-        <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800">
-          <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
-              <Globe className="h-6 w-6 animate-pulse" />
+        <div className="layout__brand">
+          <div className="layout__brand-main">
+            <div className="layout__brand-mark">
+              <Globe className="h-6 w-6" />
             </div>
             {sidebarOpen && (
-              <div className="flex flex-col">
-                <span className="font-bold text-base tracking-wider text-cyan-400">GDMAS</span>
-                <span className="text-[10px] text-slate-400 tracking-tight whitespace-nowrap">
+              <div className="layout__brand-copy">
+                <span className="layout__brand-name">GDMAS</span>
+                <span className="layout__brand-caption">
                   Disaster Monitoring
                 </span>
               </div>
@@ -131,7 +130,7 @@ export const DashboardLayout: React.FC = () => {
           </div>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors"
+            className="layout__icon-button"
             title={sidebarOpen ? "Thu gọn sidebar" : "Mở rộng sidebar"}
             aria-label="Toggle sidebar"
           >
@@ -140,7 +139,7 @@ export const DashboardLayout: React.FC = () => {
         </div>
 
         {/* Navigation list */}
-        <nav className="flex-1 space-y-1.5 p-3 overflow-y-auto">
+        <nav className="layout__nav sidebar-nav">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -152,11 +151,7 @@ export const DashboardLayout: React.FC = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
-                className={`group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
-                  isActive
-                    ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shadow-sm"
-                    : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
-                }`}
+                className={`layout__nav-link sidebar-nav-item ${isActive ? "active" : ""}`}
                 title={!sidebarOpen ? item.label : undefined}
               >
                 <Icon
@@ -165,10 +160,10 @@ export const DashboardLayout: React.FC = () => {
                   }`}
                 />
                 {sidebarOpen && (
-                  <span className="ml-3 flex-1 whitespace-nowrap truncate">{item.label}</span>
+                  <span className="layout__nav-label">{item.label}</span>
                 )}
                 {sidebarOpen && item.badge && (
-                  <span className="ml-auto rounded-full bg-cyan-900/60 px-2 py-0.5 text-[10px] font-semibold text-cyan-300 border border-cyan-700/50">
+                  <span className="layout__nav-badge">
                     {item.badge}
                   </span>
                 )}
@@ -178,55 +173,50 @@ export const DashboardLayout: React.FC = () => {
         </nav>
 
         {/* Sidebar Footer: Service Status */}
-        <div className="border-t border-slate-800 p-3">
+        <div className="layout__sidebar-footer">
           {sidebarOpen ? (
-            <div className="rounded-lg bg-slate-950/60 p-2.5 border border-slate-800/80">
-              <div className="flex items-center space-x-2">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                </span>
-                <span className="text-xs font-medium text-emerald-400">7 Terminals Sẵn Sàng</span>
+            <div className="layout__service-status">
+              <div className="layout__service-status-line">
+                <span className="layout__service-dot" />
+                <span>7 Terminals Sẵn Sàng</span>
               </div>
-              <p className="mt-1 text-[11px] text-slate-500">FastAPI, PostgreSQL & 4 Workers</p>
+              <p className="layout__service-status-caption">FastAPI, PostgreSQL & 4 Workers</p>
             </div>
           ) : (
-            <div className="flex justify-center" title="7 Terminals Sẵn Sàng">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-              </span>
+            <div className="layout__service-status-line" title="7 Terminals Sẵn Sàng">
+              <span className="layout__service-dot" />
             </div>
           )}
         </div>
       </aside>
 
       {/* Main Container */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="layout__main app-main">
         {/* Top Header */}
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 bg-slate-900/70 px-6 backdrop-blur">
-          <div className="flex items-center space-x-2 text-sm text-slate-400">
-            <span className="font-medium text-slate-200">GDMAS Console</span>
+        <header className="layout__header app-header">
+          <div className="layout__breadcrumb">
+            <span className="layout__breadcrumb-current">GDMAS Console</span>
             <ChevronRight className="h-4 w-4" />
-            <span className="text-cyan-400 font-mono text-xs uppercase tracking-wide">
+            <span className="layout__breadcrumb-current">
               {location.pathname === "/" ? "Tổng quan" : location.pathname.replace("/", "")}
             </span>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="hidden sm:flex items-center space-x-2 rounded-md bg-slate-800/80 px-3 py-1 border border-slate-700/60 text-xs font-mono text-slate-300">
+          <div className="layout__header-actions">
+            <ConnectionStatusBadge status={sseStatus} reconnectAttempt={reconnectAttempt} />
+            <div className="layout__clock hidden sm:flex">
               <Radio className="h-3.5 w-3.5 text-cyan-400 animate-pulse" />
               <span>{currentTimeUtc || "UTC SYNC"}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
-              <span className="text-xs text-slate-300 font-medium">PostgreSQL Connected</span>
+            <div className="layout__database-state">
+              <span className="layout__service-dot"></span>
+              <span>PostgreSQL Connected</span>
             </div>
           </div>
         </header>
 
         {/* Nested Content rendered via Outlet */}
-        <main className="flex-1 overflow-y-auto p-6 bg-slate-950">
+        <main className="layout__content app-content">
           <Outlet />
         </main>
       </div>

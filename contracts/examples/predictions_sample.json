@@ -1,0 +1,18 @@
+{
+  "success": true,
+  "data": {
+    "target_date": "2026-11-17",
+    "forecasted_metric": "event_count",
+    "predicted_value": 46.2,
+    "confidence_interval": { "lower": 38.0, "upper": 54.4 },
+    "confidence_level": 0.95,
+    "model_name": "Ridge-TimeSeries-Forecaster",
+    "model_version": "v1.0.0",
+    "evaluation_metrics": {
+      "mae": 4.12,
+      "rmse": 5.84,
+      "baseline_mae": 6.2
+    },
+    "generated_at": "2026-11-16T10:00:00Z"
+  }
+}

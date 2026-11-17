@@ -1,15 +1,33 @@
 {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gdmas.local/schemas/sse-event.json",
   "type": "object",
-  "description": "Hợp đồng gói tin đẩy qua Server-Sent Events",
+  "title": "Server-Sent Events payload",
+  "description": "Hợp đồng gói tin đẩy qua Server-Sent Events (GET /api/v1/stream/earthquakes và GET /api/v1/events/stream). Mở rộng additive so với bản gốc: thêm ingestion_cycle_completed, database_cleared, earthquake_alert — KHÔNG xoá/đổi giá trị cũ. Timestamp UTC ISO 8601 (Z).",
   "properties": {
     "event": {
       "type": "string",
-      "enum": ["earthquake_detected", "heartbeat", "alert"]
+      "enum": [
+        "earthquake_detected",
+        "earthquake_alert",
+        "heartbeat",
+        "alert",
+        "ingestion_cycle_completed",
+        "database_cleared"
+      ],
+      "description": "earthquake_detected (route /stream/earthquakes) và earthquake_alert (route /events/stream) là 2 tên của cùng một loại sự kiện — FE lắng nghe hợp của cả hai."
     },
     "timestamp": { "type": "string", "format": "date-time" },
-    "data": { "type": "object" }
+    "data": { "type": "object" },
+    "id": {
+      "type": "string",
+      "description": "Optional — id sự kiện SSE (header `id:`) nếu BE phát; FE dùng để chống trùng khi reconnect."
+    },
+    "retry": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Optional — gợi ý thời gian chờ reconnect (ms) từ header `retry:`. FE vẫn dùng backoff cục bộ khi thiếu."
+    }
   },
   "required": ["event", "timestamp", "data"]
 }
-
