@@ -32,7 +32,10 @@ def get_latest_prediction(db: Session = Depends(get_db)):
     except SQLAlchemyError as exc:
         logger.error("Lỗi CSDL khi đọc prediction_results: %s", exc)
         return error_response(
-            "DATABASE_ERROR", "Không thể truy vấn cơ sở dữ liệu.", 500, str(exc)
+            "DATABASE_ERROR",
+            "Không thể truy vấn cơ sở dữ liệu.",
+            500,
+            type(exc).__name__,
         )
     if row is None:
         return _empty("Chưa có kết quả dự báo. Hãy chạy Terminal 5 (prediction).")
@@ -40,19 +43,21 @@ def get_latest_prediction(db: Session = Depends(get_db)):
         "success": True,
         "data": {
             "target_date": row.target_date.isoformat(),
-            "forecasted_metric": row.metric_name,
+            "forecasted_metric": (
+                "event_count"
+                if row.metric_name == "daily_earthquake_count"
+                else row.metric_name
+            ),
             "predicted_value": row.predicted_value,
             "confidence_interval": {
                 "lower": row.lower_bound,
                 "upper": row.upper_bound,
             },
-            "actual_value": row.actual_value,
             "model_name": row.model_name,
             "model_version": row.model_version,
             "evaluation_metrics": row.evaluation_metrics or {},
             "generated_at": _iso(row.generated_at),
         },
-        "metadata": {"last_updated": _iso(row.generated_at)},
     }
 
 
@@ -70,7 +75,10 @@ def get_latest_classification(db: Session = Depends(get_db)):
     except SQLAlchemyError as exc:
         logger.error("Lỗi CSDL khi đọc classification_results: %s", exc)
         return error_response(
-            "DATABASE_ERROR", "Không thể truy vấn cơ sở dữ liệu.", 500, str(exc)
+            "DATABASE_ERROR",
+            "Không thể truy vấn cơ sở dữ liệu.",
+            500,
+            type(exc).__name__,
         )
     if row is None:
         return _empty("Chưa có kết quả phân loại. Hãy chạy Terminal 5 (prediction).")
@@ -80,11 +88,9 @@ def get_latest_classification(db: Session = Depends(get_db)):
             "target_date": row.target_date.isoformat(),
             "predicted_label": row.predicted_label,
             "probabilities": row.probability_scores or {},
-            "actual_label": row.actual_label,
             "model_name": row.model_name,
             "model_version": row.model_version,
             "evaluation_metrics": row.evaluation_metrics or {},
             "generated_at": _iso(row.generated_at),
         },
-        "metadata": {"last_updated": _iso(row.generated_at)},
     }

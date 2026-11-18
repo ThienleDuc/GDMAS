@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 
 from gdmas.api.errors import error_response
 from gdmas.api.routes.predictions import _empty
-from gdmas.api.routes.system import _iso
 from gdmas.db.connection import get_db
 from gdmas.models.analysis import AnalysisResult
 
@@ -74,7 +73,10 @@ def _respond(db: Session, kind: str, build, **filters):
     except SQLAlchemyError as exc:
         logger.error("Lỗi CSDL khi đọc analysis_results: %s", exc)
         return error_response(
-            "DATABASE_ERROR", "Không thể truy vấn cơ sở dữ liệu.", 500, str(exc)
+            "DATABASE_ERROR",
+            "Không thể truy vấn cơ sở dữ liệu.",
+            500,
+            type(exc).__name__,
         )
     if row is None:
         return _empty(
@@ -83,11 +85,6 @@ def _respond(db: Session, kind: str, build, **filters):
     return {
         "success": True,
         "data": build(row.metrics_data or {}),
-        "metadata": {
-            "period_start": _iso(row.period_start),
-            "period_end": _iso(row.period_end),
-            "last_updated": _iso(row.calculated_at),
-        },
     }
 
 

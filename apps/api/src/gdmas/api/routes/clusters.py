@@ -37,7 +37,10 @@ def get_clusters(db: Session = Depends(get_db)):
     except SQLAlchemyError as exc:
         logger.error("Lỗi CSDL khi đọc clustering_results: %s", exc)
         return error_response(
-            "DATABASE_ERROR", "Không thể truy vấn cơ sở dữ liệu.", 500, str(exc)
+            "DATABASE_ERROR",
+            "Không thể truy vấn cơ sở dữ liệu.",
+            500,
+            type(exc).__name__,
         )
     if row is None:
         return _empty("Chưa có kết quả phân cụm. Hãy chạy Terminal 4 (clustering).")
@@ -49,7 +52,7 @@ def get_clusters(db: Session = Depends(get_db)):
             "parameters": row.parameters,
             "clusters_count": row.total_clusters,
             "noise_count": row.noise_count,
+            "calculated_at": _iso(row.calculated_at),
             "clusters": [_cluster(c) for c in clusters],
         },
-        "metadata": {"last_updated": _iso(row.calculated_at)},
     }

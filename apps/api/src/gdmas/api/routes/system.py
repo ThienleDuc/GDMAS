@@ -23,8 +23,8 @@ _STARTED_AT = time.monotonic()
 
 # (khóa trong phản hồi, service_name trong service_runs, chu kỳ giây, nhãn chu kỳ)
 _WORKERS = [
-    ("data_ingestion", "ingestion", settings.INGESTION_INTERVAL_SECONDS, "5m"),
-    ("data_analysis", "analysis", settings.ANALYSIS_INTERVAL_SECONDS, "5m"),
+    ("ingestion", "ingestion", settings.INGESTION_INTERVAL_SECONDS, "5m"),
+    ("analysis", "analysis", settings.ANALYSIS_INTERVAL_SECONDS, "5m"),
     ("clustering", "clustering", settings.CLUSTERING_INTERVAL_SECONDS, "1d"),
     ("prediction", "prediction", settings.PREDICTION_INTERVAL_SECONDS, "5m"),
 ]
@@ -90,9 +90,13 @@ def system_status(db: Session = Depends(get_db)):
                 .first()
             )
             services[key] = {
-                "status": _worker_status(run, interval, now),
+                "status": {
+                    "no_data": "unknown",
+                    "failed": "error",
+                    "inactive": "idle",
+                    "active": "active",
+                }[_worker_status(run, interval, now)],
                 "last_run": _iso(run.finished_at or run.started_at) if run else None,
-                "last_run_status": run.status if run else None,
                 "cycle": cycle,
             }
         total = db.query(func.count(EarthquakeEvent.id)).scalar() or 0
@@ -100,7 +104,10 @@ def system_status(db: Session = Depends(get_db)):
     except SQLAlchemyError as exc:
         logger.error("system/status: lỗi CSDL: %s", exc)
         return error_response(
-            "DATABASE_ERROR", "Không thể truy vấn cơ sở dữ liệu.", 500, str(exc)
+            "DATABASE_ERROR",
+            "Không thể truy vấn cơ sở dữ liệu.",
+            500,
+            type(exc).__name__,
         )
 
     services["api"] = {
@@ -109,8 +116,7 @@ def system_status(db: Session = Depends(get_db)):
     }
     # Frontend được coi là "connected" khi có ít nhất một client đang mở kênh SSE
     services["frontend"] = {
-        "status": "connected" if _connected_sse_queues else "disconnected",
-        "sse_clients": len(_connected_sse_queues),
+        "status": "active" if _connected_sse_queues else "unknown",
     }
     return {
         "success": True,

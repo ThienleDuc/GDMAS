@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec "/d/KhaiPhaDuLieu/GDMAS/apps/api/.venv/Scripts/python.exe" "$@"

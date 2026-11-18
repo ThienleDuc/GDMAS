@@ -43,8 +43,8 @@ def _status(client):
 
 def test_status_with_no_runs_reports_no_data(client):
     data = _status(client)
-    assert data["services"]["data_ingestion"]["status"] == "no_data"
-    assert data["services"]["prediction"]["status"] == "no_data"
+    assert data["services"]["ingestion"]["status"] == "unknown"
+    assert data["services"]["prediction"]["status"] == "unknown"
     assert data["data_feed"]["total_events"] == 0
     assert data["data_feed"]["latest_event_time"] is None
 
@@ -53,8 +53,8 @@ def test_status_with_no_runs_reports_no_data(client):
     ("age", "run_status", "expected"),
     [
         (timedelta(minutes=2), "SUCCESS", "active"),
-        (timedelta(days=3), "SUCCESS", "inactive"),
-        (timedelta(minutes=2), "FAILED", "failed"),
+        (timedelta(days=3), "SUCCESS", "idle"),
+        (timedelta(minutes=2), "FAILED", "error"),
     ],
 )
 def test_status_of_worker_from_latest_service_run(
@@ -69,7 +69,7 @@ def test_status_of_worker_from_latest_service_run(
             finished_at=NOW - age,
         ),
     )
-    assert _status(client)["services"]["data_ingestion"]["status"] == expected
+    assert _status(client)["services"]["ingestion"]["status"] == expected
 
 
 def test_status_reports_event_totals(client, db):

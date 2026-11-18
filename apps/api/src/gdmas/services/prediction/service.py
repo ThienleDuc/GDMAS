@@ -9,6 +9,7 @@ import logging
 from datetime import UTC, date, datetime, time, timedelta
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from gdmas.db.connection import SessionLocal
@@ -25,23 +26,31 @@ MODEL_VERSION = "1.0.0"
 class PredictionService:
     def execute_cycle(self) -> dict:
         started = datetime.now(UTC)
-        with SessionLocal() as db:
-            run = ServiceRun(service_name="prediction", status="RUNNING")
-            db.add(run)
-            db.commit()
-            try:
-                result = self._predict(db, started)
-                run.status = "SUCCESS"
-                run.records_processed = 2
-            except Exception as exc:  # ghi lỗi vào service_runs, không làm sập runner
-                db.rollback()
-                logger.exception("Chu kỳ dự báo thất bại")
-                run.status = "FAILED"
-                run.error_message = str(exc)[:1000]
-                result = {"success": False, "error": str(exc)}
-            run.finished_at = datetime.now(UTC)
-            db.commit()
-        return result
+        try:
+            with SessionLocal() as db:
+                run = ServiceRun(service_name="prediction", status="RUNNING")
+                db.add(run)
+                db.commit()
+                try:
+                    result = self._predict(db, started)
+                    run.status = "SUCCESS"
+                    run.records_processed = 2
+                except SQLAlchemyError:
+                    raise
+                except (
+                    Exception
+                ) as exc:  # ghi lỗi vào service_runs, không làm sập runner
+                    db.rollback()
+                    logger.exception("Chu kỳ dự báo thất bại")
+                    run.status = "FAILED"
+                    run.error_message = str(exc)[:1000]
+                    result = {"success": False, "error": str(exc)}
+                run.finished_at = datetime.now(UTC)
+                db.commit()
+            return result
+        except SQLAlchemyError:
+            logger.exception("Mất kết nối CSDL trong chu kỳ dự báo")
+            return {"success": False, "error": "DATABASE_ERROR"}
 
     # ---- đọc dữ liệu ----
     @staticmethod

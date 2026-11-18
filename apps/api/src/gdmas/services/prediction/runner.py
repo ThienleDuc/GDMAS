@@ -57,10 +57,20 @@ def run() -> None:
     while True:
         try:
             execute_cycle()
+        except (KeyboardInterrupt, SystemExit):
             print(
-                f"[GDMAS-Prediction] Đang chờ {interval} giây cho chu kỳ tiếp theo...\n",
-                flush=True,
+                "\n[GDMAS-Prediction] Tiến trình đã nhận lệnh dừng an toàn.", flush=True
             )
+            break
+        except Exception:
+            logging.getLogger("gdmas.services.prediction").exception(
+                "Chu kỳ dự báo gặp lỗi không mong đợi"
+            )
+        print(
+            f"[GDMAS-Prediction] Đang chờ {interval} giây cho chu kỳ tiếp theo...\n",
+            flush=True,
+        )
+        try:
             time.sleep(interval)
         except (KeyboardInterrupt, SystemExit):
             print(
