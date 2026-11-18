@@ -2,16 +2,16 @@
 
 ## Metadata
 - ID: 2026-11-12-seismic-prediction-worker-tai
-- Status: completed
+- Status: validation
 - Started: 2026-11-09
-- Last Updated: 2026-11-17
+- Last Updated: 2026-11-18
 - Owner: agent | tai
 
 ---
 
 ## Tiến độ
 Progress: 100%
-Current Phase: Hoàn tất trên `feature/tai-terminal5-6-full`; chờ đồng bộ nhãn với Frontend
+Current Phase: validation — PR #25 chưa merge; chờ Squash and merge trên GitHub
 
 Completed:
 - Tải 730 ngày USGS (281.601 sự kiện), EDA, chọn ngưỡng phân vị 375/425/475.
@@ -72,4 +72,4 @@ Blocked:
 ---
 
 ## Last Update
-2026-11-17 — Đồng bộ ghi chú với nhánh `feature/tai-terminal5-6-full`; pytest 272 passed; 3 script huấn luyện chưa checkout.
+2026-11-18 — Review vòng 2 (son): Status về `validation` tới khi merge; ghi `BUG-tai-001`; execute_cycle ghi FAILED khi lỗi query; mock PredictionService trong test worker.

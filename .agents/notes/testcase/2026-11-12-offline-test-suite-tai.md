@@ -5,13 +5,17 @@
 - Mode: proposal-paired
 - Proposal: .agents/notes/proposed/2026-11-12-offline-test-suite-tai.md
 - Target: apps/api/src/gdmas/services/prediction/ (inference.py, service.py), apps/api/src/gdmas/api/routes/ (earthquakes.py, statistics.py, system.py, predictions.py, analysis.py, clusters.py), apps/api/src/gdmas/realtime/sse.py
-- Test File: apps/api/tests/unit/conftest.py, test_prediction_inference.py, test_prediction_service.py, test_earthquakes_routes.py, test_statistics_route.py, test_system_prediction_routes.py, test_sse_stream.py
+- Test File: apps/api/tests/unit/conftest.py, test_prediction_inference.py, test_prediction_service.py, test_earthquakes_routes.py, test_statistics_route.py, test_system_prediction_routes.py, test_sse_stream.py, test_worker_error_boundaries.py
 - Author: agent | tai
 - Created: 2026-11-12
 - Status: passed
-- Related Bugs: none
+- Related Bugs: BUG-tai-001
 
 ---
+
+## Cập nhật review vòng 2 (2026-11-18)
+- `test_other_workers_still_stop_cleanly[prediction.runner]` mock service để tránh mở socket PostgreSQL.
+- `test_execute_cycle_marks_failed_on_query_error` kiểm tra ghi `FAILED` sau lỗi query bằng session giả.
 
 ## 1. Mục tiêu & Ràng buộc kiểm thử
 - **Đối tượng kiểm chứng:** toàn bộ code của Task 1–3 (prediction, REST, SSE), cả hành vi đúng và hành vi lỗi (DB rỗng, DB lỗi, tham số sai, USGS không truy cập được).

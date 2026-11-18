@@ -36,6 +36,14 @@ class PredictionService:
                     run.status = "SUCCESS"
                     run.records_processed = 2
                 except SQLAlchemyError:
+                    db.rollback()
+                    try:
+                        run.status = "FAILED"
+                        run.error_message = "DATABASE_ERROR"
+                        run.finished_at = datetime.now(UTC)
+                        db.commit()
+                    except SQLAlchemyError:
+                        db.rollback()
                     raise
                 except (
                     Exception

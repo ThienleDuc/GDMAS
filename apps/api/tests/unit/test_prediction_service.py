@@ -9,6 +9,7 @@ from datetime import UTC, date, datetime
 import numpy as np
 import pandas as pd
 import pytest
+from sqlalchemy.exc import OperationalError
 from statsmodels.tsa.arima.model import ARIMA
 
 from gdmas.models.prediction import ClassificationResult, PredictionResult
@@ -302,6 +303,24 @@ def test_execute_cycle_truncates_error_message(monkeypatch):
     assert result["success"] is False
     (run,) = db.of_type(ServiceRun)
     assert len(run.error_message) == 1000
+
+
+def test_execute_cycle_marks_failed_on_query_error(monkeypatch):
+    def boom(*_args, **_kwargs):
+        raise OperationalError("SELECT 1", {}, Exception("query failed"))
+
+    db = FakeSession(first_ts=None)
+    monkeypatch.setattr(service, "SessionLocal", lambda: db)
+    monkeypatch.setattr(PredictionService, "_predict", boom)
+
+    result = PredictionService().execute_cycle()
+
+    assert result == {"success": False, "error": "DATABASE_ERROR"}
+    (run,) = db.of_type(ServiceRun)
+    assert run.status == "FAILED"
+    assert run.error_message == "DATABASE_ERROR"
+    assert run.finished_at is not None
+    assert db.rollbacks >= 1
 
 
 def test_execute_cycle_fails_when_model_files_missing(monkeypatch, tmp_path):

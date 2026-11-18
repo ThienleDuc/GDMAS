@@ -2,16 +2,16 @@
 
 ## Metadata
 - ID: 2026-11-12-offline-test-suite-tai
-- Status: completed
+- Status: validation
 - Started: 2026-11-12
-- Last Updated: 2026-11-14
+- Last Updated: 2026-11-18
 - Owner: agent | tai
 
 ---
 
 ## Tiến độ
 Progress: 100%
-Current Phase: Hoàn tất; chờ chạy notes check và mở PR
+Current Phase: validation — PR #25 chưa merge; kiểm thử lại sau review vòng 2
 
 Completed:
 - `conftest.py` dùng chung (SQLite trong bộ nhớ, `BrokenSession`, `add_event`).

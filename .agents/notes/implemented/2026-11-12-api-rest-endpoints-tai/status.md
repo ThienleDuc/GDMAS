@@ -2,16 +2,16 @@
 
 ## Metadata
 - ID: 2026-11-12-api-rest-endpoints-tai
-- Status: completed
+- Status: validation
 - Started: 2026-11-12
-- Last Updated: 2026-11-14
+- Last Updated: 2026-11-18
 - Owner: agent | tai
 
 ---
 
 ## Tiến độ
 Progress: 100%
-Current Phase: Hoàn tất; chờ rà `API.md` và mở PR
+Current Phase: validation — PR #25 chưa merge; chờ rà `API.md`
 
 Completed:
 - Thêm `system.py`, `predictions.py`, `analysis.py`, `clusters.py`.

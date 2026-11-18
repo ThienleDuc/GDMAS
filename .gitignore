@@ -137,3 +137,5 @@ $RECYCLE.BIN/
 *.sublime-project
 *.swp
 *.swo
+apps/api/data/
+.tmp-bin/

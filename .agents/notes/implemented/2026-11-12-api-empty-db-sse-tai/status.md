@@ -2,16 +2,16 @@
 
 ## Metadata
 - ID: 2026-11-12-api-empty-db-sse-tai
-- Status: completed
+- Status: validation
 - Started: 2026-11-12
-- Last Updated: 2026-11-14
+- Last Updated: 2026-11-18
 - Owner: agent | tai
 
 ---
 
 ## Tiến độ
 Progress: 100%
-Current Phase: Hoàn tất; chờ rà Frontend và mở PR
+Current Phase: validation — PR #25 chưa merge; chờ rà Frontend
 
 Completed:
 - `errors.py` Envelope lỗi; xóa `MOCK_USGS_DATA` và 1248 khỏi `earthquakes.py`/`statistics.py`.

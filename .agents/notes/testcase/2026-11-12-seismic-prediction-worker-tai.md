@@ -9,9 +9,13 @@
 - Author: agent | tai
 - Created: 2026-11-12
 - Status: passed
-- Related Bugs: none
+- Related Bugs: BUG-tai-001
 
 ---
+
+## Cập nhật review vòng 2 (2026-11-18)
+- `test_execute_cycle_marks_failed_on_query_error`: session giả ném `OperationalError`; xác nhận rollback và ghi `FAILED` khi DB còn ghi được.
+- `test_other_workers_still_stop_cleanly[prediction.runner]`: mock `PredictionService`, không kết nối PostgreSQL.
 
 ## 1. Mục tiêu & Ràng buộc kiểm thử
 - **Đối tượng kiểm chứng:** `build_series`, `forecast_next`, `classify_next`, `label_of_count`, `PredictionService._complete_day_counts`, `_predict`, `_fill_actuals`, `execute_cycle`.
