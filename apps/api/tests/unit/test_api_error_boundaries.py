@@ -57,23 +57,21 @@ def assert_safe_warning(caplog, expected_class):
 
 
 @pytest.mark.parametrize(
-    "path, status_code",
+    "path",
     [
-        ("/api/v1/earthquakes?page=1&limit=2", 200),
-        ("/api/v1/earthquakes/unit-event-not-found", 404),
-        ("/api/v1/statistics/earthquakes", 200),
+        "/api/v1/earthquakes?page=1&limit=2",
+        "/api/v1/earthquakes/unit-event-not-found",
+        "/api/v1/statistics/earthquakes",
     ],
 )
-def test_database_errors_preserve_response_and_log_safely(
-    api, caplog, path, status_code
-):
+def test_database_errors_preserve_response_and_log_safely(api, caplog, path):
     client, _ = api
     with caplog.at_level(logging.WARNING):
         response = client.get(path)
-    assert response.status_code == status_code
-    if status_code == 200:
-        assert response.json()["success"] is True
-        assert "data" in response.json()
+    assert response.status_code == 500
+    body = response.json()
+    assert body["success"] is False
+    assert body["error"]["code"] == "DATABASE_ERROR"
     assert_safe_warning(caplog, "OperationalError")
 
 
@@ -96,13 +94,15 @@ def test_source_error_preserves_sync_response_with_safe_log(api, monkeypatch, ca
     install_transport(monkeypatch, fail)
     with caplog.at_level(logging.WARNING):
         response = client.post("/api/v1/earthquakes/sync")
-    assert response.status_code == 200 and response.json()["success"] is True
+    assert response.status_code == 503
+    body = response.json()
+    assert body["success"] is False
+    assert body["error"]["code"] == "DATA_SOURCE_UNAVAILABLE"
     assert_safe_warning(caplog, "ConnectError")
 
 
 def test_sync_database_error_logs_and_rolls_back(api, monkeypatch, caplog):
     client, session = api
-    monkeypatch.setattr(earthquakes, "MOCK_USGS_DATA", [])
     payload = {
         "features": [
             {
@@ -115,7 +115,10 @@ def test_sync_database_error_logs_and_rolls_back(api, monkeypatch, caplog):
     install_transport(monkeypatch, lambda request: httpx.Response(200, json=payload))
     with caplog.at_level(logging.WARNING):
         response = client.post("/api/v1/earthquakes/sync")
-    assert response.status_code == 200 and response.json()["success"] is True
+    assert response.status_code == 500
+    body = response.json()
+    assert body["success"] is False
+    assert body["error"]["code"] == "DATABASE_ERROR"
     assert session.rollbacks == 1
     assert_safe_warning(caplog, "OperationalError")
 
@@ -173,18 +176,27 @@ def test_unexpected_programming_error_is_not_hidden_by_database_fallback(
         client.get(path)
 
 
-@pytest.mark.parametrize("invalid_json", [True, False])
-def test_invalid_source_payload_retains_sync_response(
-    api, monkeypatch, caplog, invalid_json
-):
+def test_invalid_json_from_usgs_returns_503(api, monkeypatch, caplog):
     client, _ = api
-    response = (
-        httpx.Response(200, content=b"invalid json")
-        if invalid_json
-        else httpx.Response(200, json={"features": [{"properties": None}]})
+    install_transport(
+        monkeypatch, lambda request: httpx.Response(200, content=b"invalid json")
     )
-    install_transport(monkeypatch, lambda request: response)
     with caplog.at_level(logging.WARNING):
         result = client.post("/api/v1/earthquakes/sync")
+    assert result.status_code == 503
+    body = result.json()
+    assert body["success"] is False
+    assert body["error"]["code"] == "DATA_SOURCE_UNAVAILABLE"
+    assert_safe_warning(caplog, "JSONDecodeError")
+
+
+def test_incomplete_usgs_feature_is_skipped(api, monkeypatch):
+    client, session = api
+    install_transport(
+        monkeypatch,
+        lambda request: httpx.Response(200, json={"features": [{"properties": None}]}),
+    )
+    result = client.post("/api/v1/earthquakes/sync")
     assert result.status_code == 200 and result.json()["success"] is True
-    assert_safe_warning(caplog, "JSONDecodeError" if invalid_json else "AttributeError")
+    assert result.json()["synced_count"] == 0
+    assert session.rollbacks == 0
