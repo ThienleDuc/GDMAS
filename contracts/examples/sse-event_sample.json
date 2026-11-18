@@ -1,0 +1,15 @@
+{
+  "event": "earthquake_detected",
+  "timestamp": "2026-11-06T15:35:00Z",
+  "data": {
+    "source_event_id": "us7000m8v8",
+    "event_time": "2026-11-06T15:30:00Z",
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "depth_km": 10.5,
+    "magnitude": 4.2,
+    "place": "12 km NE of San Francisco, CA"
+  },
+  "id": "earthquake-us7000m8v8",
+  "retry": 3000
+}

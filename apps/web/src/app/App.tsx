@@ -8,16 +8,8 @@ import { EarthquakesPage } from "../features/earthquakes/EarthquakesPage";
 import { StatisticsPage } from "../features/statistics/StatisticsPage";
 import { MonitoringMapPage } from "../features/monitoring/MonitoringMapPage";
 import { ReportsPage } from "../features/reports/ReportsPage";
+import { SettingsPage } from "../features/settings/SettingsPage";
 import { APP_ROUTES } from "./routes";
-
-const SettingsPlaceholder: React.FC = () => (
-  <div className="space-y-4">
-    <h1 className="text-2xl font-bold tracking-tight text-white">Cấu Hình Hệ Thống GDMAS</h1>
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 text-sm text-slate-300">
-      <p>Cấu hình ngưỡng cảnh báo địa chấn, tham số gom cụm DBSCAN (eps, min_samples) và kết nối SSE Stream.</p>
-    </div>
-  </div>
-);
 
 export const App: React.FC = () => {
   return (
@@ -28,7 +20,7 @@ export const App: React.FC = () => {
           <Route path={APP_ROUTES.HOME} element={<DashboardOverviewPage />} />
           <Route path={APP_ROUTES.EARTHQUAKES} element={<EarthquakesPage />} />
           <Route path={APP_ROUTES.STATISTICS} element={<StatisticsPage />} />
-          <Route path={APP_ROUTES.SETTINGS} element={<SettingsPlaceholder />} />
+          <Route path={APP_ROUTES.SETTINGS} element={<SettingsPage />} />
         </Route>
 
         {/* Nhóm Layout 2: Fullscreen Map Layout (Floating Glassmorphism + Map Viewport Outlet) */}

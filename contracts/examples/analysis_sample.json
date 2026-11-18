@@ -1,0 +1,85 @@
+{
+  "_note": "Fixture bundle cho Frontend offline test: mỗi giá trị validate theo contracts/schemas/analysis.json#/$defs/<tên>Response. Không dùng làm payload runtime.",
+  "temporal": {
+    "success": true,
+    "data": {
+      "status": "computed",
+      "interval": "day",
+      "line_chart": [
+        { "date": "2026-11-01", "event_count": 42, "max_magnitude": 5.2, "avg_magnitude": 3.1 },
+        { "date": "2026-11-02", "event_count": 38, "max_magnitude": 4.8, "avg_magnitude": 2.9 }
+      ],
+      "scatter_plot": [
+        { "id": 101, "timestamp": "2026-11-01T04:12:00Z", "magnitude": 5.2, "depth_km": 20.1 },
+        { "id": 102, "timestamp": "2026-11-01T08:33:00Z", "magnitude": 3.4, "depth_km": 10.0 }
+      ],
+      "histogram": {
+        "magnitude_bins": [
+          { "bin": "1.0 - 2.0", "count": 120 },
+          { "bin": "2.0 - 3.0", "count": 340 },
+          { "bin": "3.0 - 4.0", "count": 210 },
+          { "bin": "4.0 - 5.0", "count": 65 },
+          { "bin": ">= 5.0", "count": 14 }
+        ]
+      },
+      "stats": {
+        "data_points": 80,
+        "avg_magnitude": 3.0,
+        "max_magnitude": 5.2,
+        "avg_depth": 32.4
+      }
+    }
+  },
+  "trend": {
+    "success": true,
+    "data": {
+      "status": "computed",
+      "resample_freq": "M",
+      "metric": "count",
+      "series": [
+        { "period": "2026-05", "actual_value": 1120, "trend_value": 1105.4 },
+        { "period": "2026-06", "actual_value": 1240, "trend_value": 1180.2 }
+      ],
+      "slope": 0.045,
+      "intercept": 1090.5,
+      "r_squared": 0.62,
+      "p_value": 0.031,
+      "trend_direction": "increasing",
+      "sample_size": 6
+    }
+  },
+  "seasonality": {
+    "success": true,
+    "data": {
+      "status": "computed",
+      "resample_freq": "M",
+      "period": 12,
+      "components": {
+        "seasonal_line": [
+          { "cycle_index": 1, "period_label": "Tháng 1", "seasonal_factor": 1.05 },
+          { "cycle_index": 2, "period_label": "Tháng 2", "seasonal_factor": 0.98 }
+        ],
+        "residual_variance": 0.12,
+        "seasonality_strength": 0.35,
+        "interpretation": "Dữ liệu thể hiện tính chu kỳ yếu, không có bằng chứng mùa vụ rõ rệt theo tháng."
+      },
+      "data_points": 24
+    }
+  },
+  "correlation": {
+    "success": true,
+    "data": {
+      "status": "computed",
+      "variables": ["magnitude", "depth_km", "latitude", "longitude", "daily_event_count"],
+      "matrix": [
+        [1.0, -0.15, 0.02, 0.05, 0.28],
+        [-0.15, 1.0, -0.08, -0.03, -0.05],
+        [0.02, -0.08, 1.0, 0.12, 0.01],
+        [0.05, -0.03, 0.12, 1.0, 0.04],
+        [0.28, -0.05, 0.01, 0.04, 1.0]
+      ],
+      "method": "pearson",
+      "sample_size": 1248
+    }
+  }
+}

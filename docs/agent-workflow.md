@@ -31,7 +31,7 @@ Quy trình làm việc người + AI Agent tối giản hóa với **5 skill c�
 ## 2. Cây file quy trình (chỉ 1 thư mục skill duy nhất)
 
 ```text
-AGENTS.md                                  # luật chung cho mọi agent (Antigravity, Claude Code qua CLAUDE.md, Codex…)
+AGENTS.md                                  # luật chung cho mọi agent (Antigravity, Claude Code qua CLAUDE.md, OpenCode, Codex…)
 CLAUDE.md                                  # import @AGENTS.md và gọi lại 5 skill tại .agents/skills/
 .agents/
 ├── team.md                                # bảng thành viên & handle (`thien`, `son`, `van`, `tai`)
@@ -43,7 +43,7 @@ CLAUDE.md                                  # import @AGENTS.md và gọi lại 5
 │   └── review-pr/SKILL.md                 # Tự động Git (start/scope/commit tiếng Việt/update/push PR) cho Spec, Fast-Track & test/<id>
 └── notes/                                 # CHỈ giữ 4 thư mục quyết định + README.md
     ├── README.md                          # công thức grep + lệnh notes_index.py (--testcases, --bugs, --check)
-    ├── proposed/{_TEMPLATE.md, yyyy-mm-dd-<slug>-<handle>.md}
+    ├── proposed/{README.md, _TEMPLATE.md, yyyy-mm-dd-<slug>-<handle>.md}
     ├── implemented/{_TEMPLATE/{plan,status}.md, yyyy-mm-dd-<slug>-<handle>/}
     ├── testcase/{README.md, _TEMPLATE.md, yyyy-mm-dd-<slug>-<handle>.md}
     └── bugs/{README.md, INDEX.md, _TEMPLATE.md, BUG-<handle>-NNN-<slug>.md}
@@ -58,6 +58,15 @@ docs/
 ├── git-workflow.md                        # tự động hóa Git, bảng Type/Scope, Slug Engine, kiểm tra 0 conflict trước khi merge
 └── coding-rules.md                        # 7 Bất biến cứng I1–I7 kèm dấu hiệu vi phạm
 ```
+
+### 2.1. Dùng chung giữa các tool AI (trong đó có OpenCode)
+
+Repo **không** lưu cấu hình riêng cho từng tool (không có `opencode.json`/`.opencode/`, không có `.cursorrules`, không có `.github/copilot-instructions.md`). Cơ chế "đọc skill" là **quy ước bằng văn bản + cấu trúc chuẩn**, dùng chung cho mọi agent:
+
+- **Discovery:** tool tự nạp `AGENTS.md` (OpenCode nạp tự động mỗi phiên; Claude Code qua `CLAUDE.md` → `@AGENTS.md`), rồi đọc trực tiếp `.agents/skills/<name>/SKILL.md`. Mỗi skill chỉ có đúng 1 file `SKILL.md` — **không nhân bản** sang `.claude/skills/`, `.opencode/skills/` hay thư mục riêng của tool.
+- **Script & template dùng chung:** skill gọi `scripts/git-ship.sh`, `scripts/notes_index.py`, `scripts/git-setup.sh` và template tại `.agents/notes/*/_TEMPLATE*` — đều nằm ngoài thư mục skill, nên mọi tool chạy cùng một bộ lệnh, cùng một đầu ra.
+- **Guardrail khác nhau theo tool:** `.claude/settings.json` (allow/ask/deny) chỉ có hiệu lực với Claude Code. Với OpenCode và các tool khác, hàng rào chặn thật là [`.githooks/`](.githooks/) + `scripts/git-ship.sh` (tool-agnostic): chặn commit/push trực tiếp `develop`/`main`, chặn secret, kiểm format commit và `notes_index.py --check`. Vì vậy **không được** dựa vào `settings.json` để thay thế hook, cũng không dùng `--no-verify` / tắt hook khi gặp chặn.
+- **Ngôn ngữ & quy tắc:** mọi tool đọc chung `AGENTS.md` (luật I1–I7, Anti-Interrupt, ngôn ngữ tài liệu/commit tiếng Việt, khóa máy tiếng Anh) — không có bản dịch riêng cho từng tool.
 
 ## 3. Bốn tầng note & Khuôn mẫu testcase
 
@@ -95,9 +104,15 @@ Pha 4 — Implementation  build-implementation + write-testcase:
                           2. SINH ĐỒNG THỜI: implemented/<id>/{plan.md,status.md} VÀ .agents/notes/testcase/<id>.md (proposal-paired)
                           3. code theo RULE-03 & I1-I7 + viết file unit/integration test offline (test_*.py / FE test)
                           4. chạy validation nhẹ + cập nhật testcase Status: passed → đặt Status: validation
-                        → tự động chuyển giao review-pr (Phần B):
-                          scope → project-review → commit tiếng Việt → update (merge-forward) → push → PR
-                        → kiểm tra 0 xung đột (./scripts/git-ship.sh merge) → merge vào develop (ai cũng merge được) → sync → completed
+                        ▼
+                      CHECKPOINT 1 — DỪNG, hỏi người dùng (commit+push / dừng / sửa thêm)
+                        • chưa xác nhận → giữ working tree; gõ `tiếp tục workflow` để resume
+                        • xác nhận → review-pr Phần B1:
+                          scope → project-review → commit tiếng Việt → update (merge-forward) → push → PR → merge --dry-run (0 conflict)
+                        ▼
+                      CHECKPOINT 2 — DỪNG, hỏi người dùng (gửi yêu cầu merge / giữ PR mở)
+                        • chưa xác nhận → giữ PR mở; gõ `tiếp tục workflow` để resume
+                        • xác nhận → review-pr Phần B2: merge → git-ship sync → completed
 Pha 5 — Learning        Deviations / Decisions trong status.md, bugs/, cập nhật docs (gom câu hỏi nguy hiểm cuối phiên nếu có)
 ```
 
@@ -112,10 +127,16 @@ flowchart TD
     B1 --> I["Implement (RULE-03 & I1-I7) + Viết test offline"]
     B2 --> I
     I --> V["Validation nhẹ & OCP check → status: validation"]
-    V -- "tự động (review-pr)" --> G["scope → project-review → commit tiếng Việt → update → push → PR"]
-    G --> M{"Kiểm tra không xung đột?<br/>(git-ship merge — không bắt buộc ThienleDuc)"}
-    M -- "0 conflict" --> S["Merge vào develop → git-ship sync → status: completed"]
+    V --> CP1{"CHECKPOINT 1<br/>commit+push / dừng / sửa thêm?"}
+    CP1 -- "dừng / sửa thêm" --> HOLD1["Giữ working tree; gõ 'tiếp tục workflow' để resume"]
+    HOLD1 --> CP1
+    CP1 -- "tiếp tục workflow" --> G["review-pr B1: scope → project-review → commit → update → push → PR → dry-run"]
+    G --> M{"Kiểm tra không xung đột?<br/>(dry-run — không bắt buộc ThienleDuc)"}
     M -- "Có CONFLICT" --> CF["Dừng merge & giải quyết / gom hỏi cuối phiên"]
+    M -- "0 conflict" --> CP2{"CHECKPOINT 2<br/>gửi yêu cầu merge / giữ PR mở?"}
+    CP2 -- "dừng" --> HOLD2["Giữ PR mở; gõ 'tiếp tục workflow' để resume"]
+    HOLD2 --> CP2
+    CP2 -- "tiếp tục workflow" --> S["review-pr B2: merge vào develop → git-ship sync → status: completed"]
 ```
 
 ### Luồng 2: Kiểm thử chuyên sâu 1 file cụ thể (`single-file-test`)
@@ -129,8 +150,15 @@ flowchart TD
     TC --> RUN["3. Chạy unit test offline"]
     RUN -- "Pass" --> OK["Cập nhật testcase/(id).md → Status: passed"]
     RUN -- "Phát hiện lỗi" --> BUG["4. Ghi lỗi vào .agents/notes/bugs/BUG-(handle)-NNN-(slug).md<br/>Cập nhật testcase → Status: failed_with_bugs + Related Bugs"]
-    OK --> PR["5. review-pr Phần B: project-review → commit → update → push → kiểm 0 conflict & merge"]
-    BUG --> PR
+    OK --> CP1{"CHECKPOINT 1: commit+push / dừng / sửa thêm?"}
+    BUG --> CP1
+    CP1 -- "tiếp tục workflow" --> PR["5. review-pr B1: project-review → commit → update → push → dry-run"]
+    CP1 -- "dừng" --> HOLD["Giữ working tree; gõ 'tiếp tục workflow'"]
+    HOLD --> CP1
+    PR --> CP2{"CHECKPOINT 2: merge / giữ PR mở?"}
+    CP2 -- "tiếp tục workflow" --> MG["review-pr B2: merge → sync → completed"]
+    CP2 -- "dừng" --> HOLDPR["Giữ PR mở; gõ 'tiếp tục workflow'"]
+    HOLDPR --> CP2
 ```
 
 ## 5. Cơ chế dừng cứng & Gom câu hỏi nguy hiểm
@@ -139,6 +167,7 @@ flowchart TD
 - **`CRITICAL BUG: BUG-<handle>-NNN — <tiêu đề>`**: dòng đầu câu trả lời; ghi rõ vào `.agents/notes/bugs/` và báo nổi bật ngay.
 - **Thiếu `testcase/<id>.md` hoặc mã test**: task có code/logic hoặc `test/<id>` nhưng thiếu biên bản trong `.agents/notes/testcase/` hoặc thiếu unit test offline → `project-review` đánh dấu `VIOLATION`, chặn đẩy/merge PR.
 - **Im lặng không phải duyệt §9:** cần xác nhận rõ từ thành viên (`thien`/`son`/`van`/`tai`), không tự bịa §9.
+- **CHECKPOINT 1 / CHECKPOINT 2 (điểm dừng có chủ đích):** §9 Approved rồi vẫn dừng 2 lần — sau validation (quyết định commit/push) và sau push/PR + dry-run 0 conflict (quyết định merge). Khác với dừng cứng ở trên: đây là chờ người dùng, agent **in rõ tên checkpoint + cụm khởi động `tiếp tục workflow`** (chấp nhận `continue workflow`), và chỉ resume đúng task đang dừng. Chưa xác nhận → không commit/push/merge. Mỗi checkpoint chỉ 1 câu hỏi gom lựa chọn (giữ Anti-Interrupt, không hỏi từng lệnh).
 - **Chốt chặn Conflict trước Merge:** Bắt buộc kiểm tra không xung đột (`0 conflicts` qua `git-ship.sh merge` / `git merge-tree` / PR mergeability) trước khi merge — **không bắt buộc riêng `ThienleDuc`**, nhưng **tuyệt đối cấm merge khi còn `CONFLICT`**.
 - **Quy tắc gom câu hỏi cuối phiên (thay cho dừng ngang với xóa/conflict):**
   - Không bao giờ hỏi xin phép khi **thêm mới / sửa** file an toàn theo scope.
@@ -160,7 +189,8 @@ flowchart TD
 - **Risks:** <phần chưa kiểm đủ>
 - **Decision:** Theo `.agents/notes/implemented/<id>/plan.md` | Theo `.agents/notes/testcase/<id>.md`
 - **Not changed:** <thành phần liền kề cố ý không đụng>
-- **Status:** READY_FOR_REVIEW
+- **Checkpoint:** CHECKPOINT 1 (chờ xác nhận commit/push) | CHECKPOINT 2 (chờ xác nhận merge) — resume bằng `tiếp tục workflow`
+- **Status:** READY_FOR_REVIEW | DONE
 ```
 
 ## 7. Validation nhẹ cho GDMAS
@@ -175,7 +205,7 @@ flowchart TD
 | Skill | Vai trò (đã tối ưu tự động hóa cho GDMAS) |
 |---|---|
 | `write-proposal` | Pha 1+2: đọc bối cảnh (`docs/`, `notes_index.py`), kiểm conflict (nếu có thì gom hỏi cuối phiên), sinh ID bằng Slug Engine, viết proposal kèm tệp test dự kiến, dừng chờ thành viên xác nhận §9 (không cần `ThienleDuc`) |
-| `build-implementation` | Pha 4: kiểm §9 `Approved`, gọi `review-pr` Phần A rẽ nhánh, tạo **đồng thời** `implemented/<id>/` và gọi `write-testcase` tạo `testcase/<id>.md`, implement RULE-03 & I1–I7, validation nhẹ, đặt `validation` và chuyển giao `review-pr` |
+| `build-implementation` | Pha 4: kiểm §9 `Approved`, gọi `review-pr` Phần A rẽ nhánh, tạo **đồng thời** `implemented/<id>/` và gọi `write-testcase` tạo `testcase/<id>.md`, implement RULE-03 & I1–I7, validation nhẹ, đặt `validation` rồi **dừng CHECKPOINT 1** (resume: `tiếp tục workflow`) |
 | `write-testcase` | Tạo `.agents/notes/testcase/<id>.md` (từ `_TEMPLATE.md`) + viết unit test offline cho **2 luồng**: (1) `proposal-paired` song song với `implemented/<id>/`, và (2) `single-file-test` checkout nhánh `test/<id>` trước, chạy test và ghi lỗi vào `.agents/notes/bugs/` |
 | `project-review` | Thẩm định & bảo vệ mã nguồn: kiểm quyết định cũ, OCP/Churn/Core-files audit, 7 Invariants I1–I7 (gồm kiểm `testcase/<id>.md`, mã test offline & bug log), drift, scope creep |
-| `review-pr` | Tự động hóa Git toàn phần (cho Spec-Driven, Fast-Track ≤ 1 file & nhánh `test/<id>`): `start`, `scope`, secret guard, gọi `project-review`, tổng hợp Conventional Commit tiếng Việt qua bảng Type/Scope, `update` merge-forward, `push`, kiểm tra 0 conflict & `merge` (không bắt buộc riêng `ThienleDuc`), `sync` sau merge |
+| `review-pr` | Tự động hóa Git toàn phần (cho Spec-Driven, Fast-Track ≤ 1 file & nhánh `test/<id>`): `start`, `scope`, secret guard, gọi `project-review`, Conventional Commit tiếng Việt, `update` merge-forward, `push`, kiểm tra 0 conflict & `merge` (không bắt buộc riêng `ThienleDuc`), `sync` sau merge; tách B1 (đến PR+dry-run) / B2 (merge+sync) với **CHECKPOINT 2** ở giữa |

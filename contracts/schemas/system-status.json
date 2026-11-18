@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gdmas.local/schemas/system-status.json",
+  "title": "GET /api/v1/system/status response",
+  "description": "Trạng thái 7 Terminals của GDMAS + thời điểm chạy gần nhất lấy từ bảng service_runs. Mọi timestamp UTC ISO 8601 (hậu tố Z). Frontend dùng last_run để cảnh báo dữ liệu cũ theo docs/architecture.md §9.4.",
+  "type": "object",
+  "required": ["success", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "success": { "type": "boolean" },
+    "data": {
+      "type": "object",
+      "required": ["services"],
+      "additionalProperties": false,
+      "properties": {
+        "services": {
+          "type": "object",
+          "description": "Khoá là handle cố định của 7 Terminals. FE coi service thiếu là 'unknown' (không bịa trạng thái running).",
+          "required": ["postgres", "ingestion", "analysis", "clustering", "prediction", "api", "frontend"],
+          "additionalProperties": false,
+          "properties": {
+            "postgres": { "$ref": "#/$defs/service" },
+            "ingestion": { "$ref": "#/$defs/service" },
+            "analysis": { "$ref": "#/$defs/service" },
+            "clustering": { "$ref": "#/$defs/service" },
+            "prediction": { "$ref": "#/$defs/service" },
+            "api": { "$ref": "#/$defs/service" },
+            "frontend": { "$ref": "#/$defs/service" }
+          }
+        },
+        "data_feed": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "source": { "type": "string", "examples": ["USGS"] },
+            "total_events": { "type": "integer", "minimum": 0 },
+            "latest_event_time": { "type": ["string", "null"], "format": "date-time" }
+          }
+        },
+        "generated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "message": { "type": "string" }
+  },
+  "$defs": {
+    "service": {
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["running", "active", "idle", "stopped", "error", "unknown"],
+          "description": "FE chỉ tô 'healthy' cho running/active; idle/unknown là trung tính; stopped/error là cảnh báo."
+        },
+        "last_run": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Thời điểm chạy thành công gần nhất (UTC). Thiếu → FE hiển thị 'chưa có dữ liệu chạy'."
+        },
+        "cycle": {
+          "type": ["string", "null"],
+          "description": "Chu kỳ dạng '<n>m' | '<n>h' | '<n>d', vd. '5m', '1d'.",
+          "examples": ["5m", "1d"]
+        },
+        "uptime_seconds": { "type": ["number", "null"], "minimum": 0 },
+        "records_processed": { "type": ["integer", "null"], "minimum": 0 },
+        "error_message": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

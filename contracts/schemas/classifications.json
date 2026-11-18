@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gdmas.local/schemas/classifications.json",
+  "title": "GET /api/v1/classifications response (Pattern 6)",
+  "description": "Phân loại mức độ hoạt động địa chấn ngày t+1 do T5 sinh. Nhãn canonical LOW|MEDIUM|HIGH|CRITICAL; BE có thể trả nhãn dài ('Normal Activity', 'Low Activity', 'High Activity') — FE chuẩn hoá qua normalizeRiskLabel.",
+  "type": "object",
+  "required": ["success", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "success": { "type": "boolean" },
+    "data": {
+      "type": "object",
+      "required": ["target_date", "predicted_label", "probabilities"],
+      "additionalProperties": false,
+      "properties": {
+        "target_date": { "type": "string", "description": "Ngày phân loại theo UTC, dạng YYYY-MM-DD." },
+        "predicted_label": {
+          "type": "string",
+          "description": "LOW | MEDIUM | HIGH | CRITICAL hoặc nhãn dài tương ứng.",
+          "examples": ["Normal Activity", "HIGH"]
+        },
+        "probabilities": {
+          "type": "object",
+          "description": "Xác suất từng lớp trong [0, 1] (FE chuẩn hoá nếu BE trả phần trăm).",
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        },
+        "probability_scores": {
+          "type": "object",
+          "description": "Alias của `probabilities` dùng trong payload /patterns hiện tại.",
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        },
+        "model_name": { "type": "string" },
+        "model_version": { "type": "string" },
+        "evaluation_metrics": { "$ref": "#/$defs/evaluationMetrics" },
+        "generated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "message": { "type": "string" }
+  },
+  "$defs": {
+    "evaluationMetrics": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "f1_macro": { "type": "number", "minimum": 0, "maximum": 1 },
+        "f1_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "classes": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

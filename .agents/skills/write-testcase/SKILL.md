@@ -71,9 +71,10 @@ Kích hoạt khi người dùng yêu cầu kiểm thử / viết unit test cho *
      4. Cập nhật `.agents/notes/testcase/<id>.md`: đặt `Status: failed_with_bugs`, `Related Bugs: BUG-<handle>-NNN`, ghi rõ log fail ở Mục 4 & Mục 5.
      *(Không tự ý sửa code gốc đang kiểm thử trừ khi người dùng yêu cầu sửa luôn; giữ nguyên unit test tái hiện lỗi.)*
 
-5. **BƯỚC 5 — Kiểm tra nhất quán & Đẩy PR (`review-pr` Phần B):**
+5. **BƯỚC 5 — Kiểm tra nhất quán & DỪNG CHECKPOINT 1:**
    - Chạy `python3 scripts/notes_index.py --check`.
-   - Chuyển giao sang `review-pr` Phần B (`project-review`, commit `test(<scope>): bổ sung unit test cho <file> (<id>)`, `update`, `push` nhánh `test/<id>` & kiểm tra không xung đột trước khi merge PR).
+   - **DỪNG CHECKPOINT 1**: báo kết quả unit test + cụm khởi động **`tiếp tục workflow`**, hỏi người dùng commit/push hay dừng. Chưa xác nhận → không commit/push.
+   - Sau khi người dùng gõ `tiếp tục workflow` mới chuyển sang `review-pr` Phần B1 (`project-review`, commit `test(<scope>): bổ sung unit test cho <file> (<id>)`, `update`, `push` nhánh `test/<id>` & `merge --dry-run`); CHECKPOINT 2 trước merge vẫn áp dụng như mọi luồng.
 
 ## Skill này không làm
 

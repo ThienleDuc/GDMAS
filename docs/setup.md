@@ -69,7 +69,12 @@ Trước khi cấu hình, đảm bảo 3 cổng mạng sau trên `localhost` kh�
 | **uv Package Manager** | $\ge 0.4.0$ | $\ge 0.13+$ | `uv --version` |
 | **Python Runtime** | $3.11.0$ | $3.12+$ (quản lý bởi uv) | `uv run python --version` |
 | **Node.js** | $\ge 18.18.0$ (LTS) | $\ge 20.12+$ / $22+$ | `node -v` |
-| **pnpm** | $\ge 8.15.0$ | $\ge 9.0+$ | `pnpm -v` |
+| **pnpm** | $\ge 8.15.0$ | $\ge 9.0+$ | `pnpm -v` *(xem ghi chú Corepack bên dưới)* |
+
+> **Ghi chú Corepack (Frontend `apps/web/`):** `apps/web/package.json` khai báo `"packageManager": "pnpm@10.20.0"` để Corepack (có sẵn từ Node 16.10+) tự tải/ep đúng phiên bản, khớp `pnpm-lock.yaml` (`lockfileVersion: '9.0'`). Bản 10.20.0 yêu cầu Node $\ge 18.12$, nên chạy được ở cả ngưỡng tối thiểu $18.18.0$ lẫn Node $22+$. Corepack **chỉ nhận semver chính xác**, không nhận range như `pnpm@>=9`; do đó không ghi range vào `packageManager`. Ngưỡng tương thích được khai báo riêng qua `"engines": { "node": ">=18.18.0", "pnpm": ">=8.15.0" }`.
+>
+> - Kiểm tra đúng phiên bản FE dùng: `cd apps/web && corepack pnpm -v` → `10.20.0`. Lệnh `pnpm -v` ở trên có thể trả về pnpm cài global (khác bản) nên chỉ dùng để đối chiếu ngưỡng §1.4.
+> - Chạy riêng FE: `cd apps/web && corepack pnpm dev` (Vite cổng `3000`). Chạy không cần BE: `VITE_API_MOCKING=enabled corepack pnpm dev`. Không dùng `PUBLIC_*` — Vite chỉ expose biến `VITE_*`.
 
 ### 1.5 Cấu hình Biến Môi trường Cục bộ (`.env` Configuration)
 

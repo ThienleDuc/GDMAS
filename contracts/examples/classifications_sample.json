@@ -1,0 +1,20 @@
+{
+  "success": true,
+  "data": {
+    "target_date": "2026-11-17",
+    "predicted_label": "Normal Activity",
+    "probabilities": {
+      "Low Activity": 0.15,
+      "Normal Activity": 0.72,
+      "High Activity": 0.13
+    },
+    "model_name": "RandomForest-Seismic-Classifier",
+    "model_version": "v1.0.0",
+    "evaluation_metrics": {
+      "f1_macro": 0.78,
+      "accuracy": 0.82,
+      "classes": ["Low Activity", "Normal Activity", "High Activity"]
+    },
+    "generated_at": "2026-11-16T10:00:00Z"
+  }
+}

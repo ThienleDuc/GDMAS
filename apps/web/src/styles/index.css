@@ -1,4 +1,9 @@
+/* CSS entry point: import dependencies and app stylesheets here. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "./globals.css";
+@import "../layouts/layout.css";
 
 @theme {
   --color-slate-850: #151f32;
