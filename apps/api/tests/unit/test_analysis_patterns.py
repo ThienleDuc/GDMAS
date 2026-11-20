@@ -337,6 +337,8 @@ def test_snapshot_types_and_periods(ten_weeks):
         ("time_series", "week"),
         ("time_series", "month"),
         ("trend", "week"),
+        ("trend", "day"),
+        ("trend", "month"),
         ("seasonality", "day"),
         ("correlation", "day"),
     ]

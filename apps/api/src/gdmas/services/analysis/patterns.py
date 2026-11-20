@@ -27,6 +27,8 @@ CORRELATION_VARIABLES = (
     "daily_event_count",
 )
 TEMPORAL_INTERVALS = ("day", "week", "month")
+TREND_INTERVALS = ("day", "week", "month")
+TREND_METRICS = ("count", "avg_magnitude", "max_magnitude")
 SCATTER_LIMIT = 2000
 TREND_MIN_PERIODS = 3
 TREND_SIGNIFICANCE = 0.05
@@ -281,29 +283,52 @@ _DIRECTION_LABELS = {
 }
 
 
+_TREND_AGGREGATIONS = {
+    "count": "count",
+    "avg_magnitude": "mean",
+    "max_magnitude": "max",
+}
+
+
+def _trend_actual(df: pd.DataFrame, interval: str, metric: str) -> pd.Series:
+    """Chuỗi giá trị thực theo kỳ: số trận (kỳ rỗng = 0) hoặc độ lớn (kỳ rỗng bị loại)."""
+    if df.empty:
+        return pd.Series(dtype=float)
+    aggregated = _resample(df, interval)["magnitude"].agg(_TREND_AGGREGATIONS[metric])
+    actual = aggregated.astype(float)
+    # Không bịa độ lớn 0 cho kỳ không có sự kiện — bỏ kỳ đó khỏi chuỗi và hồi quy.
+    return actual if metric == "count" else actual.dropna()
+
+
 def compute_trend(
     df: pd.DataFrame,
     interval: str | None = None,
     *,
     as_of: datetime | None = None,
+    metric: str = "count",
 ) -> dict[str, Any]:
+    if metric not in _TREND_AGGREGATIONS:
+        raise ValueError(f"metric không hỗ trợ: {metric}")
     interval = interval or choose_trend_interval(df)
-    counts = (
-        _resample(df, interval)["magnitude"].count()
-        if not df.empty
-        else pd.Series(dtype=float)
-    )
-    actual = counts.astype(float)
+    actual = _trend_actual(df, interval, metric)
     moving_avg = actual.rolling(
         MOVING_AVERAGE_WINDOW, center=True, min_periods=1
     ).mean()
 
     complete = complete_period_mask(actual.index, interval, df, as_of=as_of)
+    # Vị trí kỳ thật trên lưới re-sampling (giữ khoảng cách khi metric độ lớn bỏ kỳ rỗng).
+    positions = (
+        _resample(df, interval)["magnitude"].count().index.get_indexer(actual.index)
+        if not df.empty
+        else np.array([], dtype=int)
+    )
 
     series = [
         {
             "period": _period_label(ts, interval),
-            "actual_value": int(actual.loc[ts]),
+            "actual_value": int(actual.loc[ts])
+            if metric == "count"
+            else _round(actual.loc[ts], 3),
             "trend_value": _round(moving_avg.loc[ts], 3),
             "is_complete": bool(is_complete),
         }
@@ -316,7 +341,7 @@ def compute_trend(
     r_squared: float | None = None
     direction = "stable"
     # Hồi quy trên các kỳ đầy đủ; trục x là vị trí kỳ thật để giữ khoảng cách thời gian.
-    x = np.flatnonzero(complete).astype(float)
+    x = positions[complete].astype(float)
     y = actual.to_numpy()[complete]
     status = STATUS_INSUFFICIENT if len(y) < TREND_MIN_PERIODS else STATUS_COMPUTED
 
@@ -334,7 +359,7 @@ def compute_trend(
         "status": status,
         "resample_freq": _INTERVAL_TO_FREQ_CODE[interval],
         "interval": interval,
-        "metric": "count",
+        "metric": metric,
         "series": series,
         "moving_average_window": MOVING_AVERAGE_WINDOW,
         "slope": _round(slope, 6),
@@ -347,6 +372,24 @@ def compute_trend(
         "data_points": len(series),
         "complete_periods": len(y),
     }
+
+
+def compute_trend_bundle(
+    df: pd.DataFrame,
+    interval: str,
+    *,
+    as_of: datetime | None = None,
+) -> dict[str, Any]:
+    """Pattern 2 cho một tần suất, đủ 3 metric của `GET /analysis/trend`.
+
+    Cấp cao nhất giữ kết quả metric `count` (định dạng cũ, `/patterns` vẫn đọc được);
+    khóa `metrics` chứa kết quả riêng của từng metric trong `TREND_METRICS`.
+    """
+    metrics = {
+        metric: compute_trend(df, interval, as_of=as_of, metric=metric)
+        for metric in TREND_METRICS
+    }
+    return {**metrics["count"], "metrics": metrics}
 
 
 # ---------------------------------------------------------------------------
@@ -572,8 +615,13 @@ def build_analysis_snapshot(
         item("time_series", interval, compute_temporal(df, interval))
         for interval in TEMPORAL_INTERVALS
     ]
-    trend = compute_trend(df, as_of=as_of)
-    snapshot.append(item("trend", trend["interval"], trend))
+    # Tần suất chính ghi trước: `/patterns` lấy bản `trend` đầu tiên; 2 tần suất còn lại
+    # phục vụ `GET /analysis/trend?resample_freq=D|W|M`.
+    primary = choose_trend_interval(df)
+    for interval in (primary, *(i for i in TREND_INTERVALS if i != primary)):
+        snapshot.append(
+            item("trend", interval, compute_trend_bundle(df, interval, as_of=as_of))
+        )
     seasonality = compute_seasonality(df, as_of=as_of)
     snapshot.append(item("seasonality", seasonality["interval"] or "day", seasonality))
     snapshot.append(item("correlation", "day", compute_correlation(df)))
