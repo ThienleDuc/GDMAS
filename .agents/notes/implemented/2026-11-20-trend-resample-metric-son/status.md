@@ -5,7 +5,7 @@
 
 ## Metadata
 - ID: 2026-11-20-trend-resample-metric-son
-- Status: validation   <!-- planned | in_progress | blocked | validation | completed -->
+- Status: completed   <!-- planned | in_progress | blocked | validation | completed -->
 - Started: 2026-11-20
 - Last Updated: 2026-11-20
 - Owner: son
@@ -13,8 +13,8 @@
 ---
 
 ## Tiến độ
-Progress: 90%
-Current Phase: CHECKPOINT 1 — chờ người dùng quyết định commit/push
+Progress: 100%
+Current Phase: completed — đã merge PR #34 vào develop (SHA f7ead7d)
 
 Completed:
 - Nhánh `fix/2026-11-20-trend-resample-metric-son`, bug note `BUG-son-008`, proposal (§9 Approved bởi son)
@@ -63,9 +63,9 @@ Blocked:
 ---
 
 ## Next Actions
-- CHECKPOINT 1: chờ `tiếp tục workflow` → `review-pr` Phần B1 (scope, project-review, commit, update, push, PR — ghi chủ vùng `tai`).
+- none — CHECKPOINT 1/2 đã xác nhận; PR #34 đã merge vào develop, sync hoàn tất.
 
 ---
 
 ## Last Update
-2026-11-20 — Hoàn tất code + test, validation xanh, dừng CHECKPOINT 1.
+2026-11-20 — Commit b926529, PR #34 merge vào develop (SHA f7ead7d), sync xong; status.md → completed.

@@ -4,7 +4,7 @@
 - **Severity:** medium
 - **Area:** `apps/api/src/gdmas/services/analysis/patterns.py` (T3 — đầu ra Pattern 2) và `apps/api/src/gdmas/api/routes/analysis.py` (T6 — route `/analysis/trend`, chủ vùng `tai`)
 - **Reported:** 2026-11-20 — agent rà soát task của `son` so với `develop` mới nhất (sau PR #25–#33), test thăm dò offline nối đầu ra thật của T3 vào route T6
-- **Fixed:** 2026-11-20 — nhánh `fix/2026-11-20-trend-resample-metric-son`; kiểm chứng 296 test offline pass
+- **Fixed:** 2026-11-20 — PR #34 (commit b926529, merge f7ead7d) nhánh `fix/2026-11-20-trend-resample-metric-son`; kiểm chứng 296 test offline pass
 - **Related:** `.agents/notes/proposed/2026-11-20-trend-resample-metric-son.md`, `.agents/notes/proposed/2026-11-12-analysis-four-patterns-son.md`, `.agents/notes/proposed/2026-11-12-api-rest-endpoints-tai.md`
 - **Duplicate of:** -
 
@@ -56,3 +56,4 @@ Toàn bộ backend 296 passed, Ruff sạch (testcase `2026-11-20-trend-resample-
 ## Lịch sử
 - 2026-11-20 — ghi nhận (status: open)
 - 2026-11-20 — sửa trên nhánh `fix/2026-11-20-trend-resample-metric-son`, chờ merge (status: fixed)
+- 2026-11-20 — PR #34 merge vào develop (SHA f7ead7d)
