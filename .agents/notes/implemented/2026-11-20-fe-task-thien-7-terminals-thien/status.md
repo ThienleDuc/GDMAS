@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-20-fe-task-thien-7-terminals-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-20
 - Last Updated: 2026-11-20
 - Owner: agent | thien
@@ -11,7 +11,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: CHECKPOINT 1 — chờ người dùng quyết định commit/push
+Current Phase: completed — đã merge PR #28 vào develop (SHA ac07d32)
 
 Completed:
 - Step 1 — Đọc 5 docs đối chiếu + 3 task đồng đội; bỏ qua `docs/guides/`; kiểm tra notes index
@@ -55,9 +55,9 @@ Blocked:
 ---
 
 ## Next Actions
-- Dừng CHECKPOINT 1, báo Implementation Report, chờ người dùng chọn commit/push hoặc sửa thêm.
+- none — CHECKPOINT 1 và CHECKPOINT 2 đã xác nhận; PR #28 đã merge vào `develop`, `git-ship.sh sync` hoàn tất.
 
 ---
 
 ## Last Update
-2026-11-20 — Viết xong `docs/task/thien.md` với 14 task nhỏ theo 7 terminals; validation xanh; dừng CHECKPOINT 1.
+2026-11-20 — Commit `13c45b4`, push nhánh, mở PR #28, merge vào `develop` (SHA merge `ac07d32`), sync xong; `status.md` → `completed`.
