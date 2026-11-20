@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-21-monitoring-leaflet-map-markers-thien
-- Status: validation   <!-- planned | in_progress | blocked | validation | completed -->
+- Status: completed   <!-- planned | in_progress | blocked | validation | completed -->
 - Started: 2026-11-21
 - Last Updated: 2026-11-21
 - Owner: agent | thien
@@ -67,9 +67,17 @@ Blocked:
 ---
 
 ## Next Actions
-- CHECKPOINT 1: chờ `tiếp tục workflow` → commit/push/PR (Phần B1) → CHECKPOINT 2 trước merge. Chưa commit/push.
+- none — proposal đã Approved, PR #38 đã merge vào `develop`; task hoàn tất.
+
+---
+
+## Merge Record
+- PR: https://github.com/ThienleDuc/GDMAS/pull/38
+- Merge commit: `21c712f` (`Merge pull request #38 from ThienleDuc/feat/2026-11-21-monitoring-leaflet-map-markers-thien`)
+- Feature commit: `67fb8c8`
+- Dry-run trước merge: 0 conflict (`mergeable=MERGEABLE`, `state=CLEAN`).
 
 ---
 
 ## Last Update
-2026-11-21 — Vòng 2 xong; 108/108 test pass, build sạch; `Status: validation`, dừng CHECKPOINT 1.
+2026-11-21 — PR #38 đã merge vào `develop` (SHA `21c712f`), sync xong; `Status: completed`.
