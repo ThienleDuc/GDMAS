@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DashboardLayout } from "../layouts/DashboardLayout";
+import { EarthquakesPage } from "../features/earthquakes/EarthquakesPage";
 import { APP_ROUTES } from "./routes";
 
 /**
@@ -28,7 +29,7 @@ export const App: React.FC = () => {
         <Route element={<DashboardLayout />}>
           <Route path={APP_ROUTES.HOME} element={<PlaceholderPage title="Tổng quan" />} />
           <Route path={APP_ROUTES.MONITORING} element={<PlaceholderPage title="Bản đồ Giám sát" />} />
-          <Route path={APP_ROUTES.EARTHQUAKES} element={<PlaceholderPage title="Danh mục Động đất" />} />
+          <Route path={APP_ROUTES.EARTHQUAKES} element={<EarthquakesPage />} />
           <Route path={APP_ROUTES.STATISTICS} element={<PlaceholderPage title="6 Patterns Phân tích" />} />
           <Route path={APP_ROUTES.REPORTS} element={<PlaceholderPage title="Báo cáo & Xuất bản" />} />
           <Route path={APP_ROUTES.SETTINGS} element={<PlaceholderPage title="Cấu hình Hệ thống" />} />
