@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-20-earthquakes-mock-pagination-histogram-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-20
 - Last Updated: 2026-11-20
 - Owner: agent | thien
@@ -60,9 +60,9 @@ Blocked:
 ---
 
 ## Next Actions
-- Implement, validation, dừng CHECKPOINT 1.
+- none — PR #36 đã merge vào develop (SHA 166911a), sync hoàn tất.
 
 ---
 
 ## Last Update
-2026-11-21 — Gộp notes earthquakes (xóa 3 bộ untracked), thêm lọc quốc gia từ place; build + 89/89 test xanh; dừng CHECKPOINT 1.
+2026-11-21 — PR #36 merge vào develop (SHA 166911a); gộp notes, lọc quốc gia, mock/pagination/histogram, nút lọc SVG; build + 89/89 test xanh; status completed.
