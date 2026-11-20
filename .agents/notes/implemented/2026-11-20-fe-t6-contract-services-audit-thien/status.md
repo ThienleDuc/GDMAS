@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-20-fe-t6-contract-services-audit-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-20
 - Last Updated: 2026-11-20
 - Owner: agent | thien
@@ -11,7 +11,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: validation — hoàn tất đối chiếu, guards, SSE service và test offline
+Current Phase: completed — đã merge PR #30 vào develop (SHA 317ca25)
 
 Completed:
 - Proposal §9 Approved bởi `thien` sau Changes Requested về SSE events/stream.
@@ -58,9 +58,9 @@ Blocked:
 ---
 
 ## Next Actions
-- Tạo testcase từ template; bắt đầu nhánh `feat/2026-11-20-fe-t6-contract-services-audit-thien`; đối chiếu endpoint trước khi sửa code.
+- none — CHECKPOINT 1/2 đã xác nhận; PR #30 đã merge vào develop, sync hoàn tất.
 
 ---
 
 ## Last Update
-2026-11-20 — Hoàn tất implementation và 63/63 test; chuyển Status sang `validation`, dừng CHECKPOINT 1.
+2026-11-20 — Commit c7aba43, PR #30 merge vào develop (SHA 317ca25), sync xong; status.md → completed.
