@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AnalysisInterval } from "../contracts/common.ts";
+import { isApiEmptyEnvelope, type AnalysisInterval } from "../contracts/common.ts";
 import type { StatisticsResponse } from "../contracts/earthquake.ts";
 import type { TemporalResponse } from "../contracts/analysis.ts";
 import type { ClustersResponse } from "../contracts/clusters.ts";
@@ -59,8 +59,14 @@ export function useEarthquakeInsights(interval: AnalysisInterval, refreshKey = 0
         }
 
         setState({
-          statistics: statisticsResult.status === "fulfilled" ? statisticsResult.value : null,
-          temporal: temporalResult.status === "fulfilled" ? temporalResult.value : null,
+          statistics:
+            statisticsResult.status === "fulfilled" && !isApiEmptyEnvelope(statisticsResult.value)
+              ? statisticsResult.value
+              : null,
+          temporal:
+            temporalResult.status === "fulfilled" && !isApiEmptyEnvelope(temporalResult.value)
+              ? temporalResult.value
+              : null,
           clusters: clustersResult.status === "fulfilled" && clustersResult.value.data
             ? clustersResult.value.data
             : null,

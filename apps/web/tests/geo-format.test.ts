@@ -89,3 +89,16 @@ test("TC-01 & TC-02: Toàn bộ contracts schemas & examples parse hợp lệ", 
     assert.ok(content !== null && typeof content === "object");
   }
 });
+
+test("TC-11 (bổ sung T7.04): sample earthquake khớp WGS84 & UTC cho popup bản đồ", () => {
+  const samplePath = path.resolve(
+    import.meta.dirname,
+    "../../../contracts/examples/earthquake_sample.json",
+  );
+  const sample = JSON.parse(fs.readFileSync(samplePath, "utf-8"));
+
+  assert.equal(formatCoordinate(sample.latitude, sample.longitude), "37.7749° N, 122.4194° W");
+  assert.match(sample.event_time, /Z$/);
+  assert.ok(formatEventTime(sample.event_time, "UTC").includes("UTC"));
+  assert.ok(formatEventTime(sample.event_time, "UTC+7").includes("UTC+7"));
+});

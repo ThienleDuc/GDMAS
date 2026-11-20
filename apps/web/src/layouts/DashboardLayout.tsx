@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import {
   Activity,
@@ -13,6 +13,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useSSE } from "../hooks/useSSE";
+import { SseMarkersProvider } from "../features/monitoring/sse-context.ts";
+import { APP_ROUTES } from "../app/routes.tsx";
 
 interface NavItem {
   label: string;
@@ -34,8 +36,16 @@ export const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
 
-  // Giữ kết nối SSE trong shell dùng chung.
-  useSSE("/api/v1/stream/earthquakes");
+  // Revision 2026-11-21: vào Bản đồ giám sát thì tự thu aside, mở rộng không gian.
+  // Không tự mở lại ở trang khác — người dùng bấm nút toggle khi cần.
+  useEffect(() => {
+    if (location.pathname === APP_ROUTES.MONITORING) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname]);
+
+  // Giữ một kết nối SSE duy nhất tại shell; page bản đồ chỉ đọc qua context.
+  const sse = useSSE("/api/v1/stream/earthquakes");
 
   return (
     <div className="layout layout--dashboard app-layout">
@@ -120,7 +130,9 @@ export const DashboardLayout: React.FC = () => {
 
         {/* Nested Content rendered via Outlet */}
         <main className="layout__content app-content">
-          <Outlet />
+          <SseMarkersProvider value={sse}>
+            <Outlet />
+          </SseMarkersProvider>
         </main>
       </div>
     </div>

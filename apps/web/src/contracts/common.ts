@@ -34,7 +34,8 @@ export type ErrorCode =
 export interface ApiErrorBody {
   code: ErrorCode | string;
   message: string;
-  details?: Record<string, unknown>;
+  /** BE truyền cả chuỗi lẫn object (errors.py:12) — nới type theo payload thật. */
+  details?: string | Record<string, unknown> | null;
 }
 
 /** Envelope thất bại chuẩn: `{ success: false, error }`. */
@@ -84,6 +85,21 @@ export function isApiEnvelope<T = unknown>(value: unknown): value is ApiEnvelope
     "success" in value &&
     (value as { success: unknown }).success === true &&
     "data" in value
+  );
+}
+
+/**
+ * BE trả "rỗng" bằng HTTP 200 + `{success:false, data:null, message}` (audit B1).
+ * Đây là kết quả hợp lệ, KHÔNG phải lỗi — UI phải vào Empty State, không ném ApiError.
+ */
+export function isApiEmptyEnvelope(value: unknown): boolean {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    candidate.success === false &&
+    candidate.data === null &&
+    typeof candidate.message === "string" &&
+    !("error" in candidate)
   );
 }
 

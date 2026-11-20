@@ -99,7 +99,16 @@ export async function getEarthquakes(
     max_lon: params.max_lon,
   });
 
-  return fetchApi<EarthquakeListResponse>(`/api/v1/earthquakes${qs}`, { signal });
+  const response = await fetchApi<EarthquakeListResponse>(`/api/v1/earthquakes${qs}`, { signal });
+  // Audit B1: BE trả 200 + {success:false, data:null, message} khi DB rỗng → chuẩn hoá thành [].
+  if (!response || !Array.isArray(response.data)) {
+    return {
+      success: false,
+      data: [],
+      metadata: { total: 0, page: params.page ?? 1, limit: params.limit ?? 20, total_pages: 0 },
+    };
+  }
+  return response;
 }
 
 /**

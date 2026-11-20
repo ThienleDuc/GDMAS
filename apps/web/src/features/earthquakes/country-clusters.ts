@@ -24,9 +24,23 @@ const COUNTRY_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
   [/china|taiwan/i, "China"],
 ];
 
+/** Mã bang Mỹ thường xuất hiện ở cuối địa danh USGS (Revision 2026-11-21). */
+const US_STATE_CODES = new Set([
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA",
+  "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT",
+  "VA", "WA", "WV", "WI", "WY", "DC",
+]);
+
 /** Resolve a human-readable country/region label from a place or dominant_place string. */
 export function countryFromPlace(place: string | null | undefined): string {
   if (!place?.trim()) return "Khác";
+
+  // Ưu tiên đoạn cuối là mã bang Mỹ ("12 km NE of San Francisco, CA" → USA).
+  const segments = place.split(",").map((part) => part.trim()).filter(Boolean);
+  const last = segments[segments.length - 1];
+  if (last && US_STATE_CODES.has(last.toUpperCase())) return "USA";
+
   for (const [pattern, country] of COUNTRY_PATTERNS) {
     if (pattern.test(place)) return country;
   }
