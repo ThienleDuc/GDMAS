@@ -1,4 +1,5 @@
 import { ApiError, fetchApi } from "../lib/api-client.ts";
+import { isUtcTimestamp, isWgs84Bounds } from "../contracts/common.ts";
 import type {
   ClassificationsResponse,
   ClustersResponse,
@@ -35,6 +36,30 @@ export type {
   QueryEarthquakeParams,
 } from "../contracts/index.ts";
 
+function assertQueryWindow(startTime?: string, endTime?: string): void {
+  if (startTime !== undefined && !isUtcTimestamp(startTime)) {
+    throw new TypeError("start_time phải là timestamp ISO 8601 UTC có hậu tố Z.");
+  }
+  if (endTime !== undefined && !isUtcTimestamp(endTime)) {
+    throw new TypeError("end_time phải là timestamp ISO 8601 UTC có hậu tố Z.");
+  }
+  if (startTime && endTime && Date.parse(startTime) > Date.parse(endTime)) {
+    throw new TypeError("start_time không được lớn hơn end_time.");
+  }
+}
+
+function assertBbox(params: QueryEarthquakeParams): void {
+  const bounds = {
+    min_lat: params.min_lat,
+    max_lat: params.max_lat,
+    min_lon: params.min_lon,
+    max_lon: params.max_lon,
+  };
+  if (!isWgs84Bounds(bounds)) {
+    throw new TypeError("Bounding box phải nằm trong phạm vi WGS84 và min không được lớn hơn max.");
+  }
+}
+
 function buildQuery(params: Record<string, string | number | undefined>): string {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -54,6 +79,8 @@ export async function getEarthquakes(
   params: QueryEarthquakeParams = {},
   signal?: AbortSignal,
 ): Promise<EarthquakeListResponse> {
+  assertQueryWindow(params.start_time, params.end_time);
+  assertBbox(params);
   const qs = buildQuery({
     page: params.page,
     limit: params.limit,

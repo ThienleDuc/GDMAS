@@ -10,11 +10,65 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   getClusters,
+  getClustersOptional,
+  getEarthquakeDetail,
+  getEarthquakeStatistics,
   getEarthquakes,
+  getHealth,
+  getHealthOptional,
   getOptionalApi,
+  getPatterns,
+  getPredictions,
+  getClassifications,
+  getSeasonalityAnalysis,
+  getSystemStatus,
   getSystemStatusOptional,
+  getTemporalAnalysis,
+  getTrendAnalysis,
+  getCorrelationAnalysis,
+  syncUsgsData,
 } from "../src/services/earthquake-api.ts";
 import { ApiError } from "../src/lib/api-client.ts";
+import { isApiEnvelope, isApiErrorEnvelope, isUtcTimestamp, isWgs84Bounds } from "../src/contracts/common.ts";
+
+test("TC-01: exported service functions map to documented endpoint paths", async () => {
+  const originalFetch = globalThis.fetch;
+  const urls: string[] = [];
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    urls.push(String(input));
+    return new Response(JSON.stringify({ success: true, data: { clusters: [], patterns: [], series: [], line_chart: [], scatter_plot: [], histogram: { magnitude_bins: [] }, components: { seasonal_line: [] }, variables: [], matrix: [], services: {} } }), { status: 200 });
+  };
+  try {
+    await getEarthquakes();
+    await getEarthquakeDetail(7);
+    await getEarthquakeStatistics();
+    await getPatterns();
+    await getHealth();
+    await getHealthOptional();
+    await getSystemStatus();
+    await getSystemStatusOptional();
+    await getTemporalAnalysis();
+    await getTrendAnalysis();
+    await getSeasonalityAnalysis();
+    await getCorrelationAnalysis();
+    await getPredictions();
+    await getClassifications();
+    await getClusters();
+    await getClustersOptional();
+    await syncUsgsData();
+
+    for (const path of [
+      "/api/v1/earthquakes", "/api/v1/earthquakes/7", "/api/v1/statistics/earthquakes",
+      "/api/v1/patterns", "/api/v1/health", "/api/v1/system/status",
+      "/api/v1/analysis/temporal", "/api/v1/analysis/trend", "/api/v1/analysis/seasonality",
+      "/api/v1/analysis/correlation", "/api/v1/predictions", "/api/v1/classifications",
+      "/api/v1/clusters",
+    ]) assert.ok(urls.some((url) => url.includes(path)), `Expected request for ${path}`);
+    assert.ok(urls.some((url) => url.includes("/api/v1/earthquakes/sync")));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 
 test("TC-05: getEarthquakes tạo đúng query params (start_time, end_time, bbox WGS84)", async () => {
   const originalFetch = globalThis.fetch;
@@ -98,6 +152,79 @@ test("TC-07: getOptionalApi / fetchApi vẫn throw khi gặp lỗi server 500", 
       assert.equal(err.status, 500);
     }
     assert.equal(didThrow, true, "Lỗi 500 phải ném ra ApiError");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("TC-08: UTC timestamps and WGS84 bounds are validated before fetch", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestCount = 0;
+  globalThis.fetch = async () => {
+    requestCount += 1;
+    return new Response(JSON.stringify({ success: true, data: [], metadata: { total: 0, page: 1, limit: 20, total_pages: 0 } }), { status: 200 });
+  };
+
+  try {
+    await assert.rejects(() => getEarthquakes({ start_time: "2026-11-01T00:00:00+07:00" }), /hậu tố Z/u);
+    await assert.rejects(() => getEarthquakes({ start_time: "2026-11-02T00:00:00Z", end_time: "2026-11-01T00:00:00Z" }), /start_time/u);
+    await assert.rejects(() => getEarthquakes({ min_lat: -91 }), /WGS84/u);
+    await assert.rejects(() => getEarthquakes({ min_lon: 120, max_lon: 100 }), /WGS84/u);
+    assert.equal(requestCount, 0, "Invalid params must be rejected before network fetch");
+
+    await getEarthquakes({ start_time: "2026-11-01T00:00:00Z", end_time: "2026-11-02T00:00:00Z", min_lat: -90, max_lat: 90, min_lon: -180, max_lon: 180 });
+    assert.equal(requestCount, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("TC-09: contract guards narrow success/error envelope and UTC/WGS84 values", () => {
+  assert.equal(isApiEnvelope({ success: true, data: [] }), true);
+  assert.equal(isApiEnvelope({ success: false, error: {} }), false);
+  assert.equal(isApiErrorEnvelope({ success: false, error: { code: "DATABASE_ERROR", message: "db down" } }), true);
+  assert.equal(isApiErrorEnvelope({ success: false, error: { code: 1, message: "bad" } }), false);
+  assert.equal(isUtcTimestamp("2026-11-01T00:00:00Z"), true);
+  assert.equal(isUtcTimestamp("2026-11-01T00:00:00+07:00"), false);
+  assert.equal(isWgs84Bounds({ min_lat: -90, max_lat: 90, min_lon: -180, max_lon: 180 }), true);
+  assert.equal(isWgs84Bounds({ min_lat: 91 }), false);
+  assert.equal(isWgs84Bounds({ min_lat: 20, max_lat: 10 }), false);
+});
+
+test("TC-10: API error envelope preserves code/details and legacy detail remains supported", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ success: false, error: { code: "VALIDATION_ERROR", message: "bad query", details: { field: "start_time" } } }), { status: 400 });
+  try {
+    await assert.rejects(() => getOptionalApi("/api/v1/bad"), (error: unknown) => {
+      assert.ok(error instanceof ApiError);
+      assert.equal(error.status, 400);
+      assert.equal(error.code, "VALIDATION_ERROR");
+      assert.deepEqual(error.details, { field: "start_time" });
+      assert.equal(error.message, "bad query");
+      return true;
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("TC-11: optional API chỉ chuyển 404 thành unavailable, các lỗi khác giữ ApiError", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    for (const status of [400, 500, 503]) {
+      globalThis.fetch = async () => new Response(JSON.stringify({ success: false, error: { code: "SERVICE_UNAVAILABLE", message: `status ${status}` } }), { status });
+      await assert.rejects(() => getOptionalApi("/api/v1/optional"), (error: unknown) => {
+        assert.ok(error instanceof ApiError);
+        assert.equal(error.status, status);
+        return true;
+      });
+    }
+    globalThis.fetch = async () => { throw new Error("offline"); };
+    await assert.rejects(() => getOptionalApi("/api/v1/optional"), (error: unknown) => {
+      assert.ok(error instanceof ApiError);
+      assert.equal(error.status, 0);
+      return true;
+    });
   } finally {
     globalThis.fetch = originalFetch;
   }
