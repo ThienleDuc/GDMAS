@@ -10,7 +10,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { formatCoordinate, formatMetric } from "../src/components/map/map-data.ts";
+import { formatCoordinate, formatMetric } from "../src/lib/transforms/map-data.ts";
 import { formatEventTime, getRelativeTime } from "../src/utils/timezone.ts";
 
 test("TC-14: Định dạng toạ độ WGS84 chuẩn (latitude, longitude)", () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import {
   Activity,
@@ -14,9 +14,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useSSE } from "../hooks/useSSE";
-import { ConnectionStatusBadge } from "../components/ui/ConnectionStatusBadge";
-import { IngestionToast, ToastData } from "../components/ui/IngestionToast";
-import { formatEventTime } from "../utils/timezone";
 
 interface NavItem {
   label: string;
@@ -37,65 +34,10 @@ const NAV_ITEMS: NavItem[] = [
 export const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentTimeUtc, setCurrentTimeUtc] = useState("");
-  const [toast, setToast] = useState<ToastData | null>(null);
   const location = useLocation();
 
-  const handleCloseToast = useCallback(() => {
-    setToast(null);
-  }, []);
-
-  // Kết nối SSE để nhận thông báo cào dữ liệu tự động 5 phút
-  const { data: sseData, status: sseStatus, reconnectAttempt } = useSSE("/api/v1/stream/earthquakes");
-
-  useEffect(() => {
-    if (!sseData) return;
-
-    if (sseData.event === "database_cleared") {
-      const payloadData = sseData.data as {
-        title?: string;
-        message?: string;
-      };
-
-      setToast({
-        id: `cleared-${Date.now()}`,
-        title: payloadData?.title || "⚠️ CSDL Đã Bị Xóa Trống (Demo Bước 2)",
-        message:
-          payloadData?.message ||
-          "Phát hiện CSDL đã được xóa trống bằng script demo. Hệ thống đã tự động chuyển giao diện sang trạng thái rỗng.",
-        records_processed: 0,
-        time: formatEventTime(sseData.timestamp, "UTC+7"),
-      });
-      return;
-    }
-
-    if (sseData.event === "ingestion_cycle_completed" || sseData.event === "earthquake_detected") {
-      const payloadData = sseData.data as {
-        title?: string;
-        message?: string;
-        records_processed?: number;
-      };
-
-      const title =
-        payloadData?.title ||
-        (sseData.event === "earthquake_detected"
-          ? "Phát Hiện Sự Kiện Địa Chấn Mới"
-          : "Cập Nhật Dữ Liệu Tự Động (Chu kỳ 5 phút)");
-
-      const message =
-        payloadData?.message ||
-        "Đã hoàn thành chu kỳ cào dữ liệu từ trạm địa chấn USGS.";
-
-      const time = formatEventTime(sseData.timestamp, "UTC+7");
-
-      setToast({
-        id: `${sseData.event}-${sseData.timestamp || Date.now()}`,
-        title,
-        message,
-        records_processed: payloadData?.records_processed,
-        time,
-      });
-    }
-  }, [sseData]);
+  // Giữ kết nối SSE để hiển thị trạng thái stream; phần UI còn lại đang tái cấu trúc.
+  const { status: sseStatus } = useSSE("/api/v1/stream/earthquakes");
 
   useEffect(() => {
     const updateTime = () => {
@@ -203,7 +145,7 @@ export const DashboardLayout: React.FC = () => {
           </div>
 
           <div className="layout__header-actions">
-            <ConnectionStatusBadge status={sseStatus} reconnectAttempt={reconnectAttempt} />
+            <span className="text-xs text-slate-400">{sseStatus}</span>
             <div className="layout__clock hidden sm:flex">
               <Radio className="h-3.5 w-3.5 text-cyan-400 animate-pulse" />
               <span>{currentTimeUtc || "UTC SYNC"}</span>
@@ -220,13 +162,6 @@ export const DashboardLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
-
-      {/* Toast thông báo cập nhật tự động 5 phút (Tự động tắt sau 5s hoặc bấm X tắt ngay) */}
-      <IngestionToast
-        toast={toast}
-        onClose={handleCloseToast}
-        durationMs={5000}
-      />
     </div>
   );
 };

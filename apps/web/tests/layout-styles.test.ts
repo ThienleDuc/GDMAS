@@ -5,29 +5,23 @@ import test from "node:test";
 
 const sourceRoot = join(import.meta.dirname, "../src");
 const layoutsRoot = join(sourceRoot, "layouts");
-const layoutFiles = [
-  "DashboardLayout.tsx",
-  "FullscreenMapLayout.tsx",
-  "ReportLayout.tsx",
-] as const;
+const layoutFile = "DashboardLayout.tsx";
 
 const readLayout = (file: string) => readFileSync(join(layoutsRoot, file), "utf8");
 
-test("TC-01: layouts rely on the centralized CSS entry point, not per-layout imports", () => {
-  for (const file of layoutFiles) {
-    assert.doesNotMatch(readLayout(file), /import\s+["']\.\/layout\.css["']/u, `${file} does not import CSS individually`);
-  }
+test("TC-01: layout duy nhất dùng CSS entry point tập trung, không import CSS riêng", () => {
+  assert.doesNotMatch(readLayout(layoutFile), /import\s+["']\.\/layout\.css["']/u);
 
-  const layoutCssFiles = ["layout.css", "DashboardLayout.css", "FullscreenMapLayout.css", "ReportLayout.css"]
+  const cssFiles = ["layout.css", "DashboardLayout.css", "FullscreenMapLayout.css", "ReportLayout.css"]
     .filter((file) => existsSync(join(layoutsRoot, file)));
-  assert.deepEqual(layoutCssFiles, ["layout.css"]);
+  assert.deepEqual(cssFiles, ["layout.css"]);
 });
 
-test("TC-02: shared stylesheet defines the three layout variants and semantic token usage", () => {
+test("TC-02: stylesheet định nghĩa đúng shell aside + nội dung và dùng design token", () => {
   const css = readFileSync(join(layoutsRoot, "layout.css"), "utf8");
   assert.match(css, /\.layout--dashboard/u);
-  assert.match(css, /\.layout--fullscreen/u);
-  assert.match(css, /\.layout--report/u);
+  assert.match(css, /\.layout__sidebar/u);
+  assert.match(css, /\.layout__content/u);
   assert.match(css, /var\(--(?:background|surface|border|primary|space-|radius-|z-)/u);
   assert.doesNotMatch(css, /#[\da-f]{3,8}\b/iu);
 });
@@ -45,22 +39,26 @@ test("TC-03: index.css centrally imports Tailwind, design tokens, and layout sty
   assert.match(globals, /\.dark\s*\{/u);
 });
 
-test("TC-04: report print interaction remains available and toolbar is excluded from print", () => {
-  const report = readLayout("ReportLayout.tsx");
-  const css = readFileSync(join(layoutsRoot, "layout.css"), "utf8");
-  assert.match(report, /window\.print\(\)/u);
-  assert.match(report, /layout__no-print/u);
-  assert.match(css, /@media\s+print/u);
-  assert.match(css, /\.layout__no-print\s*\{\s*display:\s*none/u);
+test("TC-04: layout có aside điều hướng và vùng chứa nội dung qua Outlet", () => {
+  const layout = readLayout(layoutFile);
+  assert.match(layout, /<aside[\s\S]*?layout__sidebar/u);
+  assert.match(layout, /NAV_ITEMS/u);
+  assert.match(layout, /<Outlet\s*\/>/u);
+  assert.match(layout, /layout__content/u);
 });
 
-test("TC-05: layout variants retain their shell and report content hooks", () => {
-  const dashboard = readLayout("DashboardLayout.tsx");
-  const fullscreen = readLayout("FullscreenMapLayout.tsx");
-  const report = readLayout("ReportLayout.tsx");
-  assert.match(dashboard, /layout--dashboard/u);
-  assert.match(fullscreen, /layout--fullscreen/u);
-  assert.match(fullscreen, /layout__viewport/u);
-  assert.match(report, /layout--report/u);
-  assert.match(report, /layout__report-document/u);
+test("TC-05: không còn tham chiếu tới layout fullscreen/report cũ", () => {
+  assert.ok(!existsSync(join(layoutsRoot, "FullscreenMapLayout.tsx")));
+  assert.ok(!existsSync(join(layoutsRoot, "ReportLayout.tsx")));
+
+  const css = readFileSync(join(layoutsRoot, "layout.css"), "utf8");
+  assert.doesNotMatch(css, /layout--fullscreen|layout--report|layout__overlay|layout__report/u);
+
+  const barrel = readFileSync(join(layoutsRoot, "index.ts"), "utf8");
+  assert.match(barrel, /DashboardLayout/u);
+  assert.doesNotMatch(barrel, /FullscreenMapLayout|ReportLayout/u);
+
+  const app = readFileSync(join(sourceRoot, "app/App.tsx"), "utf8");
+  assert.doesNotMatch(app, /FullscreenMapLayout|ReportLayout/u);
+  assert.equal((app.match(/element=\{<DashboardLayout \/>\}/gu) ?? []).length, 1);
 });
