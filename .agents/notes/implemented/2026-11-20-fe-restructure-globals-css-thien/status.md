@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-20-fe-restructure-globals-css-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-20
 - Last Updated: 2026-11-20
 - Owner: agent | thien
@@ -11,7 +11,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: CHECKPOINT 1 — chờ người dùng quyết định commit/push
+Current Phase: completed — đã merge PR #26 vào develop (SHA 5e0cb75)
 
 Completed:
 - Step 1 — Dọn nền: xóa `components/`(27) + `features/`(11); `index.css` chỉ import; `App.tsx` placeholder; nhánh mới từ `origin/develop`
@@ -58,10 +58,9 @@ Blocked:
 ---
 
 ## Next Actions
-- Dừng **CHECKPOINT 1**: báo Implementation Report, hỏi người dùng commit/push hay dừng/sửa thêm.
-- Chỉ chạy `review-pr` Phần B (`scope` → `project-review` → commit tiếng Việt → `update` → `push` → PR → `merge --dry-run`) sau khi người dùng gõ `tiếp tục workflow`.
+- none — CHECKPOINT 1 và CHECKPOINT 2 đều đã được xác nhận; PR #26 đã merge vào `develop`, `git-ship.sh sync` hoàn tất.
 
 ---
 
 ## Last Update
-2026-11-20 — Hoàn tất 4 bước tái cấu trúc; validation xanh; chuyển sang `validation`, dừng CHECKPOINT 1.
+2026-11-20 — Đã commit `f5dfdeb`, push nhánh, mở PR #26, merge vào `develop` (SHA merge `5e0cb75`), sync xong; `status.md` → `completed`.
