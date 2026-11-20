@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import {
   Activity,
@@ -7,7 +7,6 @@ import {
   Map,
   FileText,
   Settings,
-  Radio,
   Menu,
   X,
   Layers,
@@ -33,21 +32,10 @@ const NAV_ITEMS: NavItem[] = [
 
 export const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [currentTimeUtc, setCurrentTimeUtc] = useState("");
   const location = useLocation();
 
-  // Giữ kết nối SSE để hiển thị trạng thái stream; phần UI còn lại đang tái cấu trúc.
-  const { status: sseStatus } = useSSE("/api/v1/stream/earthquakes");
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentTimeUtc(now.toISOString().replace("T", " ").substring(0, 19) + " UTC");
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  // Giữ kết nối SSE trong shell dùng chung.
+  useSSE("/api/v1/stream/earthquakes");
 
   return (
     <div className="layout layout--dashboard app-layout">
@@ -64,9 +52,6 @@ export const DashboardLayout: React.FC = () => {
             {sidebarOpen && (
               <div className="layout__brand-copy">
                 <span className="layout__brand-name">GDMAS</span>
-                <span className="layout__brand-caption">
-                  Disaster Monitoring
-                </span>
               </div>
             )}
           </div>
@@ -98,7 +83,7 @@ export const DashboardLayout: React.FC = () => {
               >
                 <Icon
                   className={`h-5 w-5 shrink-0 ${
-                    isActive ? "text-cyan-400" : "text-slate-400 group-hover:text-cyan-300"
+                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
                   }`}
                 />
                 {sidebarOpen && (
@@ -115,46 +100,22 @@ export const DashboardLayout: React.FC = () => {
         </nav>
 
         {/* Sidebar Footer: Service Status */}
-        <div className="layout__sidebar-footer">
-          {sidebarOpen ? (
-            <div className="layout__service-status">
-              <div className="layout__service-status-line">
-                <span className="layout__service-dot" />
-                <span>7 Terminals Sẵn Sàng</span>
-              </div>
-              <p className="layout__service-status-caption">FastAPI, PostgreSQL & 4 Workers</p>
-            </div>
-          ) : (
-            <div className="layout__service-status-line" title="7 Terminals Sẵn Sàng">
-              <span className="layout__service-dot" />
-            </div>
-          )}
-        </div>
+        <div className="layout__sidebar-footer" />
       </aside>
 
       {/* Main Container */}
       <div className="layout__main app-main">
         {/* Top Header */}
         <header className="layout__header app-header">
-          <div className="layout__breadcrumb">
-            <span className="layout__breadcrumb-current">GDMAS Console</span>
-            <ChevronRight className="h-4 w-4" />
+          <div className="layout__breadcrumb" aria-label="Đường dẫn trang">
+            <span className="layout__breadcrumb-current">GDMAS</span>
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
             <span className="layout__breadcrumb-current">
               {location.pathname === "/" ? "Tổng quan" : location.pathname.replace("/", "")}
             </span>
           </div>
 
-          <div className="layout__header-actions">
-            <span className="text-xs text-slate-400">{sseStatus}</span>
-            <div className="layout__clock hidden sm:flex">
-              <Radio className="h-3.5 w-3.5 text-cyan-400 animate-pulse" />
-              <span>{currentTimeUtc || "UTC SYNC"}</span>
-            </div>
-            <div className="layout__database-state">
-              <span className="layout__service-dot"></span>
-              <span>PostgreSQL Connected</span>
-            </div>
-          </div>
+          <div className="layout__header-actions" />
         </header>
 
         {/* Nested Content rendered via Outlet */}

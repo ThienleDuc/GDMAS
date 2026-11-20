@@ -34,7 +34,7 @@ export function evaluateServiceFreshness(
     return {
       state: "unknown",
       label: "Chưa có thông tin",
-      badgeClass: "bg-slate-800 text-slate-400 border-slate-700",
+      badgeClass: "bg-muted text-muted-foreground border-border",
       diffMinutes: null,
     };
   }
@@ -44,7 +44,7 @@ export function evaluateServiceFreshness(
     return {
       state: "unknown",
       label: "Thời gian không hợp lệ",
-      badgeClass: "bg-slate-800 text-slate-400 border-slate-700",
+      badgeClass: "bg-muted text-muted-foreground border-border",
       diffMinutes: null,
     };
   }
@@ -60,7 +60,7 @@ export function evaluateServiceFreshness(
       return {
         state: "interrupted",
         label: "Gián đoạn (>48h)",
-        badgeClass: "bg-rose-500/20 text-rose-300 border-rose-500/40",
+        badgeClass: "bg-destructive/10 text-destructive border-destructive/30",
         diffMinutes,
       };
     }
@@ -68,14 +68,14 @@ export function evaluateServiceFreshness(
       return {
         state: "stale",
         label: "Dữ liệu cũ (>26h)",
-        badgeClass: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+        badgeClass: "bg-warning-light text-warning-dark border-warning",
         diffMinutes,
       };
     }
     return {
       state: "fresh",
       label: "Hoạt động tốt",
-      badgeClass: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+      badgeClass: "bg-success-light text-success-dark border-success",
       diffMinutes,
     };
   }
@@ -85,7 +85,7 @@ export function evaluateServiceFreshness(
     return {
       state: "interrupted",
       label: "Gián đoạn (>60m)",
-      badgeClass: "bg-rose-500/20 text-rose-300 border-rose-500/40",
+      badgeClass: "bg-destructive/10 text-destructive border-destructive/30",
       diffMinutes,
     };
   }
@@ -93,7 +93,7 @@ export function evaluateServiceFreshness(
     return {
       state: "stale",
       label: "Dữ liệu cũ (>15m)",
-      badgeClass: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+      badgeClass: "bg-warning-light text-warning-dark border-warning",
       diffMinutes,
     };
   }
@@ -101,7 +101,7 @@ export function evaluateServiceFreshness(
   return {
     state: "fresh",
     label: "Hoạt động tốt",
-    badgeClass: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+    badgeClass: "bg-success-light text-success-dark border-success",
     diffMinutes,
   };
 }

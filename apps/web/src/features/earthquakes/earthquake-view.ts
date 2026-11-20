@@ -15,7 +15,9 @@ import { getEarthquakes } from "../../services/earthquake-api.ts";
 export type DateRangePreset = "day" | "week" | "month";
 export type ViewState = "loading" | "error" | "empty" | "ready";
 
-export const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_PAGE_SIZE = 10;
+/** Chart aggregate uses one request with a large limit, independent of table paging. */
+export const CHART_PAGE_SIZE = 100;
 export const RANGE_PRESETS: ReadonlyArray<{ value: DateRangePreset; label: string }> = [
   { value: "day", label: "Ngày" },
   { value: "week", label: "Tuần" },

@@ -73,7 +73,7 @@
     background: var(--sidebar);
     color: var(--sidebar-foreground);
     border-right: 1px solid var(--sidebar-border);
-    transition: width var(--duration-moderate) var(--ease-smooth), flex-basis var(--duration-moderate) var(--ease-smooth);
+    transition: width var(--duration-normal) var(--ease-smooth), flex-basis var(--duration-normal) var(--ease-smooth);
   }
 
   .layout--dashboard .layout__sidebar.is-collapsed {
@@ -87,7 +87,7 @@
     justify-content: space-between;
     gap: var(--space-3);
     min-height: var(--header-height);
-    padding: 0 var(--space-4);
+    padding: 0 var(--space-6);
     border-bottom: 1px solid var(--sidebar-border);
   }
 
@@ -281,36 +281,24 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: var(--space-3);
+    gap: var(--space-2);
     min-width: 0;
-  }
-
-  .layout__clock {
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-1) var(--space-3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--muted);
-    color: var(--muted-foreground);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-  }
-
-  .layout__database-state {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    color: var(--muted-foreground);
-    font-size: var(--text-xs);
   }
 
   .layout__content {
     flex: 1;
     min-width: 0;
     overflow: auto;
+    width: min(100%, var(--content-max-width));
+    margin-inline: auto;
     padding: var(--page-padding);
     background: var(--background);
+  }
+
+  @media (max-width: 1023px) {
+    .layout__content {
+      padding: var(--space-6);
+    }
   }
 
   @media (max-width: 767px) {
@@ -320,15 +308,16 @@
     }
 
     .layout--dashboard .layout__header {
+      min-height: var(--header-height);
       padding: 0 var(--space-4);
+    }
+
+    .layout__content {
+      padding: var(--space-4);
     }
 
     .layout__header-actions {
       gap: var(--space-2);
-    }
-
-    .layout__database-state span:last-child {
-      display: none;
     }
   }
 }

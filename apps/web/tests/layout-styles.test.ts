@@ -23,6 +23,9 @@ test("TC-02: stylesheet định nghĩa đúng shell aside + nội dung và dùng
   assert.match(css, /\.layout__sidebar/u);
   assert.match(css, /\.layout__content/u);
   assert.match(css, /var\(--(?:background|surface|border|primary|space-|radius-|z-)/u);
+  assert.match(css, /--sidebar-width/u);
+  assert.match(css, /--header-height/u);
+  assert.doesNotMatch(css, /layout__theme-toggle|theme-transition|layout__clock|layout__database-state/u);
   assert.doesNotMatch(css, /#[\da-f]{3,8}\b/iu);
 });
 
@@ -35,8 +38,15 @@ test("TC-03: index.css centrally imports Tailwind, design tokens, and layout sty
   assert.match(index, /@import\s+["']tw-animate-css["']/u);
   assert.match(index, /@import\s+["']\.\/globals\.css["']/u);
   assert.match(index, /@import\s+["']\.\.\/layouts\/layout\.css["']/u);
+  assert.match(index, /Space\+Grotesk/u);
+  assert.match(index, /JetBrains\+Mono/u);
+  assert.doesNotMatch(index, /family=Inter/u);
   assert.match(globals, /--primary/u);
-  assert.match(globals, /\.dark\s*\{/u);
+  assert.match(globals, /color-scheme:\s*light/u);
+  assert.match(globals, /"Space Grotesk"/u);
+  assert.match(globals, /"JetBrains Mono"/u);
+  assert.doesNotMatch(globals, /"Inter"/u);
+  assert.doesNotMatch(globals, /@custom-variant\s+dark|\.dark\s*\{/u);
 });
 
 test("TC-04: layout có aside điều hướng và vùng chứa nội dung qua Outlet", () => {
