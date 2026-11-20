@@ -27,6 +27,7 @@ INTERVAL_ALIASES = {
     "day": ["day", "daily", "hourly"],
     "week": ["week", "weekly"],
     "month": ["month", "monthly"],
+    "D": ["day", "daily"],
     "W": ["week", "weekly"],
     "M": ["month", "monthly"],
 }
@@ -48,8 +49,12 @@ def _latest(
     interval: str | None = None,
     start: datetime | None = None,
     end: datetime | None = None,
+    strict_interval: bool = False,
 ) -> AnalysisResult | None:
-    """Bản ghi mới nhất của một pattern. Ưu tiên khớp interval, không có thì lấy mới nhất."""
+    """Bản ghi mới nhất của một pattern. Ưu tiên khớp interval, không có thì lấy mới nhất.
+
+    `strict_interval=True`: chỉ nhận bản khớp interval (không lùi sang tần suất khác).
+    """
     query = db.query(AnalysisResult).filter(
         AnalysisResult.analysis_type.in_(TYPE_ALIASES[kind])
     )
@@ -62,7 +67,7 @@ def _latest(
         matched = ordered.filter(
             AnalysisResult.time_interval.in_(INTERVAL_ALIASES[interval])
         ).first()
-        if matched is not None:
+        if matched is not None or strict_interval:
             return matched
     return ordered.first()
 
@@ -136,7 +141,7 @@ def get_temporal(
 
 @router.get("/trend")
 def get_trend(
-    resample_freq: str = Query("M", pattern="^(W|M)$"),
+    resample_freq: str = Query("M", pattern="^(D|W|M)$"),
     metric: str = Query("count", pattern="^(count|avg_magnitude|max_magnitude)$"),
     db: Session = Depends(get_db),
 ):
@@ -148,9 +153,22 @@ def get_trend(
     }[metric]
 
     def build(m: dict[str, Any]) -> dict[str, Any]:
-        if "series" in m:
-            series = m["series"]
+        per_metric = m.get("metrics")
+        if isinstance(per_metric, dict) and isinstance(per_metric.get(metric), dict):
+            # Định dạng T3: kết quả riêng cho từng metric
+            source = per_metric[metric]
+            series = source.get("series", [])
+        elif "series" in m:
+            # Chuỗi đã lưu chỉ đúng cho metric của chính nó; khác metric thì không gắn nhãn sai
+            source = m
+            if m.get("metric", "count") == metric:
+                series = m["series"]
+            else:
+                series = []
+                source = {"status": "insufficient_data"}
         else:
+            # Định dạng cũ của demo_seeder (`trend_line`)
+            source = m
             series = [
                 {
                     "period": p.get("period"),
@@ -159,15 +177,19 @@ def get_trend(
                 }
                 for p in m.get("trend_line", [])
             ]
-        return {
+        data = {
             "resample_freq": resample_freq,
             "metric": metric,
             "series": series,
-            "slope": m.get("slope"),
-            "trend_direction": m.get("trend_direction"),
+            "slope": source.get("slope"),
+            "trend_direction": source.get("trend_direction"),
         }
+        if source.get("status") is not None:
+            data["status"] = source["status"]
+        return data
 
-    return _respond(db, "trend", build, interval=resample_freq)
+    # Chỉ nhận bản đúng tần suất yêu cầu; không có thì Empty State thay vì trả tần suất khác
+    return _respond(db, "trend", build, interval=resample_freq, strict_interval=True)
 
 
 @router.get("/seasonality")

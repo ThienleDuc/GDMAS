@@ -243,8 +243,8 @@ Cung cấp dữ liệu vẽ 3 biểu đồ bắt buộc: Line chart, Scatter plo
 Biểu diễn xu hướng của dữ liệu sau khi thực hiện **Re-sampling** (Moving Average / Decomposition).
 
 - **Query Parameters:**
-  - `resample_freq`: `W` (Tuần) | `M` (Tháng) (Mặc định `M`)
-  - `metric`: `count` | `avg_magnitude` | `max_magnitude`
+  - `resample_freq`: `D` (Ngày) | `W` (Tuần) | `M` (Tháng) (Mặc định `M`)
+  - `metric`: `count` | `avg_magnitude` | `max_magnitude` (Mặc định `count`)
 
 - **Response (200 OK):**
 ```json
@@ -254,14 +254,21 @@ Biểu diễn xu hướng của dữ liệu sau khi thực hiện **Re-sampling*
     "resample_freq": "M",
     "metric": "count",
     "series": [
-      { "period": "2026-05", "actual_value": 1120, "trend_value": 1105.4 },
-      { "period": "2026-06", "actual_value": 1240, "trend_value": 1180.2 }
+      { "period": "2026-05", "actual_value": 1120, "trend_value": 1105.4, "is_complete": true },
+      { "period": "2026-06", "actual_value": 1240, "trend_value": 1180.2, "is_complete": true }
     ],
     "slope": 0.045,
-    "trend_direction": "increasing"
+    "trend_direction": "increasing",
+    "status": "computed"
   }
 }
 ```
+
+- **Ghi chú:**
+  - Terminal 3 ghi sẵn kết quả cho cả 3 tần suất (`day`/`week`/`month`) × 3 metric; route chỉ trả đúng tần suất và metric được yêu cầu.
+  - `series` của `avg_magnitude`/`max_magnitude` bỏ các kỳ không có sự kiện (không điền 0).
+  - `status: "insufficient_data"` khi chưa đủ ≥ 3 kỳ đầy đủ để hồi quy (khi đó `trend_direction` là `stable`).
+  - Chưa có kết quả đúng tần suất yêu cầu → Empty State (`success: false`, `data: null`), không trả tần suất khác thay thế.
 
 #### Pattern 3: `GET /api/v1/analysis/seasonality`
 Biểu diễn tính chu kỳ / mùa vụ (**Seasonal line**) sau khi thực hiện **Re-sampling**.

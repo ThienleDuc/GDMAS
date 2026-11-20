@@ -81,7 +81,7 @@ def test_cycles_replace_snapshot_and_preserve_raw_events(sessions):
     assert second["events_analyzed"] == 3
     with sessions() as db:
         results = db.query(AnalysisResult).all()
-        assert len(results) == 6
+        assert len(results) == 8
         assert db.query(EarthquakeEvent).count() == 3
         assert db.query(ServiceRun).count() == 2
         assert all(row.service_run_id == second["service_run_id"] for row in results)
@@ -107,9 +107,9 @@ def test_empty_database_then_refill_recovers_without_fake_rows(sessions):
     add_events(sessions, count=1)
     recovered = service.execute_cycle()
     assert recovered["success"] and recovered["events_analyzed"] == 1
-    assert recovered["results_written"] == 6
+    assert recovered["results_written"] == 8
     with sessions() as db:
-        assert db.query(AnalysisResult).count() == 6
+        assert db.query(AnalysisResult).count() == 8
         assert db.get(ServiceRun, recovered["service_run_id"]).status == "SUCCESS"
 
 
