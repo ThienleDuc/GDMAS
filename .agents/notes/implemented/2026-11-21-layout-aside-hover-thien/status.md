@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-21-layout-aside-hover-thien
-- Status: validation   <!-- planned | in_progress | blocked | validation | completed -->
+- Status: completed   <!-- planned | in_progress | blocked | validation | completed -->
 - Started: 2026-11-21
 - Last Updated: 2026-11-21
 - Owner: agent | thien
@@ -62,9 +62,17 @@ Blocked:
 ---
 
 ## Next Actions
-- CHECKPOINT 1: chờ `tiếp tục workflow` → commit/push/PR (Phần B1) → CHECKPOINT 2 trước merge. Chưa commit/push.
+- none — proposal đã Approved, PR #40 đã merge vào `develop`; task hoàn tất.
+
+---
+
+## Merge Record
+- PR: https://github.com/ThienleDuc/GDMAS/pull/40
+- Merge commit: `8ea4af4` (`Merge pull request #40 from ThienleDuc/refactor/2026-11-21-layout-aside-hover-thien`)
+- Feature commit: `97ec03f`
+- Dry-run trước merge: 0 conflict (`mergeable=MERGEABLE`, `state=CLEAN`).
 
 ---
 
 ## Last Update
-2026-11-21 — Validation xanh (116/116 test, build sạch, notes OK); `Status: validation`, dừng CHECKPOINT 1.
+2026-11-21 — PR #40 đã merge vào `develop` (SHA `8ea4af4`), sync xong; `Status: completed`.
