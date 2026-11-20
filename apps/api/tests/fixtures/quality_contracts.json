@@ -628,7 +628,7 @@
               "required": false,
               "schema": {
                 "type": "string",
-                "pattern": "^(W|M)$",
+                "pattern": "^(D|W|M)$",
                 "default": "M",
                 "title": "Resample Freq"
               }
