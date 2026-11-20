@@ -37,6 +37,8 @@ export interface EarthquakeItem {
   place?: string;
   source_url?: string;
   ingested_at?: string;
+  /** BE trả field này (schemas/earthquake.py:23) — khai báo để FE type khớp payload thật. */
+  raw_data?: Record<string, unknown> | null;
 }
 
 export interface EarthquakeListResponse {

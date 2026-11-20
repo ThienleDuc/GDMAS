@@ -6,7 +6,7 @@
  * không đổi chữ ký `fetchApi` mà các service đang dùng.
  */
 
-import { isApiEnvelope, isApiErrorEnvelope } from "../contracts/common.ts";
+import { isApiEmptyEnvelope, isApiEnvelope, isApiErrorEnvelope } from "../contracts/common.ts";
 
 const envBase =
   typeof import.meta !== "undefined" && import.meta.env
@@ -18,9 +18,9 @@ const API_BASE_URL = (envBase ?? "http://localhost:8000").replace(/\/+$/, "");
 export class ApiError extends Error {
   readonly status: number;
   readonly code?: string;
-  readonly details?: Record<string, unknown>;
+  readonly details?: string | Record<string, unknown> | null;
 
-  constructor(message: string, status: number, code?: string, details?: Record<string, unknown>) {
+  constructor(message: string, status: number, code?: string, details?: string | Record<string, unknown> | null) {
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -37,7 +37,7 @@ function buildUrl(path: string): string {
 interface ExtractedApiError {
   message: string;
   code?: string;
-  details?: Record<string, unknown>;
+  details?: string | Record<string, unknown> | null;
 }
 
 function extractApiError(payload: unknown, status: number): ExtractedApiError {
@@ -94,7 +94,14 @@ export async function fetchApi<T>(path: string, init: RequestInit = {}): Promise
 
   // Các endpoint collection trả envelope; một số response detail cũ trả trực tiếp entity.
   // Nếu payload có marker `success` thì buộc phải là envelope chuẩn, còn raw entity được giữ tương thích.
-  if (typeof payload === "object" && payload !== null && "success" in payload && !isApiEnvelope(payload)) {
+  // Empty envelope (200 + success:false + data:null + message) là kết quả rỗng hợp lệ.
+  if (
+    typeof payload === "object" &&
+    payload !== null &&
+    "success" in payload &&
+    !isApiEnvelope(payload) &&
+    !isApiEmptyEnvelope(payload)
+  ) {
     throw new ApiError("Envelope phản hồi API không hợp lệ.", response.status);
   }
 
