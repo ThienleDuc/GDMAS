@@ -21,7 +21,7 @@ import {
   timeRangeBounds,
   toMapEarthquake,
   viewportToBbox,
-} from "../src/components/map/map-data.ts";
+} from "../src/lib/transforms/map-data.ts";
 
 test("TC-08: Bán kính & màu marker tăng đơn điệu theo magnitude", () => {
   // Bán kính kẹp trong [4, 9] px

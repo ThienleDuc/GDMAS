@@ -12,7 +12,7 @@ import {
   formatElapsedMinutes,
   TERMINAL_KEYS,
   TERMINAL_SPECS,
-} from "../src/features/settings/settings-data.ts";
+} from "../src/lib/transforms/settings-data.ts";
 
 test("TC-19: Đủ 7 Terminals chuẩn theo kiến trúc GDMAS", () => {
   assert.equal(TERMINAL_KEYS.length, 7);

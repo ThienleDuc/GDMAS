@@ -3,129 +3,37 @@ import type {
   ClassificationsResponse,
   ClustersResponse,
   CorrelationResponse,
+  EarthquakeItem,
+  EarthquakeListResponse,
   HealthResponse,
   OptionalApiResult,
+  PatternsResponse,
   PredictionsResponse,
+  QueryEarthquakeParams,
   SeasonalityResponse,
+  StatisticsResponse,
+  SyncResponse,
   SystemStatusResponse,
   TemporalResponse,
   TrendResponse,
 } from "../contracts/index.ts";
 
-export interface EarthquakeItem {
-  id: number;
-  source: string;
-  source_event_id: string;
-  event_time: string;
-  latitude: number;
-  longitude: number;
-  depth_km: number;
-  magnitude: number;
-  magnitude_type?: string;
-  place?: string;
-  source_url?: string;
-  ingested_at?: string;
-}
-
-export interface EarthquakeListResponse {
-  success: boolean;
-  data: EarthquakeItem[];
-  metadata: {
-    total: number;
-    page: number;
-    limit: number;
-    total_pages: number;
-    last_updated?: string;
-  };
-}
-
-export interface HourlyTimeSeriesPoint {
-  time: string;
-  count: number;
-  avg_mag: number;
-}
-
-export interface StatisticsResponse {
-  success: boolean;
-  data: {
-    total_events: number;
-    strong_events_count: number;
-    moderate_events_count: number;
-    minor_events_count?: number;
-    recent_24h_count: number;
-    avg_magnitude: number;
-    max_magnitude: number;
-    latest_event_time?: string;
-    time_series_preview?: HourlyTimeSeriesPoint[];
-  };
-}
-
-export interface SyncResponse {
-  success: boolean;
-  message: string;
-  synced_count: number;
-  source: string;
-  timestamp: string;
-}
-
-export interface PatternItem {
-  id: string;
-  name: string;
-  type: string;
-  status: "COMPUTED" | "PENDING";
-  /** Chưa siết type theo từng pattern ở tầng service; component dùng typed view. */
-  metrics: Record<string, unknown>;
-  period: string;
-}
-
 /**
- * Payload legacy của `clustering_summary` (do T4/demo_seeder sinh) — xem
- * `contracts/schemas/clusters.json#/$defs/legacyCluster`. Adapter `normalizeClusters()`
- * trong `components/map/map-data.ts` ánh xạ sang canonical `ClusterSummary`.
+ * Các kiểu dữ liệu API giờ nằm trong `src/contracts/` (tách theo schema).
+ * Re-export để mọi import cũ dạng `from "../services/earthquake-api"` vẫn hoạt động (RULE-03).
  */
-export interface LegacyClusterItem {
-  id: number;
-  name?: string | null;
-  lat: number;
-  lon: number;
-  events_count: number;
-  avg_mag?: number | null;
-}
-
-export interface ClusteringSummary {
-  clusters?: LegacyClusterItem[];
-  [key: string]: unknown;
-}
-
-export interface PatternsResponse {
-  success: boolean;
-  total_patterns: number;
-  patterns: PatternItem[];
-  clustering_summary?: ClusteringSummary | null;
-  message?: string;
-  last_updated?: string;
-}
-
-export interface QueryEarthquakeParams {
-  page?: number;
-  limit?: number;
-  min_magnitude?: number;
-  max_magnitude?: number;
-  min_depth?: number;
-  max_depth?: number;
-  search?: string;
-  sort_by?: "event_time" | "magnitude" | "depth_km";
-  order?: "asc" | "desc";
-  /** ISO 8601 UTC (hậu tố Z). */
-  start_time?: string;
-  /** ISO 8601 UTC (hậu tố Z). */
-  end_time?: string;
-  /** Bounding box WGS84. */
-  min_lat?: number;
-  max_lat?: number;
-  min_lon?: number;
-  max_lon?: number;
-}
+export type {
+  EarthquakeItem,
+  EarthquakeListResponse,
+  HourlyTimeSeriesPoint,
+  StatisticsResponse,
+  SyncResponse,
+  PatternItem,
+  LegacyClusterItem,
+  ClusteringSummary,
+  PatternsResponse,
+  QueryEarthquakeParams,
+} from "../contracts/index.ts";
 
 function buildQuery(params: Record<string, string | number | undefined>): string {
   const query = new URLSearchParams();

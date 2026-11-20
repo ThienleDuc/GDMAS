@@ -28,7 +28,7 @@ import {
   startOfIsoWeekUtc,
   toObservedFromLineChart,
   toObservedFromTrend,
-} from "../src/components/charts/chart-data.ts";
+} from "../src/lib/transforms/chart-data.ts";
 
 const samplePath = path.resolve(
   import.meta.dirname,
