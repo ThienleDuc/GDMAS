@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import test from "node:test";
 import type { EarthquakeItem, EarthquakeListResponse } from "../src/contracts/earthquake.ts";
 import {
@@ -113,6 +115,39 @@ test("TC-08: formatEventRow giữ UTC text và trả '—' cho tọa độ sai",
   const bad = formatEventRow(makeItem({ latitude: 100, longitude: 200, place: "" }));
   assert.equal(bad.coordinates, "—");
   assert.equal(bad.place, "—");
+});
+
+test("TC-10: page composes the extracted presentational components", () => {
+  const sourceRoot = resolve(import.meta.dirname, "../src");
+  const page = readFileSync(resolve(sourceRoot, "features/earthquakes/EarthquakesPage.tsx"), "utf8");
+  assert.match(page, /<EarthquakeFilterBar/u);
+  assert.match(page, /<EarthquakeTable/u);
+  assert.match(page, /<EarthquakePagination/u);
+  assert.match(page, /<AsyncStatePanel/u);
+  assert.doesNotMatch(page, /<table\b/u);
+  assert.doesNotMatch(page, /RANGE_PRESETS\.map/u);
+});
+
+test("TC-11: page CSS is colocated and centrally imported; index.css remains imports-only", () => {
+  const sourceRoot = resolve(import.meta.dirname, "../src");
+  const cssPath = resolve(sourceRoot, "features/earthquakes/EarthquakesPage.css");
+  const indexCss = readFileSync(resolve(sourceRoot, "styles/index.css"), "utf8");
+  const css = readFileSync(cssPath, "utf8");
+  assert.equal(existsSync(cssPath), true);
+  assert.ok(indexCss.includes('@import "../features/earthquakes/EarthquakesPage.css";'));
+  const indexLines = indexCss.split("\n").map((line) => line.trim()).filter((line) => line && !line.startsWith("/*") && !line.startsWith("*"));
+  assert.ok(indexLines.every((line) => line.startsWith("@import ")));
+  assert.match(css, /\.eq-/u);
+  assert.match(css, /var\(--(?:background|surface|border|space-|radius-|text-|card|foreground)/u);
+  assert.match(css, /@media \(max-width: 767px\)/u);
+  assert.match(css, /@media \(max-width: 479px\)/u);
+  assert.match(css, /prefers-reduced-motion/u);
+  assert.match(css, /\.eq-table-card\s*\{[^}]*box-shadow:\s*var\(--shadow-/su);
+  assert.match(css, /\.eq-table-card\s*\{[^}]*border:\s*1px solid var\(--border\)/su);
+  assert.match(css, /\.eq-table-card\s*\{[^}]*border-radius:\s*var\(--radius-/su);
+  assert.match(css, /\.eq-page\s*\{[^}]*background:\s*var\(--background\)/su);
+  assert.match(css, /\.eq-table-card\s*\{[^}]*background:\s*var\(--card\)/su);
+  assert.doesNotMatch(css, /#[\da-f]{3,8}\b/iu);
 });
 
 test("TC-09: đổi filter rebuild query với page = 1", () => {

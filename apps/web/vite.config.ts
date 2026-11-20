@@ -18,7 +18,7 @@ function contractMockPlugin(enabled: boolean): Plugin {
 
       server.middlewares.use((request, response, next) => {
         const url = new URL(request.url ?? "/", "http://localhost");
-        const mock = resolveContractMock(request.method ?? "GET", url.pathname, readFixture);
+        const mock = resolveContractMock(request.method ?? "GET", url.pathname, readFixture, url.search);
         if (!mock) {
           next();
           return;

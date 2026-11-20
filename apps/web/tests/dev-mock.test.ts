@@ -56,11 +56,31 @@ test("TC-09: contract API routes serve fixture envelopes offline", () => {
 test("TC-10: earthquake list/detail and SSE are served from contract fixtures", () => {
   const list = resolveContractMock("GET", "/api/v1/earthquakes", fixture);
   assert.ok(list);
-  assert.deepEqual(JSON.parse(list.body), {
-    success: true,
-    data: [fixture("earthquake_sample.json")],
-    metadata: { total: 1, page: 1, limit: 20, total_pages: 1 },
-  });
+  const listBody = JSON.parse(list.body) as {
+    success: boolean;
+    data: Array<{ id: number }>;
+    metadata: { total: number; page: number; limit: number; total_pages: number };
+  };
+  assert.equal(listBody.success, true);
+  assert.equal(listBody.data.length, 10);
+  assert.equal(listBody.metadata.total, 40);
+  assert.equal(listBody.metadata.total_pages, 4);
+
+  const secondPage = resolveContractMock("GET", "/api/v1/earthquakes", fixture, "?page=2");
+  assert.ok(secondPage);
+  const secondBody = JSON.parse(secondPage.body) as { metadata: { page: number } };
+  assert.equal(secondBody.metadata.page, 2);
+
+  const allForChart = resolveContractMock("GET", "/api/v1/earthquakes", fixture, "?page=1&limit=100");
+  assert.ok(allForChart);
+  const allBody = JSON.parse(allForChart.body) as { data: unknown[] };
+  assert.equal(allBody.data.length, 40);
+
+  const futureWindow = resolveContractMock("GET", "/api/v1/earthquakes", fixture, "?start_time=2099-01-01T00:00:00Z");
+  assert.ok(futureWindow);
+  const futureBody = JSON.parse(futureWindow.body) as { data: unknown[]; metadata: { total: number } };
+  assert.equal(futureBody.data.length, 0);
+  assert.equal(futureBody.metadata.total, 0);
 
   const detail = resolveContractMock("GET", "/api/v1/earthquakes/1042", fixture);
   assert.ok(detail);

@@ -20,3 +20,4 @@ export * from "./analysis.ts";
 export * from "./patterns.ts";
 export * from "./predictions.ts";
 export * from "./classifications.ts";
+export * from "./country-clusters.ts";
