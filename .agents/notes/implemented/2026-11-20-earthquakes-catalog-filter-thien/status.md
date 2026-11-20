@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-20-earthquakes-catalog-filter-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-20
 - Last Updated: 2026-11-20
 - Owner: agent | thien
@@ -11,7 +11,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: validation — đã xong page, helper, wire route và test offline
+Current Phase: completed — đã merge PR #32 vào develop (SHA f0c2790)
 
 Completed:
 - Proposal §9 Approved bởi `thien`; không conflict/critical bug.
@@ -55,9 +55,9 @@ Blocked:
 ---
 
 ## Next Actions
-- Viết `earthquake-view.ts`, `EarthquakesPage.tsx`, wire `App.tsx`, test, validation, dừng CHECKPOINT 1.
+- none — CHECKPOINT 1/2 đã xác nhận; PR #32 đã merge vào develop, sync hoàn tất.
 
 ---
 
 ## Last Update
-2026-11-20 — Hoàn tất T7.03, build + 69/69 test xanh; chuyển `validation`, dừng CHECKPOINT 1.
+2026-11-20 — Commit 3e74d90, PR #32 merge vào develop (SHA f0c2790), sync xong; status.md → completed.
