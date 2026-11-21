@@ -72,6 +72,22 @@ export function formatEventTime(isoString: string, mode: TimezoneMode = "UTC+7")
 }
 
 /**
+ * Định dạng thời điểm hiện tại cho đồng hồ header theo 2 chế độ UTC / UTC+7.
+ * Hàm thuần: nhận `Date` từ ngoài để test offline với mốc cố định (I7).
+ */
+export function formatClockTime(now: Date, mode: TimezoneMode = "UTC+7"): string {
+  const timeZone = mode === "UTC" ? "UTC" : "Asia/Ho_Chi_Minh";
+  const clock = new Intl.DateTimeFormat("vi-VN", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(now);
+  return `${clock} ${mode}`;
+}
+
+/**
  * Tính khoảng thời gian tương đối so với hiện tại (ví dụ: "5 phút trước")
  */
 export function getRelativeTime(isoString: string): string {

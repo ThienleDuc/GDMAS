@@ -1,6 +1,6 @@
 /**
  * Cấu hình điều hướng dùng chung cho shell (Terminal 7) — thuần, không React/DOM.
- * Nguồn nhãn: docs/task/thien.md (6 route), docs/yeucaubatbuoc.md.
+ * Nguồn nhãn: docs/task/thien.md (4 route), docs/yeucaubatbuoc.md.
  * I3/I5: chỉ là nhãn hiển thị tiếng Việt, không đổi route hay payload.
  */
 
@@ -21,8 +21,6 @@ export const NAV_META: readonly NavMeta[] = [
   },
   { path: "/earthquakes", label: "Danh mục Động đất", description: "Danh sách sự kiện, lọc và phân trang" },
   { path: "/statistics", label: "6 nhóm phân tích", description: "Trực quan hóa 6 nhóm phân tích chuỗi thời gian" },
-  { path: "/reports", label: "Báo cáo & Xuất bản", description: "Tổng hợp số liệu thật và xuất báo cáo" },
-  { path: "/settings", label: "Cấu hình Hệ thống", description: "Trạng thái 7 Terminals và múi giờ" },
 ];
 
 /** Tìm meta của route hiện tại; hỗ trợ route con, bỏ dấu `/` thừa ở cuối. */

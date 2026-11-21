@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { SSEEventPayload } from "../contracts";
 import {
   createSseSource,
@@ -17,6 +17,8 @@ export interface UseSSEResult {
   isConnected: boolean;
   lastEventTime: Date | null;
   reconnectAttempt: number;
+  /** Mở lại kết nối SSE để lấy sự kiện mới (dùng khi chu kỳ cập nhật 5 phút kết thúc). */
+  reconnect: () => void;
 }
 
 /**
@@ -33,6 +35,9 @@ export function useSSE(endpoint: string = ENV_ENDPOINT || DEFAULT_ENDPOINT): Use
   const [status, setStatus] = useState<SseStatus>("connecting");
   const [lastEventTime, setLastEventTime] = useState<Date | null>(null);
   const [reconnectAttempt, setReconnectAttempt] = useState<number>(0);
+  const [reconnectKey, setReconnectKey] = useState<number>(0);
+
+  const reconnect = useCallback(() => setReconnectKey((key) => key + 1), []);
 
   useEffect(() => {
     const targetUrl = resolveSseUrl(endpoint, API_BASE_URL, DEFAULT_ENDPOINT);
@@ -47,7 +52,7 @@ export function useSSE(endpoint: string = ENV_ENDPOINT || DEFAULT_ENDPOINT): Use
     });
 
     return () => connection.close();
-  }, [endpoint]);
+  }, [endpoint, reconnectKey]);
 
   return {
     data,
@@ -55,6 +60,7 @@ export function useSSE(endpoint: string = ENV_ENDPOINT || DEFAULT_ENDPOINT): Use
     isConnected: status === "open",
     lastEventTime,
     reconnectAttempt,
+    reconnect,
   };
 }
 

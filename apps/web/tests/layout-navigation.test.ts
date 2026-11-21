@@ -12,8 +12,12 @@ test("TC-01: routeLabel trả nhãn tiếng Việt cho 6 route + fallback", () =
   assert.equal(routeLabel("/monitoring"), "Bản đồ Giám sát");
   assert.equal(routeLabel("/earthquakes"), "Danh mục Động đất");
   assert.equal(routeLabel("/statistics"), "6 nhóm phân tích");
-  assert.equal(routeLabel("/reports"), "Báo cáo & Xuất bản");
-  assert.equal(routeLabel("/settings"), "Cấu hình Hệ thống");
+
+  // 2 route placeholder đã bị gỡ — fallback "Trang", không trả slug tiếng Anh.
+  assert.equal(routeLabel("/reports"), "Trang");
+  assert.equal(routeLabel("/settings"), "Trang");
+  assert.equal(navMetaFor("/reports"), null);
+  assert.equal(navMetaFor("/settings"), null);
 
   // Route lạ / route con — không trả slug tiếng Anh.
   assert.equal(routeLabel("/khong-ton-tai"), "Trang");
@@ -25,7 +29,7 @@ test("TC-01: routeLabel trả nhãn tiếng Việt cho 6 route + fallback", () =
 test("TC-02: navMetaFor trả đủ nhãn, mô tả và badge", () => {
   assert.deepEqual(
     NAV_META.map((item) => item.path),
-    ["/", "/monitoring", "/earthquakes", "/statistics", "/reports", "/settings"],
+    ["/", "/monitoring", "/earthquakes", "/statistics"],
   );
 
   const meta = navMetaFor("/monitoring");

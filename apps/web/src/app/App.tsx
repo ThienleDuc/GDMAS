@@ -34,8 +34,6 @@ export const App: React.FC = () => {
               </React.Suspense>
             }
           />
-          <Route path={APP_ROUTES.REPORTS} element={<PlaceholderPage title="Báo cáo & Xuất bản" />} />
-          <Route path={APP_ROUTES.SETTINGS} element={<PlaceholderPage title="Cấu hình Hệ thống" />} />
         </Route>
 
         {/* Điều hướng mặc định nếu route không tồn tại */}
