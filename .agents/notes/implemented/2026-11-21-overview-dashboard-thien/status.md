@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-21-overview-dashboard-thien
-- Status: validation   <!-- planned | in_progress | blocked | validation | completed -->
+- Status: completed   <!-- planned | in_progress | blocked | validation | completed -->
 - Started: 2026-11-21
 - Last Updated: 2026-11-21
 - Owner: agent | thien
@@ -11,7 +11,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: validation — chờ CHECKPOINT 1
+Current Phase: completed — đã merge PR #50 vào develop, sync xong
 
 Completed:
 - Proposal §9 Approved (Reviewer: thien, 2026-11-21; "được, duyệt")
@@ -62,9 +62,9 @@ Blocked:
 ---
 
 ## Next Actions
-- DỪNG CHECKPOINT 1: báo Implementation Report, hỏi `tiếp tục workflow` / `dừng lại` / `sửa thêm`. Chưa xác nhận → không commit/push.
+- none — hoàn tất vòng đời proposal. Theo dõi riêng việc BE bổ sung `dominant_place` cho `/clusters` để xếp hạng không còn gộp "Khác".
 
 ---
 
 ## Last Update
-2026-11-21 — Giữ viền bảng, chỉ css nội dung ô (số hạng, tên, số liệu, thời gian, tọa độ) + rủi ro tiếng Việt; re-validation 173/173 test, build PASS, notes OK. Vẫn dừng CHECKPOINT 1.
+2026-11-21 — CHECKPOINT 2 xác nhận (`tiếp tục workflow`). PR #50 đã merge vào `develop` với SHA `d5813432fb002188c11404e4e991ba1c9132afb6` (kèm commit style `8bd53c4` trên PR); `git-ship.sh sync` xong, 0 conflict. Chuyển `Status: completed`.
