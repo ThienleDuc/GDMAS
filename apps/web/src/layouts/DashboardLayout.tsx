@@ -1,18 +1,10 @@
 import React from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import {
-  Activity,
-  BarChart3,
-  Globe,
-  Map,
-  FileText,
-  Settings,
-  Layers,
-  ChevronRight,
-} from "lucide-react";
+import { Activity, BarChart3, Globe, Map, Layers, ChevronRight } from "lucide-react";
 import { useSSE } from "../hooks/useSSE";
 import { SseMarkersProvider } from "../features/monitoring/sse-context.ts";
 import { NAV_META, routeLabel, type NavMeta } from "./navigation.ts";
+import { HeaderActions } from "./header/HeaderActions.tsx";
 
 interface NavItem extends NavMeta {
   icon: React.ComponentType<{ className?: string }>;
@@ -23,8 +15,6 @@ const NAV_ICONS: ReadonlyArray<React.ComponentType<{ className?: string }>> = [
   Map,
   Activity,
   BarChart3,
-  FileText,
-  Settings,
 ];
 
 /** NAV_ITEMS giữ nguyên tên để tương thích test/CSS cũ; giờ lấy nhãn từ navigation.ts. */
@@ -94,7 +84,7 @@ export const DashboardLayout: React.FC = () => {
             <span className="layout__breadcrumb-current">{routeLabel(location.pathname)}</span>
           </div>
 
-          <div className="layout__header-actions" />
+          <HeaderActions onRefresh={sse.reconnect} />
         </header>
 
         <main className="layout__content app-content">

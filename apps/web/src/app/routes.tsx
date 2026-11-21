@@ -4,8 +4,6 @@ export const APP_ROUTES = {
   MONITORING: "/monitoring",
   EARTHQUAKES: "/earthquakes",
   STATISTICS: "/statistics",
-  REPORTS: "/reports",
-  SETTINGS: "/settings",
 } as const;
 
 export type AppRoute = typeof APP_ROUTES[keyof typeof APP_ROUTES];

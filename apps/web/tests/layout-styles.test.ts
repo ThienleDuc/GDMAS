@@ -117,3 +117,23 @@ test("TC-09: vùng nội dung dùng toàn bộ chiều rộng", () => {
   assert.doesNotMatch(css, /\.layout__content\s*\{[^}]*var\(--content-max-width\)/u);
   assert.doesNotMatch(css, /margin-inline:\s*auto/u);
 });
+
+test("TC-10: header actions chứa 3 widget dùng design token, không hardcode màu", () => {
+  const layout = readLayout(layoutFile);
+  assert.match(layout, /<HeaderActions\s/u);
+  assert.doesNotMatch(layout, /APP_ROUTES\.(REPORTS|SETTINGS)/u);
+
+  const css = readLayoutCss();
+  assert.match(css, /\.layout__header-actions/u);
+  assert.match(css, /\.layout__header-widget/u);
+  assert.match(css, /\.layout__filter-chip/u);
+  assert.match(css, /\.header-clock-toggle/u);
+  assert.match(css, /\.layout__refresh-toast\s*\{[^}]*position:\s*fixed/u);
+  assert.match(css, /\.layout__refresh-toast\s*\{[^}]*z-index:\s*var\(--z-toast\)/u);
+  assert.match(css, /--countdown-progress/u);
+  assert.match(css, /--toast-progress/u);
+  assert.match(css, /@keyframes gdmas-toast-in/u);
+  assert.match(css, /prefers-reduced-motion/u);
+  assert.match(css, /\.layout__header-widget\s*\{[^}]*background:\s*var\(--card\)/u);
+  assert.doesNotMatch(css, /#[\da-f]{3,8}\b/iu);
+});
