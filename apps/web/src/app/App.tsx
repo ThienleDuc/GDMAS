@@ -3,6 +3,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DashboardLayout } from "../layouts/DashboardLayout";
 import { EarthquakesPage } from "../features/earthquakes/EarthquakesPage";
 import { MonitoringMapPage } from "../features/monitoring/MonitoringMapPage";
+const OverviewPage = React.lazy(() =>
+  import("../features/overview/OverviewPage.tsx").then((module) => ({ default: module.OverviewPage })),
+);
 const StatisticsRoutes = React.lazy(() =>
   import("../features/statistics/StatisticsRoutes").then((module) => ({ default: module.StatisticsRoutes })),
 );
@@ -23,7 +26,14 @@ export const App: React.FC = () => {
       <Routes>
         {/* Layout duy nhất: aside điều hướng + vùng chứa nội dung (Outlet) */}
         <Route element={<DashboardLayout />}>
-          <Route path={APP_ROUTES.HOME} element={<PlaceholderPage title="Tổng quan" />} />
+          <Route
+            path={APP_ROUTES.HOME}
+            element={
+              <React.Suspense fallback={<PlaceholderPage title="Tổng quan" />}>
+                <OverviewPage />
+              </React.Suspense>
+            }
+          />
           <Route path={APP_ROUTES.MONITORING} element={<MonitoringMapPage />} />
           <Route path={APP_ROUTES.EARTHQUAKES} element={<EarthquakesPage />} />
           <Route
