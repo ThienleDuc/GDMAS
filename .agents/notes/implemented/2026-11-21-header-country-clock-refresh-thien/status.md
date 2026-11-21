@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-21-header-country-clock-refresh-thien
-- Status: validation   <!-- planned | in_progress | blocked | validation | completed -->
+- Status: completed   <!-- planned | in_progress | blocked | validation | completed -->
 - Started: 2026-11-21
 - Last Updated: 2026-11-21
 - Owner: agent | thien
@@ -11,7 +11,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: validation — chờ CHECKPOINT 1
+Current Phase: completed — đã merge PR #46 vào develop, sync xong
 
 Completed:
 - Proposal §9 Approved (Reviewer: thien, 2026-11-21)
@@ -60,9 +60,9 @@ Blocked:
 ---
 
 ## Next Actions
-- DỪNG CHECKPOINT 1: báo Implementation Report, hỏi người dùng `tiếp tục workflow` / `dừng lại` / `sửa thêm`. Chưa xác nhận → giữ working tree, không commit/push.
+- none — hoàn tất vòng đời proposal. Theo dõi drift tài liệu đã biết (T7.11/T7.12 trong `docs/task/thien.md`) ở proposal riêng nếu cần.
 
 ---
 
 ## Last Update
-2026-11-21 — Làm đẹp CSS widget header (gradient, shadow, progress bar, chấm live, toast trượt vào, reduced-motion). Re-validation xanh: 152/152 test, build PASS. `Status: validation`, dừng lại CHECKPOINT 1.
+2026-11-21 — CHECKPOINT 2 xác nhận (`1`). PR #46 đã merge vào `develop` với SHA `0aa34a19e7a594f36932282cade8acb7624ad89a`; `git-ship.sh sync` xong, 0 conflict. Chuyển `Status: completed`.
