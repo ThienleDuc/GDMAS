@@ -19,6 +19,15 @@ function fixture(filename: string): unknown {
     "predictions_sample.json": { success: true, data: {} },
     "classifications_sample.json": { success: true, data: {} },
     "clusters_sample.json": { success: true, data: {} },
+    "analysis_sample.json": {
+      temporal: {
+        success: true,
+        data: { interval: "day", line_chart: [], scatter_plot: [], histogram: { magnitude_bins: [] } },
+      },
+      trend: { success: true, data: { resample_freq: "M", metric: "count", series: [] } },
+      seasonality: { success: true, data: { components: { seasonal_line: [] } } },
+      correlation: { success: true, data: { variables: [], matrix: [], method: "pearson" } },
+    },
     "sse-event_sample.json": {
       event: "earthquake_detected",
       timestamp: "2026-11-06T15:35:00Z",
@@ -50,6 +59,23 @@ test("TC-09: contract API routes serve fixture envelopes offline", () => {
     assert.ok(response);
     assert.equal(response.status, 200);
     assert.deepEqual(JSON.parse(response.body), fixture(filename));
+  }
+});
+
+test("TC-11: analysis endpoints serve contract bundle subsections offline", () => {
+  const cases = [
+    ["/api/v1/analysis/temporal", "temporal"],
+    ["/api/v1/analysis/trend", "trend"],
+    ["/api/v1/analysis/seasonality", "seasonality"],
+    ["/api/v1/analysis/correlation", "correlation"],
+  ] as const;
+
+  const bundle = fixture("analysis_sample.json") as Record<string, unknown>;
+  for (const [path, key] of cases) {
+    const response = resolveContractMock("GET", path, fixture);
+    assert.ok(response, `${path} phải được mock phục vụ`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(JSON.parse(response.body), bundle[key]);
   }
 });
 

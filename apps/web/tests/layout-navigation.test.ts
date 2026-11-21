@@ -11,7 +11,7 @@ test("TC-01: routeLabel trả nhãn tiếng Việt cho 6 route + fallback", () =
   assert.equal(routeLabel("/"), "Tổng quan");
   assert.equal(routeLabel("/monitoring"), "Bản đồ Giám sát");
   assert.equal(routeLabel("/earthquakes"), "Danh mục Động đất");
-  assert.equal(routeLabel("/statistics"), "6 Patterns Phân tích");
+  assert.equal(routeLabel("/statistics"), "6 nhóm phân tích");
   assert.equal(routeLabel("/reports"), "Báo cáo & Xuất bản");
   assert.equal(routeLabel("/settings"), "Cấu hình Hệ thống");
 
@@ -32,7 +32,7 @@ test("TC-02: navMetaFor trả đủ nhãn, mô tả và badge", () => {
   assert.ok(meta);
   assert.equal(meta.label, "Bản đồ Giám sát");
   assert.ok(meta.description.length > 0);
-  assert.equal(meta.badge, "Live");
+  assert.equal(meta.badge, "Trực tiếp");
 
   assert.ok(navMetaFor("/")?.label === "Tổng quan");
   assert.equal(navMetaFor("/khong-ton-tai"), null);

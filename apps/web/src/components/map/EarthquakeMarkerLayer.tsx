@@ -14,7 +14,7 @@ export function EarthquakeMarkerLayer({ events }: { events: ReadonlyArray<MapEar
           pathOptions={markerStyleFor(event)}
         >
           <Tooltip direction="top" offset={[0, -6]} opacity={0.9}>
-            M {formatMetric(event.magnitude, 1)} — {event.place}
+            Độ lớn {formatMetric(event.magnitude, 1)} — {event.place}
           </Tooltip>
           <Popup>
             <MapPopupCard event={event} />

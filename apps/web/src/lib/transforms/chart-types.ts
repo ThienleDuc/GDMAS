@@ -138,9 +138,13 @@ export interface EvaluationMetrics {
 export interface PredictionMetrics {
   target_date?: string | null;
   predicted_value?: number | null;
+  /** BE /predictions trả dạng lồng nhau — asPrediction() chuẩn hóa sang 2 alias phẳng bên dưới. */
+  confidence_interval?: { lower?: number | null; upper?: number | null } | null;
   lower_bound?: number | null;
   upper_bound?: number | null;
   model_name?: string | null;
+  /** BE trả `forecasted_metric`; giữ `metric_name` làm alias tương thích. */
+  forecasted_metric?: string | null;
   metric_name?: string | null;
   model_version?: string | null;
   evaluation_metrics?: EvaluationMetrics | null;
@@ -150,6 +154,8 @@ export interface PredictionMetrics {
 export interface ClassificationMetrics {
   target_date?: string | null;
   predicted_label?: string | null;
+  /** BE /classifications trả `probabilities` — asClassification() chuẩn hóa sang `probability_scores`. */
+  probabilities?: Record<string, number> | null;
   probability_scores?: Record<string, number> | null;
   model_name?: string | null;
   model_version?: string | null;
