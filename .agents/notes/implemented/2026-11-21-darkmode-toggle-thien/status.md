@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-21-darkmode-toggle-thien
-- Status: validation   <!-- planned | in_progress | blocked | validation | completed -->
+- Status: completed   <!-- planned | in_progress | blocked | validation | completed -->
 - Started: 2026-11-21
 - Last Updated: 2026-11-21
 - Owner: agent | thien
@@ -11,7 +11,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: validation — chờ CHECKPOINT 1
+Current Phase: completed — đã merge PR #48 vào develop, sync xong
 
 Completed:
 - Proposal §9 Approved (Reviewer: thien, 2026-11-21)
@@ -57,9 +57,9 @@ Blocked:
 ---
 
 ## Next Actions
-- DỪNG CHECKPOINT 1: báo Implementation Report, hỏi `tiếp tục workflow` / `dừng lại` / `sửa thêm`. Chưa xác nhận → không commit/push.
+- none — hoàn tất vòng đời proposal. Theo dõi riêng việc cập nhật assertion light-only của test cũ đã ghi trong Deviations.
 
 ---
 
 ## Last Update
-2026-11-21 — Validation xanh: 8/8 test mới, 160/160 full suite, build PASS, notes OK. Chuyển `Status: validation`, dừng CHECKPOINT 1.
+2026-11-21 — CHECKPOINT 2 xác nhận (`tiếp tục workflow`). PR #48 đã merge vào `develop` với SHA `5dda5949c9b89b89233462278fc39a8393c63f28`; `git-ship.sh sync` xong, 0 conflict. Chuyển `Status: completed`.
