@@ -37,11 +37,14 @@ export const MagnitudeHistogramChart: React.FC<MagnitudeHistogramChartProps> = (
       <p className="text-caption">{items.length} trận</p>
       {items.length ? (
         <div className="eq-country-chart__bars" role="img" aria-label="Số trận theo từng khoảng độ lớn">
-          {bins.map((item) => (
+          {bins.map((item, index) => (
             <div className="eq-country-chart__row" key={item.bin}>
               <span className="eq-country-chart__label">{item.bin}</span>
               <span className="eq-country-chart__track">
-                <span className="eq-country-chart__fill" style={{ width: `${(item.count / max) * 100}%` }} />
+                <span
+                  className="eq-country-chart__fill"
+                  style={{ width: `${(item.count / max) * 100}%`, animationDelay: `${index * 60}ms` }}
+                />
               </span>
               <span className="eq-country-chart__value">{item.count} · {item.ratio}%</span>
             </div>

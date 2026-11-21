@@ -34,11 +34,14 @@ export const CountryClusterChart: React.FC<CountryClusterChartProps> = ({
       </header>
       {visible.length ? (
         <div className="eq-country-chart__bars" role="img" aria-label="Số sự kiện theo quốc gia">
-          {visible.map((item) => (
+          {visible.map((item, index) => (
             <div className="eq-country-chart__row" key={item.country}>
               <span className="eq-country-chart__label">{item.country}</span>
               <span className="eq-country-chart__track">
-                <span className="eq-country-chart__fill" style={{ width: `${(item.eventCount / max) * 100}%` }} />
+                <span
+                  className="eq-country-chart__fill"
+                  style={{ width: `${(item.eventCount / max) * 100}%`, animationDelay: `${index * 60}ms` }}
+                />
               </span>
               <span className="eq-country-chart__value">{formatNumber(item.eventCount, 0)}</span>
             </div>

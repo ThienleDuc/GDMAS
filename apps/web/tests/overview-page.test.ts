@@ -33,12 +33,16 @@ test("TC-10: App dùng OverviewPage, đủ 4 chart + bảng xếp hạng + live 
   }
   assert.doesNotMatch(page, /ov-card__head/u); // header card đã bị gỡ
   assert.doesNotMatch(page, /ov-card--12|buildTerminalRows|ov-terminals/u); // card G đã bị gỡ
+  assert.doesNotMatch(page, /ov-global-note/u); // bỏ thông báo lọc/unavailable trên overview
+  assert.doesNotMatch(css, /ov-global-note/u);
 
   assert.match(page, /<th>Mức độ<\/th>/u);
   assert.match(hotspots, /Độ lớn TB<\/th>/u);
   assert.match(hotspots, /Độ lớn cao nhất<\/th>/u);
   assert.match(hotspots, /<th>Mức độ<\/th>/u);
   assert.match(hotspots, /severityLabel\(row\.maxMagnitude\)/u);
+  assert.match(hotspots, /ov-severity--\$\{severityLabel\(row\.maxMagnitude\)\.tone\}/u);
+  assert.match(page, /ov-severity--\$\{severity\.tone\}/u); // 2 bảng dùng chung 1 kiểu nhãn
   assert.match(hotspots, /ov-rank-index/u);
   assert.match(hotspots, /ov-cell-count/u);
   assert.match(page, /ov-cell-time/u);
@@ -64,9 +68,11 @@ test("TC-11: grid 12/6/1, dùng design token, không hardcode màu", () => {
   assert.match(css, /prefers-reduced-motion/u);
   assert.doesNotMatch(css, /ov-card__head/u);
   assert.doesNotMatch(css, /ov-card--12|ov-terminal/u);
-  assert.match(css, /\.ov-severity--high/u);
-  assert.match(css, /\.ov-severity--medium/u);
-  assert.match(css, /\.ov-severity--low/u);
+  assert.match(css, /\.ov-severity\s*\{[^}]*background:\s*transparent/u);
+  assert.match(css, /\.ov-severity\s*\{[^}]*font-weight:\s*var\(--font-bold\)/u);
+  assert.match(css, /\.ov-severity--high\s*\{[^}]*color:\s*var\(--destructive\)/u);
+  assert.match(css, /\.ov-severity--medium\s*\{[^}]*color:\s*var\(--chart-4\)/u);
+  assert.match(css, /\.ov-severity--low\s*\{[^}]*color:\s*var\(--chart-3\)/u);
   assert.match(css, /\.ov-page \.ds-table-wrapper\s*\{[^}]*border:\s*1px solid var\(--border\)/u);
   assert.match(css, /\.ov-page \.ds-table/u);
   assert.match(css, /\.ov-rank-index/u);

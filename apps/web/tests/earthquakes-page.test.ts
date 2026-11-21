@@ -142,6 +142,8 @@ test("TC-11: page CSS is colocated and centrally imported; index.css remains imp
   assert.match(css, /@media \(max-width: 767px\)/u);
   assert.match(css, /@media \(max-width: 479px\)/u);
   assert.match(css, /prefers-reduced-motion/u);
+  assert.match(css, /@keyframes eq-bar-grow/u);
+  assert.match(css, /\.eq-country-chart__fill\s*\{[^}]*animation:\s*eq-bar-grow/u);
   assert.match(css, /\.eq-table-card\s*\{[^}]*box-shadow:\s*var\(--shadow-/su);
   assert.match(css, /\.eq-table-card\s*\{[^}]*border:\s*1px solid var\(--border\)/su);
   assert.match(css, /\.eq-table-card\s*\{[^}]*border-radius:\s*var\(--radius-/su);

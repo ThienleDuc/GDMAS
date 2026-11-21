@@ -94,22 +94,6 @@
   color: var(--foreground);
 }
 
-.ov-global-note {
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--chart-4);
-  border-radius: var(--radius-md);
-  background: var(--accent);
-  color: var(--accent-foreground);
-  font-size: var(--text-xs);
-}
-
-.ov-global-note--error {
-  border-left-color: var(--destructive);
-  color: var(--destructive);
-}
-
 .ov-skeleton {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -300,33 +284,30 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Nhãn mức độ — nền đặc, không dùng bán trong suốt */
+/* Nhãn mức độ trên cả 2 bảng tổng quan: không nền highlight, chữ đậm có màu */
 .ov-severity {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 4.5rem;
-  padding: var(--space-1) var(--space-3);
+  padding: 0;
   border: 0;
-  border-radius: var(--radius-sm);
+  background: transparent;
   font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-bold);
   white-space: nowrap;
 }
 
 .ov-severity--high {
-  background: var(--error-light);
-  color: var(--error-dark);
+  color: var(--destructive);
 }
 
 .ov-severity--medium {
-  background: var(--warning-light);
-  color: var(--warning-dark);
+  color: var(--chart-4);
 }
 
 .ov-severity--low {
-  background: var(--success-light);
-  color: var(--success-dark);
+  color: var(--chart-3);
 }
 
 /* Bảng có viền rõ; nội dung trong ô được chăm riêng (xem .ov-cell-*) */
