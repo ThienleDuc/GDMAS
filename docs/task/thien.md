@@ -99,7 +99,31 @@ Phạm vi: SPA React + TypeScript + Vite theo design system `apps/web/src/styles
 
 ---
 
-## 4. Nguyên tắc khi tiếp tục
+## 4. Task tiếp theo — Audit hợp đồng & đề xuất BE sửa (chưa triển khai)
+
+**ID đề xuất:** `2026-11-21-be-contract-gap-audit-thien` · **Trạng thái:** Pending (chưa viết proposal, chưa giao BE).
+
+**Mục tiêu:** Gom các điểm FE↔BE còn lệch thành một đầu việc rõ ràng cho chủ vùng backend, để T7 biết BE cần sửa gì. **T7 chỉ đối chiếu/viết proposal/test — không tự sửa `apps/api/**`.**
+
+**Căn cứ đã có:**
+- `2026-11-21-api-docs-contract-sync-thien` §7 — 2 gap BE bị hoãn lại proposal riêng.
+- `2026-11-21-monitoring-leaflet-map-markers-thien` §4.9 / B2 — `/clusters` thiếu địa danh, chờ chủ vùng `van`.
+- Code BE hiện tại: `api/routes/clusters.py:19-29`, `api/routes/analysis.py:180-189, 232-237`; T3 đã tính đủ ở `services/analysis/patterns.py:359-369, 572-579`.
+
+| # | Việc BE cần làm | Chủ vùng | Tác động FE khi xong |
+|---|---|---|---|
+| 1 | `GET /api/v1/clusters`: `_cluster()` bổ sung `dominant_place`, `radius_km` (field đã có trong `contracts/schemas/clusters.json`, **không đổi schema/migration**) | `van` (T4) | Bảng xếp hạng Overview và popup cụm bản đồ có địa danh/bán kính thật, bỏ nhóm "Khác" |
+| 2 | `GET /api/v1/analysis/trend`: pass through `r_squared`, `intercept`, `p_value`, `sample_size` từ `metrics_data` của T3 | `son` (T3) + `tai` (T6) | Chart A Overview + Pattern 2 hiển thị độ tin cậy mô hình |
+| 3 | `GET /api/v1/analysis/correlation`: pass through `status`, `note`, `sample_size`, `spearman_matrix` | `son` + `tai` | Empty State đúng thông điệp BE, đủ hệ số Spearman |
+| 4 (thấp) | Thống nhất nhãn `/classifications` (4 nhãn canonical) và 2 shape `/predictions` vs `/patterns` | `tai` | Không chặn — FE đã adapter, docs đã mô tả cả 2 |
+
+**Đầu việc khi triển khai:** viết proposal `write-proposal` → xác nhận §9 (chủ vùng BE hoặc `thien`) → BE sửa route + test offline → FE bỏ fallback/phần gộp "Khác" nếu cần → cập nhật mục 1 của file này.
+
+**Không nằm trong task này:** sửa drift `docs/task/tai.md`, demo 6 bước, hay tự ý đụng `contracts/`/`docs/api/API.md` (đã đồng bộ ở proposal trước).
+
+---
+
+## 5. Nguyên tắc khi tiếp tục
 
 1. Thay đổi **> 1 file** hoặc đổi logic/contract → `write-proposal` (ID đuôi `-thien`) → `build-implementation` → `review-pr` với 2 checkpoint; sửa **≤ 1 file** → Fast-Track.
 2. Mỗi proposal `-thien` sau khi merge phải **cập nhật mục 1 của file này** trong cùng PR (kèm ID proposal + đường dẫn test).
