@@ -113,6 +113,21 @@
 
 
   /* ----------------------------------------------------------
+     3.4.1. PASTEL HIGHLIGHT TOKENS
+     Dùng để nhấn từ khóa trong hướng dẫn đọc biểu đồ — nền nhạt, chữ đủ tương phản.
+     ---------------------------------------------------------- */
+
+  --highlight-blue-bg: #eef2ff;
+  --highlight-blue-fg: #4338ca;
+
+  --highlight-orange-bg: #fff7ed;
+  --highlight-orange-fg: #9a3412;
+
+  --highlight-red-bg: #fff1f2;
+  --highlight-red-fg: #9f1239;
+
+
+  /* ----------------------------------------------------------
      3.5. LIGHT THEME
      Semantic tokens compatible with shadcn/ui
      ---------------------------------------------------------- */

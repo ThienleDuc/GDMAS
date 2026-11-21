@@ -46,7 +46,7 @@ export function MapControlsPanel({
           value={draftMagnitude}
           onChange={(event) => setDraftMagnitude(Number(event.target.value))}
         />
-        <span className="gm-map__control-value">M {draftMagnitude.toFixed(1)}</span>
+        <span className="gm-map__control-value">Độ lớn {draftMagnitude.toFixed(1)}</span>
       </div>
 
       <div className="gm-map__control-row gm-map__control-row--stack">

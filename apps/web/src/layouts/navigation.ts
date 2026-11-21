@@ -17,10 +17,10 @@ export const NAV_META: readonly NavMeta[] = [
     path: "/monitoring",
     label: "Bản đồ Giám sát",
     description: "Địa chấn realtime theo quốc gia và khu vực",
-    badge: "Live",
+    badge: "Trực tiếp",
   },
   { path: "/earthquakes", label: "Danh mục Động đất", description: "Danh sách sự kiện, lọc và phân trang" },
-  { path: "/statistics", label: "6 Patterns Phân tích", description: "Trực quan hóa 6 patterns chuỗi thời gian" },
+  { path: "/statistics", label: "6 nhóm phân tích", description: "Trực quan hóa 6 nhóm phân tích chuỗi thời gian" },
   { path: "/reports", label: "Báo cáo & Xuất bản", description: "Tổng hợp số liệu thật và xuất báo cáo" },
   { path: "/settings", label: "Cấu hình Hệ thống", description: "Trạng thái 7 Terminals và múi giờ" },
 ];

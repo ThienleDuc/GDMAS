@@ -3,6 +3,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DashboardLayout } from "../layouts/DashboardLayout";
 import { EarthquakesPage } from "../features/earthquakes/EarthquakesPage";
 import { MonitoringMapPage } from "../features/monitoring/MonitoringMapPage";
+const StatisticsRoutes = React.lazy(() =>
+  import("../features/statistics/StatisticsRoutes").then((module) => ({ default: module.StatisticsRoutes })),
+);
 import { APP_ROUTES } from "./routes";
 
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
@@ -23,7 +26,14 @@ export const App: React.FC = () => {
           <Route path={APP_ROUTES.HOME} element={<PlaceholderPage title="Tổng quan" />} />
           <Route path={APP_ROUTES.MONITORING} element={<MonitoringMapPage />} />
           <Route path={APP_ROUTES.EARTHQUAKES} element={<EarthquakesPage />} />
-          <Route path={APP_ROUTES.STATISTICS} element={<PlaceholderPage title="6 Patterns Phân tích" />} />
+          <Route
+            path={`${APP_ROUTES.STATISTICS}/*`}
+            element={
+              <React.Suspense fallback={<PlaceholderPage title="6 nhóm phân tích" />}>
+                <StatisticsRoutes />
+              </React.Suspense>
+            }
+          />
           <Route path={APP_ROUTES.REPORTS} element={<PlaceholderPage title="Báo cáo & Xuất bản" />} />
           <Route path={APP_ROUTES.SETTINGS} element={<PlaceholderPage title="Cấu hình Hệ thống" />} />
         </Route>

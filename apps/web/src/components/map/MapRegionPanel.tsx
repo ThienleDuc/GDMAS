@@ -138,7 +138,7 @@ export function MapRegionPanel({
                   className="gm-region-panel__meta"
                   title={`${cluster.eventCount} sự kiện · độ lớn TB ${cluster.avgMagnitude ?? "—"}`}
                 >
-                  {cluster.eventCount} · M {cluster.avgMagnitude ?? "—"}
+                  {cluster.eventCount} sự kiện · độ lớn trung bình {cluster.avgMagnitude ?? "—"}
                 </span>
               </button>
             );

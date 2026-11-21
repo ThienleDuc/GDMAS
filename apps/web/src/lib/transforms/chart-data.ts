@@ -427,9 +427,19 @@ export function asCorrelation(metrics: Record<string, unknown>): CorrelationMetr
 }
 
 export function asPrediction(metrics: Record<string, unknown>): PredictionMetrics {
-  return metrics as PredictionMetrics;
+  const view = { ...metrics } as PredictionMetrics;
+  const ci = isRecord(metrics.confidence_interval) ? metrics.confidence_interval : null;
+  if (ci) {
+    if (!isFiniteNumber(view.lower_bound) && isFiniteNumber(ci.lower)) view.lower_bound = ci.lower;
+    if (!isFiniteNumber(view.upper_bound) && isFiniteNumber(ci.upper)) view.upper_bound = ci.upper;
+  }
+  return view;
 }
 
 export function asClassification(metrics: Record<string, unknown>): ClassificationMetrics {
-  return metrics as ClassificationMetrics;
+  const view = { ...metrics } as ClassificationMetrics;
+  if (!view.probability_scores && isRecord(metrics.probabilities)) {
+    view.probability_scores = metrics.probabilities as Record<string, number>;
+  }
+  return view;
 }

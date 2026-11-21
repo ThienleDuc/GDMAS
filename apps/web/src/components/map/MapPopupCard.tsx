@@ -11,14 +11,14 @@ export function MapPopupCard({ event }: { event: MapEarthquake }) {
       <dl className="gm-popup__grid">
         <dt>Mã sự kiện</dt>
         <dd>{fields.sourceEventId}</dd>
-        <dt>Thời gian (UTC)</dt>
+        <dt>Thời gian quốc tế</dt>
         <dd>{fields.eventTimeUtc}</dd>
         <dt>Giờ địa phương</dt>
         <dd>{fields.eventTimeLocal}</dd>
         <dt>Độ sâu</dt>
         <dd>{fields.depthKm} km</dd>
         <dt>Độ lớn</dt>
-        <dd>M {fields.magnitude}</dd>
+        <dd>{fields.magnitude}</dd>
         <dt>Nguồn</dt>
         <dd>
           {fields.sourceUrl ? (

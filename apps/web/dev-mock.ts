@@ -8,6 +8,14 @@ import { createEarthquakeList, slicePage } from "./tests/mocks/earthquakes-list.
 
 export type FixtureLoader = (filename: string) => unknown;
 
+/** 4 endpoint phân tích lấy từ bundle analysis_sample.json (theo contract). */
+const ANALYSIS_ROUTES: Record<string, "temporal" | "trend" | "seasonality" | "correlation"> = {
+  "/api/v1/analysis/temporal": "temporal",
+  "/api/v1/analysis/trend": "trend",
+  "/api/v1/analysis/seasonality": "seasonality",
+  "/api/v1/analysis/correlation": "correlation",
+};
+
 export function isContractMockEnabled(env: Record<string, string | undefined>): boolean {
   return env.VITE_API_MOCKING === "enabled";
 }
@@ -44,6 +52,13 @@ export function resolveContractMock(
     "/api/v1/classifications": "classifications_sample.json",
     "/api/v1/clusters": "clusters_sample.json",
   };
+  const analysisKey = ANALYSIS_ROUTES[pathname];
+  if (analysisKey) {
+    const bundle = loadFixture("analysis_sample.json") as Record<string, unknown>;
+    const response = bundle[analysisKey];
+    if (response && typeof response === "object") return jsonResponse(response);
+  }
+
   const fixtureName = routes[pathname];
   if (fixtureName) return jsonResponse(loadFixture(fixtureName));
 

@@ -161,7 +161,7 @@ export const MonitoringMapPage: React.FC = () => {
       <header className="gm-page__heading">
         <div>
           <h1 className="gm-page__title">Bản đồ Giám sát</h1>
-          <p className="gm-page__subtitle">Sự kiện địa chấn realtime · WGS84 · UTC</p>
+          <p className="gm-page__subtitle">Sự kiện địa chấn thời gian thực · tọa độ địa lý · giờ quốc tế</p>
         </div>
       </header>
 
