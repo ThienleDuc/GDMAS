@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-21-api-docs-contract-sync-thien
-- Status: validation   <!-- planned | in_progress | blocked | validation | completed -->
+- Status: completed   <!-- planned | in_progress | blocked | validation | completed -->
 - Started: 2026-11-21
 - Last Updated: 2026-11-21
 - Owner: agent | thien
@@ -56,9 +56,17 @@ Blocked:
 ---
 
 ## Next Actions
-- Commit duy nhất trên nhánh docs; không push.
+- none — PR #42 đã merge vào `develop`; task hoàn tất.
+
+---
+
+## Merge Record
+- PR: https://github.com/ThienleDuc/GDMAS/pull/42
+- Merge commit: `2987e3b` (`Merge pull request #42 from ThienleDuc/docs/2026-11-21-api-docs-contract-sync-thien`)
+- Feature commit: `f6fc8e8`
+- Dry-run trước merge: 0 conflict (`mergeable=MERGEABLE`, `state=CLEAN`).
 
 ---
 
 ## Last Update
-2026-11-21 — Validation xanh; chuẩn bị commit 1 lần theo yêu cầu người dùng.
+2026-11-21 — PR #42 đã merge vào `develop` (SHA `2987e3b`); `Status: completed`.
