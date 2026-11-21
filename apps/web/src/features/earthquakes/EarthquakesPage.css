@@ -183,6 +183,8 @@
     height: 100%;
     border-radius: var(--radius-full);
     background: var(--primary);
+    transform-origin: left center;
+    animation: eq-bar-grow var(--duration-slow) ease-out both;
   }
 
   .eq-country-chart__value {
@@ -415,5 +417,21 @@
       flex: 1;
       justify-content: center;
     }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .eq-country-chart__fill {
+      animation: none;
+    }
+  }
+}
+
+/* Thanh bar grow lên khi chuyển trang đến (component mount) */
+@keyframes eq-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
   }
 }

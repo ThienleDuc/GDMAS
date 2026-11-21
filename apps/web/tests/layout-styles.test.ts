@@ -131,6 +131,11 @@ test("TC-10: header actions chứa 3 widget dùng design token, không hardcode 
   assert.match(css, /\.header-clock-toggle/u);
   assert.match(css, /\.layout__refresh-toast\s*\{[^}]*position:\s*fixed/u);
   assert.match(css, /\.layout__refresh-toast\s*\{[^}]*z-index:\s*var\(--z-toast\)/u);
+  assert.match(css, /\.layout__refresh-toast\s*\{[^}]*bottom:\s*var\(--space-8\)/u);
+  assert.match(css, /\.layout__refresh-toast\s*\{[^}]*left:\s*50%/u);
+  assert.match(css, /\.layout__refresh-toast\s*\{[^}]*transform:\s*translateX\(-50%\)/u);
+  assert.doesNotMatch(css, /\.layout__refresh-toast\s*\{[^}]*(?:top:|right:)/u);
+  assert.match(css, /\.layout__refresh-toast-text/u);
   assert.match(css, /--countdown-progress/u);
   assert.match(css, /--toast-progress/u);
   assert.match(css, /@keyframes gdmas-toast-in/u);

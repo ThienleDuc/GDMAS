@@ -83,18 +83,6 @@ export const OverviewPage: React.FC = () => {
         </div>
       </header>
 
-      {!isCountryMode && (
-        <p className="ov-global-note">
-          Bộ lọc quốc gia đang bật — các KPI thống kê vẫn là số liệu toàn cục (API không nhận param country).
-        </p>
-      )}
-      {data.unavailable.length > 0 && (
-        <p className="ov-global-note">
-          Một số nguồn chưa có dữ liệu: {data.unavailable.join(", ")}.
-        </p>
-      )}
-      {data.error && <p className="ov-global-note ov-global-note--error">{data.error}</p>}
-
       {data.loading && !data.statistics ? (
         <div className="ov-skeleton" role="status" aria-label="Đang tải dữ liệu tổng quan">
           {Array.from({ length: 6 }, (_, index) => (

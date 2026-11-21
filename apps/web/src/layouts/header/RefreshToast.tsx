@@ -7,7 +7,7 @@ interface RefreshToastProps {
   onClose: () => void;
 }
 
-/** Thông báo góc trên bên phải — tự đóng sau 5 giây. */
+/** Thông báo giữa dưới màn hình — tự đóng sau 5 giây. */
 export const RefreshToast: React.FC<RefreshToastProps> = ({ open, onClose }) => {
   const [remaining, setRemaining] = useState(TOAST_SECONDS);
 
@@ -32,10 +32,7 @@ export const RefreshToast: React.FC<RefreshToastProps> = ({ open, onClose }) => 
       aria-live="polite"
     >
       <RefreshCw className="layout__header-icon h-4 w-4" aria-hidden="true" />
-      <div className="layout__refresh-toast-body">
-        <strong>Dữ liệu đã được cập nhật</strong>
-        <span>Tự đóng sau {remaining}s</span>
-      </div>
+      <span className="layout__refresh-toast-text">Dữ liệu đã được cập nhật</span>
     </div>
   );
 };
