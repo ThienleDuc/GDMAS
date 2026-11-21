@@ -3,6 +3,7 @@ import { DataRefreshLabel } from "./DataRefreshLabel.tsx";
 import { GlobalCountryFilter } from "./GlobalCountryFilter.tsx";
 import { HeaderFilterContext } from "./HeaderFilterContext.tsx";
 import { RealtimeClock } from "./RealtimeClock.tsx";
+import { ThemeToggle } from "./ThemeToggle.tsx";
 
 interface HeaderActionsProps {
   onRefresh: () => void;
@@ -15,5 +16,6 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({ onRefresh }) => (
     <GlobalCountryFilter />
     <DataRefreshLabel onRefresh={onRefresh} />
     <RealtimeClock />
+    <ThemeToggle />
   </div>
 );

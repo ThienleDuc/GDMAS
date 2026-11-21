@@ -22,10 +22,10 @@
    ============================================================ */
 
 /* ============================================================
-   2. LIGHT MODE ONLY
+   2. LIGHT-FIRST + DARK MODE
    ============================================================ */
 
-/* Ứng dụng dùng Light Mode duy nhất: không có biến thể hoặc class dành cho chế độ tối. */
+/* Light mode là mặc định; dark mode bật bằng class `.dark` trên <html> (xem khối §4). */
 
 
 /* ============================================================
@@ -430,6 +430,102 @@
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
 
+}
+
+
+/* ============================================================
+   4. DARK THEME OVERRIDES
+   Bật bằng class `.dark` trên <html> (lib/theme.ts → applyTheme).
+   Chỉ override token ngữ nghĩa: mọi component/page dùng var(--...)
+   tự đổi màu — không hardcode màu sáng/tối ở từng file (I5).
+   ============================================================ */
+
+.dark {
+  color-scheme: dark;
+
+  /* Surface & text */
+  --background: #0b1120;
+  --foreground: #e2e8f0;
+  --card: #0f172a;
+  --card-foreground: #e2e8f0;
+  --popover: #0f172a;
+  --popover-foreground: #e2e8f0;
+  --surface: #0f172a;
+  --surface-secondary: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-disabled: #64748b;
+
+  /* Brand & states */
+  --primary: #818cf8;
+  --primary-foreground: #0b1120;
+  --secondary: #1e293b;
+  --secondary-foreground: #e2e8f0;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e1b4b;
+  --accent-foreground: #c7d2fe;
+  --destructive: #f87171;
+  --destructive-foreground: #0b1120;
+  --link: #a5b4fc;
+  --border: #334155;
+  --border-strong: #475569;
+  --input: #334155;
+  --ring: #818cf8;
+
+  /* Success / warning / error / info */
+  --success: #4ade80;
+  --success-light: #14532d;
+  --success-dark: #bbf7d0;
+  --warning: #fbbf24;
+  --warning-light: #78350f;
+  --warning-dark: #fde68a;
+  --error: #f87171;
+  --error-light: #7f1d1d;
+  --error-dark: #fecaca;
+  --info: #60a5fa;
+  --info-light: #1e3a8a;
+  --info-dark: #bfdbfe;
+
+  /* Pastel highlights — nền tối, chữ sáng */
+  --highlight-blue-bg: #1e1b4b;
+  --highlight-blue-fg: #c7d2fe;
+  --highlight-orange-bg: #431407;
+  --highlight-orange-fg: #fed7aa;
+  --highlight-red-bg: #4c0519;
+  --highlight-red-fg: #fecdd3;
+
+  /* Sidebar */
+  --sidebar: #0f172a;
+  --sidebar-foreground: #cbd5e1;
+  --sidebar-primary: #818cf8;
+  --sidebar-primary-foreground: #0b1120;
+  --sidebar-accent: #1e1b4b;
+  --sidebar-accent-foreground: #c7d2fe;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #818cf8;
+
+  /* Charts */
+  --chart-1: #818cf8;
+  --chart-2: #22d3ee;
+  --chart-3: #4ade80;
+  --chart-4: #fbbf24;
+  --chart-5: #f472b6;
+
+  /* Shadows đậm hơn trên nền tối */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.55), 0 2px 6px -2px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 12px 24px -6px rgb(0 0 0 / 0.6);
+}
+
+/* Chuyển mượt khi applyTheme thêm class theme-transition trên <html> */
+.theme-transition,
+.theme-transition body {
+  transition:
+    background-color var(--duration-moderate) ease,
+    color var(--duration-moderate) ease;
 }
 
 

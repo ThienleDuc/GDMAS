@@ -529,6 +529,37 @@
     outline-offset: 2px;
   }
 
+  /* Nút SVG đổi Light ⇄ Dark — ngay sau đồng hồ realtime */
+  .header-theme-toggle {
+    display: inline-grid;
+    flex: 0 0 var(--button-height-sm);
+    width: var(--button-height-sm);
+    height: var(--button-height-sm);
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    background: var(--accent);
+    color: var(--accent-foreground);
+    cursor: pointer;
+    transition:
+      background-color var(--duration-normal) ease,
+      border-color var(--duration-normal) ease,
+      color var(--duration-normal) ease,
+      transform var(--duration-fast) ease;
+  }
+
+  .header-theme-toggle:hover {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--primary-foreground);
+    transform: rotate(-12deg) scale(1.05);
+  }
+
+  .header-theme-toggle:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
   /* Toast báo cập nhật — góc trên bên phải */
   .layout__refresh-toast {
     position: fixed;
@@ -606,7 +637,8 @@
     .layout__refresh-toast,
     .header-clock::before,
     .layout__header-widget,
-    .header-clock-toggle {
+    .header-clock-toggle,
+    .header-theme-toggle {
       animation: none;
       transition: none;
     }
