@@ -185,15 +185,24 @@ export const OverviewPage: React.FC = () => {
                 {prediction.predictedValue === null ? "—" : prediction.predictedValue.toLocaleString("vi-VN")}
               </p>
               <p className="ov-forecast__meta">
-                {prediction.lower !== null && prediction.upper !== null
-                  ? `Khoảng tin cậy: ${prediction.lower} – ${prediction.upper}`
-                  : "Chưa có khoảng tin cậy"}
+                Khoảng tin cậy:{" "}
+                {prediction.lower !== null && prediction.upper !== null ? (
+                  <span className="ov-forecast__highlight">
+                    {prediction.lower} – {prediction.upper}
+                  </span>
+                ) : (
+                  "Chưa có khoảng tin cậy"
+                )}
               </p>
               <p className="ov-forecast__meta">
-                Mức rủi ro: <strong>{prediction.riskLabel ?? "—"}</strong>
+                Mức rủi ro:{" "}
+                <strong className="ov-forecast__highlight">{prediction.riskLabel ?? "—"}</strong>
               </p>
               {prediction.targetDate && (
-                <p className="ov-forecast__meta">Ngày mục tiêu (UTC): {prediction.targetDate}</p>
+                <p className="ov-forecast__meta">
+                  Ngày mục tiêu (UTC):{" "}
+                  <span className="ov-forecast__highlight">{prediction.targetDate}</span>
+                </p>
               )}
               <p className="ov-chart__note">
                 Dự báo cho ngày kế tiếp — không so sánh trực tiếp với số liệu 24h thực tế (khác cửa sổ thời gian).

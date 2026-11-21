@@ -44,6 +44,9 @@ test("TC-10: App dùng OverviewPage, đủ 4 chart + bảng xếp hạng + live 
   assert.match(page, /ov-cell-time/u);
   assert.match(page, /ov-cell-place/u);
   assert.match(page, /ov-cell-coord/u);
+  assert.match(page, /ov-forecast__highlight/u);
+  assert.match(css, /ov-forecast__highlight/u);
+  assert.match(css, /\.ov-forecast__meta\s*\{[^}]*font-size:\s*var\(--text-sm\)/u);
 
   assert.match(barrel, /OverviewTrendChart/u);
   assert.match(barrel, /OverviewSeverityChart/u);

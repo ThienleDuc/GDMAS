@@ -283,9 +283,21 @@
 }
 
 .ov-forecast__meta {
-  margin: var(--space-1) 0 0;
-  color: var(--muted-foreground);
-  font-size: var(--text-xs);
+  margin: var(--space-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+
+/* Highlight các điểm quan trọng trong card dự báo */
+.ov-forecast__highlight {
+  display: inline-block;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-weight: var(--font-semibold);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Nhãn mức độ — nền đặc, không dùng bán trong suốt */
