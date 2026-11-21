@@ -47,7 +47,8 @@ test("TC-03: index.css centrally imports Tailwind, design tokens, and layout sty
   assert.match(globals, /"Space Grotesk"/u);
   assert.match(globals, /"JetBrains Mono"/u);
   assert.doesNotMatch(globals, /"Inter"/u);
-  assert.doesNotMatch(globals, /@custom-variant\s+dark|\.dark\s*\{/u);
+  // Dark Mode đã được bổ sung (proposal 2026-11-21-darkmode-toggle-thien): giờ kỳ vọng có .dark.
+  assert.match(globals, /\.dark\s*\{[\s\S]{0,80}color-scheme:\s*dark/u);
 });
 
 test("TC-04: layout có aside điều hướng và vùng chứa nội dung qua Outlet", () => {
