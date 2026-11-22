@@ -145,3 +145,44 @@ def test_invalid_resample_freq_is_rejected(client, freq):
     resp = client.get(API, params={"resample_freq": freq})
 
     assert resp.status_code in (400, 422)
+
+
+# GAP-02 — hệ số hồi quy T3 được pass-through
+def test_trend_exposes_regression_metrics_from_t3(client, db):
+    snapshot = seed_t3_snapshot(db)
+    expected = stored_trend(snapshot, "month")["metrics"]["count"]
+
+    data = client.get(API, params={"resample_freq": "M", "metric": "count"}).json()[
+        "data"
+    ]
+
+    assert data["r_squared"] == expected["r_squared"]
+    assert data["intercept"] == expected["intercept"]
+    assert data["p_value"] == expected["p_value"]
+    assert data["sample_size"] == expected["complete_periods"]
+    assert data["status"] == expected["status"]
+
+
+def test_trend_sample_size_fallback_and_status_default(client, db):
+    db.add(
+        AnalysisResult(
+            analysis_type="trend",
+            time_interval="week",
+            period_start=AS_OF - timedelta(days=70),
+            period_end=AS_OF,
+            metrics_data={
+                "metric": "count",
+                "series": [{"period": "2026-11-02", "actual_value": 77}],
+                "slope": 1.5,
+                "data_points": 9,
+            },
+        )
+    )
+    db.commit()
+
+    data = client.get(API, params={"resample_freq": "W", "metric": "count"}).json()[
+        "data"
+    ]
+
+    assert data["sample_size"] == 9
+    assert data["status"] == "computed"
