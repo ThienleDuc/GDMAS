@@ -17,15 +17,23 @@ router = APIRouter(tags=["Clustering"])
 
 
 def _cluster(c: dict) -> dict:
-    """Chuẩn hóa về tên trường của API.md (nhận cả tên cũ của demo_seeder)."""
+    """Chuẩn hóa về tên trường canonical của contract FE (nhận alias legacy).
+
+    Bổ sung field optional đã có trong ``contracts/schemas/clusters.json``:
+    ``radius_km``, ``dominant_place``. FE ``normalizeClusters()`` / ``groupClustersByCountry()``
+    đọc trực tiếp ``dominant_place`` — thiếu field này mọi cụm thật rơi vào nhóm "Khác"
+    (GAP-01). Giữ nguyên chữ ký và 6 key cũ (RULE-03); field thiếu → ``None`` (không bịa số).
+    """
     return {
         "cluster_id": c.get("cluster_id", c.get("id")),
         "center_latitude": c.get("center_latitude", c.get("lat")),
         "center_longitude": c.get("center_longitude", c.get("lon")),
         "event_count": c.get("event_count", c.get("events_count")),
         "avg_magnitude": c.get("avg_magnitude", c.get("avg_mag")),
-        "max_magnitude": c.get("max_magnitude"),
-        **({"name": c["name"]} if "name" in c else {}),
+        "max_magnitude": c.get("max_magnitude", c.get("max_mag")),
+        "radius_km": c.get("radius_km", c.get("radius")),
+        "name": c.get("name"),
+        "dominant_place": c.get("dominant_place", c.get("place")),
     }
 
 
