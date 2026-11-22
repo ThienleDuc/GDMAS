@@ -1,0 +1,115 @@
+# Chức năng Còn Thiếu / Chưa thể Tích hợp BE → FE — Danh sách Task nhỏ
+
+> **Ngày đối chiếu:** 2026-11-22 · **Người đối chiếu:** `thien` · **Nhánh:** `docs/fe-be-contract-integration-audit-thien`
+>
+> File **thứ hai** trong cặp kết quả audit FE↔BE. File còn lại:
+> [`fe-be-integration-ready.md`](fe-be-integration-ready.md) — các chức năng đã sẵn sàng.
+>
+> **Yêu cầu kèm theo của đầu việc:** *"thay đổi phía BE để đồng bộ FE"* → các task **GAP-01…GAP-04, GAP-06, GAP-07** là đầu việc sửa BE, được ghi lại dưới dạng task để chủ vùng triển khai. **Nhánh này chỉ build danh sách task — không sửa mã nguồn `apps/**`** (quyết định của người dùng 2026-11-22). Các task chạm `contracts/` chỉ thực hiện sau khi có phê duyệt (đã được chấp thuận cho GAP-07).
+
+---
+
+## 0. Định nghĩa "chưa thể tích hợp"
+
+Một chức năng rơi vào file này khi **FE contract đã khai báo field/shape nhưng BE route không trả**, khiến FE phải:
+- hiển thị `"—"` / "chưa có dữ liệu kiểm định" dù T3/T4/T5 đã tính ra số (`I3` — mất thông tin thật);
+- gộp nhãn thành `"Khác"` dù có địa danh thật (`overview-view.ts:174-180`);
+- dùng mock ở view chính thức (`mock-region-clusters.ts`, vi phạm `I5`);
+- hoặc bỏ qua sự kiện realtime dù SSE đã phát (`monitoring-view.ts:112-118`).
+
+**Nguyên tắc sửa:** chỉ **pass-through thêm field** (additive) từ dữ liệu T3/T4/T5 đã có sẵn trong DB → **không migration Alembic** (`I4`), **không đổi chữ ký hàm/route cũ** (`I2`), **không đụng `contracts/`** trừ khi có phê duyệt riêng (`I6`, vùng khóa). Kiểm tra `additionalProperties:false` trong schema trước khi thêm field.
+
+Bảng dưới đây phân biệt rõ: **Field đã có trong schema repo → thêm an toàn** vs **Field chưa có trong schema → phải xin đổi contract trước**.
+
+---
+
+## 1. Bảng tổng hợp gap
+
+| Task | Chức năng / Field thiếu | FE contract (đọc ở đâu) | BE route / nguồn | Tác động FE hiện tại | Mức | Chủ vùng | Trạng thái / hướng xử lý |
+|---|---|---|---|---|---|---|---|
+| **GAP-01** | `/clusters` thiếu `dominant_place`, `radius_km` (và `max_magnitude` không ổn định) | `clusters.ts:14-16`; `map-data.ts:110-151`; `country-clusters.ts:47-50` | `routes/clusters.py:19-29` `_cluster()`; nguồn `clustering.py` JSONB đã có chỗ chứa | Xếp hạng Overview rơi `"Khác"`; popup bản đồ mất bán kính/địa danh; header lọc quốc gia suy yếu | **Cao** | `van` (T4) + `tai` (T6) | **Cần làm** — pass-through `_cluster()` |
+| **GAP-02** | `/analysis/trend` thiếu `intercept`, `r_squared`, `p_value`, `sample_size` | `analysis.ts:62-67`; `overview-view.ts:264-269`; `ai-insights.ts:119-152` | `routes/analysis.py:155-189` `build()`; T3 có tại `services/analysis/patterns.py:366,368,369,372-373` | Chart A Overview & Pattern 2 mất độ tin cậy mô hình (hiện `"—"`) | **Cao** | `son` (T3) + `tai` (T6) | **Cần làm** — pass-through từ `source` |
+| **GAP-03** | `/analysis/correlation` thiếu `status`, `sample_size`, `note` | `analysis.ts:107-112`; `ai-insights.ts:189-235` | `routes/analysis.py:232-237` `build()`; T3 có tại `patterns.py:572,577,579` | Heatmap không phân biệt `insufficient_data`; mất hệ số mẫu & chú thích "không suy diễn nhân quả" | **Cao** | `son` + `tai` | **Cần làm** — chỉ 3 field đã có trong `analysis.json` |
+| **GAP-04** | `/analysis/temporal` thiếu `status`, `stats`; `/analysis/seasonality` thiếu `status`, `period`, `data_points` | `analysis.ts:32,37-42,82,91`; `chart-data.ts:371-407` | `routes/analysis.py:124-137,199-223`; T3 có tại `patterns.py:244,249-252,470,473,482` | Empty State không đọc được thông điệp `insufficient_data` của BE; mất số điểm dữ liệu | Trung bình | `son` + `tai` | **Cần làm** — pass-through |
+| **GAP-05** | FE dùng mock ở view chính thức (`mock-region-clusters.ts`) | `country-clusters.ts:6-12` (view model FE-only) | Hệ quả của GAP-01; BE không có endpoint riêng cho "khu vực" | Panel lọc khu vực trên `/monitoring` hiển thị 8 địa danh giả → vi phạm `I5` | **Cao** | `thien` (T7) | Chờ GAP-01 xong → bỏ mock, dùng `/clusters` + `[]` when unavailable |
+| **GAP-06** | SSE inner `data` shape không khớp FE: BE gửi `new_events[]`/`alert_events[]`, FE đọc phẳng `latitude/magnitude` | `sse.ts:19-28`; `monitoring-view.ts:108-141`; `docs/api/API.md:453-462` | `realtime/sse.py:256-293` (packet `earthquake_detected`/`earthquake_alert`) | Marker realtime gần như không bao giờ được thêm vào bản đồ (`applySseEvent` trả nguyên mảng cũ) | **Cao** | `tai` (T6) + `thien` (T7) | **Cần làm** — BE bổ sung field phẳng, giữ field cũ |
+| **GAP-13** | Toast "Dữ liệu đã được cập nhật" bắn theo đồng hồ cục bộ, không theo SSE; SSE `ingestion_cycle_completed` (5 phút) chỉ được dùng để phục hồi DB | `DataRefreshLabel.tsx:24-30`; `useDatabaseReset.ts:48-58` | BE phát `ingestion_cycle_completed` mỗi chu kỳ T2 (`sse.py:256-266`) | Toast báo cập nhật giả; event thật không bắn toast | Trung bình | `thien` (FE) | **Cần làm (FE)** — giữ toast cũ, đổi nguồn kích hoạt sang SSE (không CSS lại) |
+| **GAP-07** | `/patterns` P5 thiếu `metric_name`, `model_version`, `evaluation_metrics`, `generated_at`; P6 thiếu `model_version`, `evaluation_metrics` | `patterns.ts:9-17`; `chart-types.ts:138-163`; `contracts/README.md:98` | `routes/patterns.py:103-157`; DB đã có (`models/prediction.py:25,31-39,57-63`) | Typed view FE đọc `undefined`; UI hiện "chưa có dữ liệu kiểm định" dù DB có số | Trung bình | `tai` + `thien` | **Cần làm** — user đã cho phép sửa contracts (chỉ ghi chú, không đổi shape schema): cập nhật `patterns.json`/`README.md`, BE `/patterns` pass-through field |
+| **GAP-08** | `/predictions` thiếu top-level `confidence_level`; `/classifications` thiếu alias `probability_scores` | `predictions.ts:36`; `classifications.ts:15-16` | `routes/predictions.py:42-61,85-96` | Không chặn — FE đã adapter (`asPrediction`, `asClassification`) | Thấp | `tai` | Chờ thống nhất: FE adapter đủ dùng, ưu tiên giữ BE tối giản |
+| **GAP-09** | SSE chưa phát event `"alert"`; chưa gửi header `id:`/`retry:` | `sse.ts:8-15,25-27` | `realtime/sse.py:59-62`, phát `:192-304` | Không chặn — FE đăng ký cả tên lạ; reconnect backoff tự tính | Thấp | `tai` | Chờ quyết định bỏ `"alert"` khỏi contract hoặc phát thêm |
+| **GAP-10** | `time_series_preview[].time` là `"HH:MM"` thay vì ISO 8601 UTC | `earthquake.ts:56-60`; `API.md:211`; `earthquake.json:21` | `routes/statistics.py:52` `strftime("%H:%M")` | FE đọc chuỗi `string` nên không crash, nhưng lệch `I3` nếu dùng làm mốc thời gian | Trung bình | `thien` (FE) | **Cần làm (FE)** — user chọn sửa FE, không sửa BE: comment contract `earthquake.ts` xác định `time` là nhãn hiển thị, không parse ISO |
+| **GAP-11** | Empty state `/patterns` mâu thuẫn nội bộ: prose `API.md` đòi `data:null`, schema `patterns.json` lại không định nghĩa `data` | `common.ts:95-104` `isApiEmptyEnvelope` | `routes/patterns.py:39-45` trả `{success:false,total_patterns:0,patterns:[],message}` | FE vẫn render Empty State được, nhưng contract không nhất quán | Trung bình | `thien` + `tai` | **Cần làm (docs)** — user "không sửa schema": chỉ cập nhật prose `docs/api/API.md` §2/§3.3 đúng shape empty thực tế |
+| **GAP-12** | `/system/status` thiếu `records_processed`, `error_message`, `generated_at`; `/health` thiếu `degraded/unhealthy`, `uptime_seconds` | `system-status.ts:7-13,38-40,53`; `health.ts:6-16` | `routes/system.py:67-75,84-131` | Không chặn — FE coi `last_run` thiếu là `unknown` | Thấp | `tai` | Chờ RD-16 kéo API vào UI rồi mới biết field nào thực cần |
+
+---
+
+## 2. Đầu việc chi tiết (dành cho chủ vùng triển khai)
+
+### GAP-01 — `/api/v1/clusters` trả đủ địa danh & bán kính
+
+- **Đụng:** `apps/api/src/gdmas/api/routes/clusters.py` — hàm `_cluster()` (dòng 19-29).
+- **Thay đổi:** copy thêm `radius_km`, `dominant_place`, `max_magnitude` (canonical, fallback alias nếu payload legacy); `name` trả ổn định dưới dạng `str | None`. Không đổi chữ ký `_cluster()`, không sửa `models/clustering.py` (JSONB), không migration.
+- **Schema:** cả 3 field đã có trong `contracts/schemas/clusters.json:61-67` (optional) → an toàn.
+- **Acceptance:** payload có `dominant_place = "Honshu, Japan"` → `groupClustersByCountry()` bỏ nhóm `"Khác"`; thiếu field → fallback `eps_km` như cũ, không bịa số.
+- **Test:** `apps/api/tests/unit/test_cluster_contract_fields.py` (mới) — canonical + legacy + missing field.
+
+### GAP-02 — `/api/v1/analysis/trend` pass-through hệ số hồi quy
+
+- **Đụng:** `apps/api/src/gdmas/api/routes/analysis.py` — `build()` trong `get_trend()` (dòng 155-189).
+- **Thay đổi:** thêm `intercept`, `r_squared`, `p_value` từ `source`; `sample_size` lấy theo thứ tự `source.sample_size → source.complete_periods → source.data_points`; đảm bảo `status` luôn có (fallback `"computed"` khi nguồn cũ không có).
+- **Schema:** `analysis.json:113-117` đã định nghĩa → an toàn.
+- **Acceptance:** `GET /analysis/trend?resample_freq=M&metric=count` trả `r_squared > 0` khi T3 có; series vẫn giữ nguyên (không relabel sai metric).
+- **Test:** mở rộng `apps/api/tests/unit/test_analysis_trend_route.py` (kiểm chứng field mới bằng snapshot T3 thật).
+
+### GAP-03 — `/api/v1/analysis/correlation` pass-through trạng thái & chú thích
+
+- **Đụng:** `apps/api/src/gdmas/api/routes/analysis.py` — `build()` trong `get_correlation()` (dòng 232-237).
+- **Thay đổi:** thêm `status`, `sample_size`, `note` từ `metrics_data`. **Không** thêm `spearman_matrix`/`undefined_pairs`/`corr_mag_depth` vì `analysis.json:168-192` có `additionalProperties:false` chưa định nghĩa (đưa vào GAP riêng nếu cần).
+- **Acceptance:** `status = "insufficient_data"` → FE `resolvePatternView` hiển thị thông điệp từ `note`; `sample_size` đúng số dòng T3.
+- **Test:** `apps/api/tests/unit/test_analysis_contract_fields.py` (mới).
+
+### GAP-04 — `/analysis/temporal` & `/analysis/seasonality` pass-through field optional
+
+- **Đụng:** `apps/api/src/gdmas/api/routes/analysis.py` — `build()` của `get_temporal()` (124-137) và `get_seasonality()` (199-223).
+- **Thay đổi:** temporal thêm `status` + `stats{data_points, avg_magnitude, max_magnitude, avg_depth}` (gom từ `metrics_data`, không nội suy); seasonality thêm `status`, `period`, `data_points`.
+- **Acceptance:** field chỉ xuất hiện khi nguồn có; không trả số 0 thay cho `null`.
+- **Test:** gộp vào `test_analysis_contract_fields.py`.
+
+### GAP-06 — SSE inner `data` bổ sung field phẳng cho marker bản đồ
+
+- **Đụng:** `apps/api/src/gdmas/realtime/sse.py` — các chỗ phát `earthquake_detected` (`:269-279`) và `earthquake_alert` (`:284-293`).
+- **Thay đổi:** giữ nguyên `title/message/new_events[]/alert_events[]`, **bổ sung** `source_event_id`, `event_time`, `latitude`, `longitude`, `magnitude`, `depth_km`, `place`, `magnitude_type`, `source_url` từ sự kiện đầu tiên trong mảng (packet phẳng theo `API.md:455` và `sse.ts:19-28`). Không xoá field cũ (RULE-03), không đổi cấu trúc bọc `{event,data,timestamp}`.
+- **Acceptance:** FE `applySseEvent` đọc `payload.data.latitude/magnitude` → thêm marker ngay trên bản đồ; khi mảng rỗng không emit field phẳng (FE giữ nguyên danh sách).
+- **Test:** `apps/api/tests/unit/test_sse_stream.py` (bổ sung case) — assert inner data có field phẳng, outer vẫn đúng bọc.
+
+---
+
+## 3. Quyết định của người dùng (2026-11-22) — định hướng triển khai các task
+
+> Nhánh này **chỉ build task**: không file nào trong `apps/**`, `contracts/**` hay `docs/api/API.md` bị sửa. Các quyết định dưới đây là **định hướng để chủ vùng triển khai**, không phải công việc đã làm.
+
+| Hạng mục | Quyết định / định hướng |
+|---|---|
+| GAP-05 (mock FE) | Lỗi FE (`I5`) — dứt điểm sau GAP-01; tách task riêng |
+| GAP-09 (SSE `"alert"` / header `id`,`retry`) | Không chặn — cần nhóm quyết định bỏ tên khỏi contract hay phát thêm |
+| GAP-07 (`/patterns` P5/P6) | User **cho phép sửa contracts**, nhưng chỉ ghi chú (không đổi shape schema): cập nhật `patterns.json`/`README.md`, BE pass-through field |
+| GAP-10 (`HH:MM`) | User chọn **sửa FE, không sửa BE**: `earthquake.ts` ghi rõ `time` là nhãn hiển thị, không parse ISO |
+| GAP-11 (empty `/patterns`) | User **"không sửa schema"**: chỉ cập nhật prose `docs/api/API.md` §2/§3.3 cho đúng shape thực tế |
+| GAP-13 (toast ↔ SSE) | BE xác nhận phát `ingestion_cycle_completed` mỗi 5 phút (`sse.py:256-266`); giữ toast cũ, đổi nguồn kích hoạt sang SSE (không CSS lại) |
+| Migration Alembic, phần còn lại của `contracts/**` | Giữ nguyên quy tắc vùng khóa (I4/I6) |
+
+---
+
+## 4. Cách kiểm chứng khi triển khai task
+
+Khi chủ vùng nhận task, tạo proposal/testcase theo quy trình GDMAS rồi kiểm chứng:
+
+```bash
+cd apps/api && uv run pytest <test_file> && uv run pytest
+cd apps/api && uv run ruff check . && uv run ruff format --check .
+cd apps/web && pnpm test && pnpm build
+python3 scripts/notes_index.py --check
+./scripts/git-ship.sh scope
+```
+
+Mỗi task use additive (không migration, không đổi chữ ký hàm cũ), kèm test offline 100% (I7).
