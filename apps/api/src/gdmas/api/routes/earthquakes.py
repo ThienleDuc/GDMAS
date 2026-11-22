@@ -9,6 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from gdmas.api.errors import error_response
+from gdmas.core.config import settings
 from gdmas.db.connection import get_db
 from gdmas.models.earthquake import EarthquakeEvent
 from gdmas.schemas.earthquake import (
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/earthquakes", tags=["Earthquakes"])
 
+# Legacy alias — giữ cho import/test cũ (RULE-03). Nguồn sự thật là settings.USGS_FEED_URL.
 USGS_FEED_URL = (
     "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
 )
@@ -162,7 +164,7 @@ def sync_usgs_earthquakes(db: Session = Depends(get_db)):
     """
     try:
         with httpx.Client(timeout=10.0) as client:
-            resp = client.get(USGS_FEED_URL)
+            resp = client.get(settings.USGS_FEED_URL)
             resp.raise_for_status()
             features = resp.json().get("features", [])
     except (httpx.HTTPError, ValueError) as exc:
