@@ -136,7 +136,8 @@ Kiểm tra trạng thái hoạt động và thời điểm cập nhật gần nh
 }
 ```
 
-> `status` của mỗi service nhận một trong các giá trị: `active`, `idle`, `error`, `unknown`.
+> `status` của mỗi service nhận một trong các giá trị: `active`, `idle`, `error`, `unknown`, `running`.
+> (`running` là giá trị BE trả cho `postgres` — `system.py`; FE cũng chấp nhận alias `stopped`.)
 > Khi chưa có `last_run`, FE hiển thị trạng thái "không xác định" thay vì giả định đang chạy.
 
 ---
@@ -157,6 +158,7 @@ Truy vấn danh sách sự kiện động đất có phân trang và hỗ trợ 
   | `max_magnitude` | float | Không | - | Độ lớn tối đa |
   | `min_depth` | float | Không | - | Độ sâu tối thiểu (km) |
   | `max_depth` | float | Không | - | Độ sâu tối đa (km) |
+  | `search` | string | Không | - | Tìm theo khu vực (`place`) hoặc mã sự kiện (`source_event_id`), không phân biệt hoa thường |
   | `min_lat` / `max_lat` | float | Không | - | Phạm vi vĩ độ bounding box |
   | `min_lon` / `max_lon` | float | Không | - | Phạm vi kinh độ bounding box |
   | `sort_by` | string | Không | `event_time` | Trường sắp xếp (`event_time`, `magnitude`, `depth_km`) |

@@ -5,7 +5,6 @@ import type { ClustersResponse } from "../../contracts/clusters.ts";
 import type { EarthquakeItem, StatisticsResponse } from "../../contracts/earthquake.ts";
 import type { PredictionsResponse } from "../../contracts/predictions.ts";
 import { isApiEmptyEnvelope } from "../../contracts/common.ts";
-import { toUtcIso } from "../../lib/formatters.ts";
 import { ApiError } from "../../lib/api-client.ts";
 import { useEarthquakeInsights } from "../../hooks/useEarthquakeInsights.ts";
 import {
@@ -62,19 +61,13 @@ export function useOverviewData(): OverviewData {
 
   useEffect(() => {
     const controller = new AbortController();
-    const end = new Date();
-    const start = new Date(end.getTime() - 14 * 24 * 60 * 60 * 1000);
-    const window = {
-      resample_freq: "D" as const,
-      start_time: toUtcIso(start),
-      end_time: toUtcIso(end),
-    };
-
+    // API.md §3.3: BE /analysis/trend chỉ nhận resample_freq/metric; seasonality không nhận param.
+    // Không gửi cửa sổ 14 ngày giả — BE vốn bỏ qua các param thời gian này.
     setState((previous) => ({ ...previous, loading: true, error: null, unavailable: [] }));
 
     Promise.allSettled([
-      getTrendAnalysis(window, controller.signal),
-      getSeasonalityAnalysis(window, controller.signal),
+      getTrendAnalysis({ resample_freq: "D" }, controller.signal),
+      getSeasonalityAnalysis({}, controller.signal),
       getPredictions(controller.signal),
       getClassifications(controller.signal),
       getEarthquakes({ limit: 5, sort_by: "event_time", order: "desc" }, controller.signal),
