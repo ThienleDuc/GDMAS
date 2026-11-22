@@ -2,7 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-region-clusters-no-mock-thien
-- Status: validation
+- Status: completed
+- Merged: 2026-11-22 — PR #73, merge commit `e92842f4d04031ab3857bd61081356a9a8655faf`
 - Started: 2026-11-22
 - Last Updated: 2026-11-22
 - Owner: agent | thien
@@ -11,7 +12,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: CHECKPOINT 1 — chờ người dùng commit/push hay giữ nguyên
+Current Phase: completed — PR #73 đã merge vào develop, nhánh local đã sync
 
 Completed:
 - Rẽ nhánh `feat/2026-11-22-region-clusters-no-mock-thien` từ `develop`
@@ -61,4 +62,4 @@ Blocked:
 ---
 
 ## Last Update
-2026-11-22 — GAP-05 code + validation xanh (FE 212, BE 313), dừng CHECKPOINT 1.
+2026-11-22 — GAP-05 hoàn tất: PR #73 merged (`e92842f`), `sync` xong, status = completed.
