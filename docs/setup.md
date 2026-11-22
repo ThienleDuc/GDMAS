@@ -106,7 +106,7 @@ CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 # ==============================================================================
 # CẤU HÌNH DỊCH VỤ NẠP DỮ LIỆU ĐỊA CHẤN (USGS INGESTION WORKER)
 # ==============================================================================
-USGS_API_BASE_URL=https://earthquake.usgs.gov/fdsnws/event/1/query
+USGS_FEED_URL=https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson
 INGESTION_INTERVAL_SECONDS=300
 INGESTION_MIN_MAGNITUDE=2.5
 INGESTION_TIMEOUT_SECONDS=30
@@ -123,11 +123,14 @@ PREDICTION_INTERVAL_SECONDS=300
 Dành cho ứng dụng Vite React Client:
 
 ```env
-# URL kết nối tới máy chủ API
-VITE_API_URL=http://localhost:8000/api/v1
+# Base URL máy chủ API — KHÔNG kèm /api/v1 (service đã tự nối prefix)
+VITE_API_BASE_URL=http://localhost:8000
 
-# URL kết nối tới kênh Server-Sent Events (SSE) thời gian thực
-VITE_SSE_URL=http://localhost:8000/api/v1/stream/earthquakes
+# Endpoint SSE chuẩn theo API.md §3.5 (legacy: /api/v1/stream/earthquakes)
+VITE_SSE_ENDPOINT=/api/v1/events/stream
+
+# BẮT BUỘC disabled để dùng dữ liệu BE thật. "enabled" chỉ dành cho dev không có BE.
+VITE_API_MOCKING=disabled
 ```
 
 ---
@@ -155,8 +158,9 @@ if (-not (Test-Path ".env")) {
 if (-not (Test-Path "apps\web\.env")) {
     Write-Host "[2/5] Đang tạo file apps\web\.env..." -ForegroundColor Yellow
     @"
-VITE_API_URL=http://localhost:8000/api/v1
-VITE_SSE_URL=http://localhost:8000/api/v1/stream/earthquakes
+VITE_API_BASE_URL=http://localhost:8000
+VITE_SSE_ENDPOINT=/api/v1/events/stream
+VITE_API_MOCKING=disabled
 "@ | Out-File -FilePath "apps\web\.env" -Encoding utf8
 } else {
     Write-Host "[2/5] File apps\web\.env đã tồn tại." -ForegroundColor Green
@@ -206,7 +210,10 @@ echo "========================================================"
 # 1. Khởi tạo .env
 echo "--> [1/5] Thiết lập tệp cấu hình biến môi trường..."
 [ ! -f .env ] && cp .env.example .env
-[ ! -f apps/web/.env ] && echo "VITE_API_URL=http://localhost:8000/api/v1\nVITE_SSE_URL=http://localhost:8000/api/v1/stream/earthquakes" > apps/web/.env
+[ ! -f apps/web/.env ] && printf '%s\n' \
+  'VITE_API_BASE_URL=http://localhost:8000' \
+  'VITE_SSE_ENDPOINT=/api/v1/events/stream' \
+  'VITE_API_MOCKING=disabled' > apps/web/.env
 
 # 2. Cấu hình Backend Python
 echo "--> [2/5] Cấu hình môi trường ảo Backend (uv)..."
@@ -339,13 +346,14 @@ cd ../..
    ```bash
    docker exec -it gdmas-postgres psql -U gdmas_user -d gdmas_db -c "\dt"
    ```
-   Kết quả kỳ vọng hiển thị danh sách 7 bảng:
-   - `earthquakes`
-   - `daily_aggregates`
-   - `earthquake_clusters`
-   - `disaster_predictions`
-   - `ingestion_logs`
-   - `analysis_runs`
+   Kết quả kỳ vọng hiển thị các bảng do Alembic `001_initial_gdmas_schema` tạo:
+   - `earthquake_events`
+   - `analysis_results`
+   - `clustering_results`
+   - `clustering_event_mapping`
+   - `prediction_results`
+   - `classification_results`
+   - `service_runs`
    - `alembic_version`
 
 ---
@@ -382,12 +390,17 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/v1/health"
 # Linux / macOS / Git Bash:
 curl -s http://localhost:8000/api/v1/health | jq .
 ```
-Phản hồi hợp lệ:
+Phản hồi hợp lệ (envelope chuẩn API.md §2):
 ```json
 {
-  "status": "healthy",
-  "database": "connected",
-  "version": "1.0.0"
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "database": "connected",
+    "version": "1.0.0",
+    "timestamp": "2026-11-22T12:00:00Z",
+    "uptime_seconds": 120
+  }
 }
 ```
 
@@ -398,7 +411,7 @@ Mở trình duyệt web truy cập địa chỉ: `http://localhost:3000`. Giao d
 ```bash
 bash scripts/test.sh
 ```
-Nếu toàn bộ kiểm tra hiển thị màu xanh và báo cáo đạt độ phủ mã nguồn $\ge 70\%$, hệ thống cấu hình hoàn toàn chuẩn xác.
+Script chạy lần lượt 3 bước offline: kiểm tra nhất quán notes (`notes_index.py --check`), toàn bộ test Backend (`uv run pytest -q`) và toàn bộ test Frontend (`pnpm test`). Script **không đo độ phủ mã nguồn** — dừng lại với exit code khác 0 ngay khi có bước nào fail. Lưu ý: mock FE phải tắt (`VITE_API_MOCKING=disabled`) thì dữ liệu trên Dashboard mới đến từ BE thật.
 
 ---
 
