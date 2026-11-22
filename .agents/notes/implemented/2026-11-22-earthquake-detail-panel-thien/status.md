@@ -4,16 +4,17 @@
 
 ## Metadata
 - ID: 2026-11-22-earthquake-detail-panel-thien
-- Status: validation   <!-- planned | in_progress | blocked | validation | completed -->
+- Status: completed   <!-- planned | in_progress | blocked | validation | completed -->
 - Started: 2026-11-22
 - Last Updated: 2026-11-22
+- Merged: 2026-11-22 — PR #57, merge commit `85b02d12dd4e8512a98523ca5e72903065a4766d`
 - Owner: agent | thien
 
 ---
 
 ## Tiến độ
 Progress: 100%
-Current Phase: CHECKPOINT 1 — chờ người dùng commit/push hay giữ nguyên
+Current Phase: completed — PR #57 đã merge vào develop, nhánh local đã sync
 
 Completed:
 - Rẽ nhánh `feat/2026-11-22-earthquake-detail-panel-thien` từ `develop`
@@ -60,9 +61,9 @@ Blocked:
 ---
 
 ## Next Actions
-- CHECKPOINT 1: chờ người dùng commit/push (`tiếp tục workflow`) hoặc giữ nguyên/sửa thêm. Proposal sau: RD-17.
+- Không còn — phiên tiếp theo bắt đầu proposal 3 (**RD-17**) từ `develop`; đọc mục 4 `docs/task/fe-be-integration-ready.md` để có ngữ cảnh.
 
 ---
 
 ## Last Update
-2026-11-22 — Hoàn tất RD-13 (panel chi tiết), validation 189/189 xanh, dừng CHECKPOINT 1.
+2026-11-22 — RD-13 hoàn tất: PR #57 merged (`85b02d1`), `sync` xong, status = completed.
