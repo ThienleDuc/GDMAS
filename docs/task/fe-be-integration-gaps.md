@@ -27,7 +27,7 @@ Bảng dưới đây phân biệt rõ: **Field đã có trong schema repo → th
 
 | Task | Chức năng / Field thiếu | FE contract (đọc ở đâu) | BE route / nguồn | Tác động FE hiện tại | Mức | Chủ vùng | Trạng thái / hướng xử lý |
 |---|---|---|---|---|---|---|---|
-| **GAP-01** | `/clusters` thiếu `dominant_place`, `radius_km` (và `max_magnitude` không ổn định) | `clusters.ts:14-16`; `map-data.ts:110-151`; `country-clusters.ts:47-50` | `routes/clusters.py:19-29` `_cluster()`; nguồn `clustering.py` JSONB đã có chỗ chứa | Xếp hạng Overview rơi `"Khác"`; popup bản đồ mất bán kính/địa danh; header lọc quốc gia suy yếu | **Cao** | `van` (T4) + `tai` (T6) | **Cần làm** — pass-through `_cluster()` |
+| **GAP-01** | `/clusters` thiếu `dominant_place`, `radius_km` (và `max_magnitude` không ổn định) | `clusters.ts:14-16`; `map-data.ts:110-151`; `country-clusters.ts:47-50` | `routes/clusters.py:19-29` `_cluster()`; nguồn `clustering.py` JSONB đã có chỗ chứa | Xếp hạng Overview rơi `"Khác"`; popup bản đồ mất bán kính/địa danh; header lọc quốc gia suy yếu | **Cao** | `van` (T4) + `tai` (T6) | ✅ **Đã xong code + validation** — pass-through `_cluster()` (xem §5) |
 | **GAP-02** | `/analysis/trend` thiếu `intercept`, `r_squared`, `p_value`, `sample_size` | `analysis.ts:62-67`; `overview-view.ts:264-269`; `ai-insights.ts:119-152` | `routes/analysis.py:155-189` `build()`; T3 có tại `services/analysis/patterns.py:366,368,369,372-373` | Chart A Overview & Pattern 2 mất độ tin cậy mô hình (hiện `"—"`) | **Cao** | `son` (T3) + `tai` (T6) | **Cần làm** — pass-through từ `source` |
 | **GAP-03** | `/analysis/correlation` thiếu `status`, `sample_size`, `note` | `analysis.ts:107-112`; `ai-insights.ts:189-235` | `routes/analysis.py:232-237` `build()`; T3 có tại `patterns.py:572,577,579` | Heatmap không phân biệt `insufficient_data`; mất hệ số mẫu & chú thích "không suy diễn nhân quả" | **Cao** | `son` + `tai` | **Cần làm** — chỉ 3 field đã có trong `analysis.json` |
 | **GAP-04** | `/analysis/temporal` thiếu `status`, `stats`; `/analysis/seasonality` thiếu `status`, `period`, `data_points` | `analysis.ts:32,37-42,82,91`; `chart-data.ts:371-407` | `routes/analysis.py:124-137,199-223`; T3 có tại `patterns.py:244,249-252,470,473,482` | Empty State không đọc được thông điệp `insufficient_data` của BE; mất số điểm dữ liệu | Trung bình | `son` + `tai` | **Cần làm** — pass-through |
@@ -113,3 +113,20 @@ python3 scripts/notes_index.py --check
 ```
 
 Mỗi task use additive (không migration, không đổi chữ ký hàm cũ), kèm test offline 100% (I7).
+
+---
+
+## 5. Nhật ký triển khai (đọc đầu tiên ở phiên tiếp theo)
+
+> Mỗi gap hoàn thành ghi 1 mục ở đây để phiên sau không phân tích lại. Thứ tự đề xuất:
+> **GAP-01** ✅ → GAP-02/03/04 (analysis pass-through) → GAP-06 (SSE) → GAP-07 (/patterns) → GAP-05 (FE mock) → GAP-13 (toast) → GAP-10/11 (docs/FE nhỏ) → GAP-08/09/12 (thấp).
+
+### GAP-01 — `/clusters` trả `dominant_place` & `radius_km` — ✅ CODE XONG (2026-11-22)
+
+- **Nhánh:** `feat/2026-11-22-cluster-contract-fields-thien`
+- **Proposal / Plan / Testcase:** `2026-11-22-cluster-contract-fields-thien` (§9 Approved), `.agents/notes/implemented/...`, `.agents/notes/testcase/...`
+- **Vấn đề đã đóng:** `_cluster()` (`routes/clusters.py:19-29`) chỉ trả 6 field + `name` có điều kiện → FE không có địa danh/bán kính thật, xếp hạng rơi `"Khác"`.
+- **Cách làm:** thêm `max_magnitude` (alias `max_mag`), `radius_km` (alias `radius`), `name` (luôn trả, `None` khi thiếu), `dominant_place` (alias `place`). Giữ nguyên 6 key/chữ ký; field thiếu → `None`, không số giả. Không migration (JSONB), không đổi schema/docs/contracts, không đụng FE.
+- **Test:** `apps/api/tests/unit/test_cluster_contract_fields.py` (mới, 3 case: canonical / legacy alias / empty); `uv run pytest` full BE **299 passed**, `ruff check/format` sạch; `cd apps/web && pnpm test` 209/209 + `pnpm build` PASS (kiểm tra drift); `notes_index --check` OK; `scope` OK.
+- **Bài học cho phiên sau:** schema `clusters.json:61-67` đã có field từ trước → không cần sửa contracts. Nguồn `summary_clusters` từ `demo_seeder` chỉ có alias legacy → `radius_km`/`max_magnitude` sẽ `None` cho tới khi T4 ghi canonical; FE đã fallback `eps_km` (đúng thiết kế).
+- **Tiếp theo:** GAP-02/03/04 — pass-through hệ số hồi quy/trạng thái/stats trong `routes/analysis.py` (T3 đã tính sẵn ở `services/analysis/patterns.py`). Có thể gom 1 proposal cho 4 route vì cùng 1 file; nhớ `analysis.json` có `additionalProperties:false` → **không** thêm `spearman_matrix`.
