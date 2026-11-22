@@ -64,8 +64,13 @@ kèm nội dung `message`, không ném lỗi 4xx/5xx.
 }
 ```
 
-Áp dụng cho: `GET /api/v1/patterns`, `/analysis/*`, `/predictions`, `/classifications`, `/clusters`
+Áp dụng cho: `/analysis/*`, `/predictions`, `/classifications`, `/clusters`
 khi worker chưa chạy hoặc dữ liệu đã bị xóa rỗng.
+
+> **Ngoại lệ `GET /api/v1/patterns` (GAP-11):** endpoint tổng hợp trả rỗng bằng shape riêng
+> `{ "success": false, "total_patterns": 0, "patterns": [], "message": "..." }` (HTTP 200),
+> **không có khóa `data`**. Shape này khớp `contracts/schemas/patterns.json` (không định nghĩa
+> `data` ở root) và FE vẫn hiển thị Empty State; không sửa schema.
 
 ### Phản hồi thất bại (HTTP 4xx / 5xx)
 ```json
@@ -222,7 +227,8 @@ Thống kê nhanh các chỉ số địa chấn tổng quan phục vụ thẻ Da
 Trả về cả 6 bản ghi pattern trong một phản hồi, dùng làm hợp đồng chính cho FE (`contracts/schemas/patterns.json`).
 Mỗi phần tử gồm `id` (`pattern_1` … `pattern_6`), `name`, `type`, `status` (`COMPUTED` / `PENDING`),
 `period`, `metrics` (dạng object theo từng pattern) và `total_patterns`, `clustering_summary`, `last_updated`.
-Khi chưa có bản ghi → `success: false`, `data: null`, `message` (xem §2).
+Khi chưa có bản ghi → `{ "success": false, "total_patterns": 0, "patterns": [], "message": "..." }`
+(HTTP 200, **không có khóa `data`** — xem ngoại lệ ở §2; FE vẫn hiển thị Empty State).
 
 #### Pattern 1: `GET /api/v1/analysis/temporal`
 Cung cấp dữ liệu vẽ 3 biểu đồ bắt buộc: Line chart, Scatter plot và Histogram.

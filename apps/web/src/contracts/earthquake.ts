@@ -54,6 +54,11 @@ export interface EarthquakeListResponse {
 }
 
 export interface HourlyTimeSeriesPoint {
+  /**
+   * Nhãn hiển thị do BE tạo (`HH:MM`, ví dụ "09:00"), KHÔNG phải mốc ISO 8601.
+   * Quyết định 2026-11-22 (GAP-10): giữ payload BE, FE không parse bằng new Date()/isUtcTimestamp;
+   * chỉ đổi múi giờ ở tầng hiển thị nếu cần (UTC / UTC+7).
+   */
   time: string;
   count: number;
   avg_mag: number;
