@@ -72,10 +72,35 @@ def test_new_event_emits_earthquake_detected_without_alert(monkeypatch):
 def test_strong_event_emits_earthquake_alert(monkeypatch):
     new = [{"id": 11, "magnitude": 4.5}, {"id": 12, "magnitude": 3.0}]
     packets = _collect(monkeypatch, _state(), [_state(new_events=new, max_id=12)])
-    assert _names(packets) == ["heartbeat", "earthquake_detected", "earthquake_alert"]
-    alert = packets[-1]["data"]
+    assert _names(packets) == [
+        "heartbeat",
+        "earthquake_detected",
+        "earthquake_alert",
+        "alert",
+    ]
+    alert = packets[-2]["data"]
     assert [e["id"] for e in alert["alert_events"]] == [11]
     assert alert["max_magnitude"] == 4.5
+
+
+def test_packets_carry_id_and_retry(monkeypatch):
+    packets = _collect(monkeypatch, _state(), [])
+    packet = packets[0]
+
+    assert packet["id"].startswith("gdmas-")
+    assert packet["retry"] == 5_000
+    assert packet["timestamp"].endswith("Z")
+
+
+def test_alert_alias_carries_same_payload(monkeypatch):
+    new = [{"id": 11, "magnitude": 4.5, "latitude": 38.2, "longitude": 142.4}]
+    packets = _collect(monkeypatch, _state(), [_state(new_events=new, max_id=12)])
+    alert, alias = packets[-2], packets[-1]
+
+    assert alert["event"] == "earthquake_alert"
+    assert alias["event"] == "alert"
+    assert alert["data"] == alias["data"]
+    assert alias["id"] != alert["id"]
 
 
 def test_earthquake_detected_has_flat_marker_fields(monkeypatch):
@@ -160,7 +185,7 @@ def test_db_error_then_empty_db_still_reports_cleared_once(monkeypatch):
 def test_packets_follow_contract_with_utc_timestamp(monkeypatch):
     packets = _collect(monkeypatch, _state(), [])
     packet = packets[0]
-    assert set(packet) == {"event", "data", "timestamp"}
+    assert set(packet) == {"event", "data", "timestamp", "id", "retry"}
     assert packet["timestamp"].endswith("Z")
 
 

@@ -36,7 +36,7 @@ Bảng dưới đây phân biệt rõ: **Field đã có trong schema repo → th
 | **GAP-13** | Toast "Dữ liệu đã được cập nhật" bắn theo đồng hồ cục bộ, không theo SSE; SSE `ingestion_cycle_completed` (5 phút) chỉ được dùng để phục hồi DB | `DataRefreshLabel.tsx:24-30`; `useDatabaseReset.ts:48-58` | BE phát `ingestion_cycle_completed` mỗi chu kỳ T2 (`sse.py:256-266`) | Toast báo cập nhật giả; event thật không bắn toast | Trung bình | `thien` (FE) | ✅ **Đã xong code + validation** — giữ toast cũ, đổi nguồn kích hoạt sang SSE (xem §5) |
 | **GAP-07** | `/patterns` P5 thiếu `metric_name`, `model_version`, `evaluation_metrics`, `generated_at`; P6 thiếu `model_version`, `evaluation_metrics` | `patterns.ts:9-17`; `chart-types.ts:138-163`; `contracts/README.md:98` | `routes/patterns.py:103-157`; DB đã có (`models/prediction.py:25,31-39,57-63`) | Typed view FE đọc `undefined`; UI hiện "chưa có dữ liệu kiểm định" dù DB có số | Trung bình | `tai` + `thien` | ✅ **Đã xong code + validation** — ghi chú contracts cập nhật, BE `/patterns` pass-through field (xem §5) |
 | **GAP-08** | `/predictions` thiếu top-level `confidence_level`; `/classifications` thiếu alias `probability_scores` | `predictions.ts:36`; `classifications.ts:15-16` | `routes/predictions.py:42-61,85-96` | Không chặn — FE đã adapter (`asPrediction`, `asClassification`) | Thấp | `tai` | ✅ **Đã xong** — user chọn bổ sung BE: `confidence_level` + `probability_scores` (xem §6) |
-| **GAP-09** | SSE chưa phát event `"alert"`; chưa gửi header `id:`/`retry:` | `sse.ts:8-15,25-27` | `realtime/sse.py:59-62`, phát `:192-304` | Không chặn — FE đăng ký cả tên lạ; reconnect backoff tự tính | Thấp | `tai` | Chờ quyết định bỏ `"alert"` khỏi contract hoặc phát thêm |
+| **GAP-09** | SSE chưa phát event `"alert"`; chưa gửi header `id:`/`retry:` | `sse.ts:8-15,25-27` | `realtime/sse.py:59-62`, phát `:192-304` | Không chặn — FE đăng ký cả tên lạ; reconnect backoff tự tính | Thấp | `tai` | ✅ **Đã xong** — user chọn bổ sung BE: phát `alert` + `id`/`retry` (xem dưới) |
 | **GAP-10** | `time_series_preview[].time` là `"HH:MM"` thay vì ISO 8601 UTC | `earthquake.ts:56-60`; `API.md:211`; `earthquake.json:21` | `routes/statistics.py:52` `strftime("%H:%M")` | FE đọc chuỗi `string` nên không crash, nhưng lệch `I3` nếu dùng làm mốc thời gian | Trung bình | `thien` (FE) | ✅ **Đã xong** — comment contract `earthquake.ts`: `time` là nhãn `HH:MM`, không parse ISO (xem §5) |
 | **GAP-11** | Empty state `/patterns` mâu thuẫn nội bộ: prose `API.md` đòi `data:null`, schema `patterns.json` lại không định nghĩa `data` | `common.ts:95-104` `isApiEmptyEnvelope` | `routes/patterns.py:39-45` trả `{success:false,total_patterns:0,patterns:[],message}` | FE vẫn render Empty State được, nhưng contract không nhất quán | Trung bình | `thien` + `tai` | ✅ **Đã xong** — prose `docs/api/API.md` §2/§3.3 đúng shape empty `/patterns`, không sửa schema (xem §5) |
 | **GAP-12** | `/system/status` thiếu `records_processed`, `error_message`, `generated_at`; `/health` thiếu `degraded/unhealthy`, `uptime_seconds` | `system-status.ts:7-13,38-40,53`; `health.ts:6-16` | `routes/system.py:67-75,84-131` | Không chặn — FE coi `last_run` thiếu là `unknown` | Thấp | `tai` | Chờ RD-16 kéo API vào UI rồi mới biết field nào thực cần |
@@ -206,7 +206,16 @@ Mỗi task use additive (không migration, không đổi chữ ký hàm cũ), k�
 |---|---|
 | GAP-01, 02, 03, 04, 05, 06, 07, 13, 10, 11 | ✅ code + validation + merge vào `develop` |
 | GAP-08 | ✅ Đã xong — `confidence_level` + `probability_scores` (xem dưới) |
-| GAP-09, 12 | ⏸ Cần bổ sung BE theo quyết định user — đang triển khai |
+| GAP-09 | ✅ Đã xong — event `alert` + `id`/`retry` (xem dưới) |
+| GAP-12 | ⏸ Cần bổ sung BE theo quyết định user — đang triển khai |
+
+### GAP-09 — SSE phát `alert` và `id`/`retry` — ✅ CODE XONG (2026-11-22)
+
+- **Nhánh:** `feat/2026-11-22-sse-contract-events-thien`
+- **Proposal / Plan / Testcase:** `2026-11-22-sse-contract-events-thien` (§9 Approved)
+- **Đã làm:** `_packet()` thêm `id` duy nhất (`gdmas-N`, `itertools.count`) và `retry=5000` cả ở wire dict lẫn inner JSON (FE đọc inner); nhánh `earthquake_alert` phát thêm event alias `"alert"` cùng payload. Giữ nguyên `earthquake_alert`, bọc `{event,data,timestamp}`, event names cũ.
+- **Test:** bổ sung `test_sse_stream.py` (id/retry, alias alert cùng payload, set packet keys); targeted 16/16, full BE **317/317**, ruff sạch; FE 217/217 + build.
+- **Lưu ý:** `alert` cùng data với `earthquake_alert` → FE dedup theo `source_event_id` (field phẳng GAP-06), không nhân marker.
 
 ### GAP-08 — Alias `/predictions` & `/classifications` — ✅ CODE XONG (2026-11-22)
 
