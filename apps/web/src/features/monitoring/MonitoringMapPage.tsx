@@ -51,15 +51,17 @@ export const MonitoringMapPage: React.FC = () => {
   const abortRef = useRef<AbortController | null>(null);
   const { country, region, setRegion, setSelection } = useCatalogSelection();
 
-  // Mock phân cụm theo quốc gia/khu vực — thay bằng GET /api/v1/clusters khi BE sẵn sàng.
+  // Panel khu vực dùng cụm thật từ GET /api/v1/clusters (GAP-05 — không mock).
   useEffect(() => {
-    let active = true;
-    void fetchRegionClusters().then((rows) => {
-      if (active) setRegionClusters(rows);
-    });
-    return () => {
-      active = false;
-    };
+    const controller = new AbortController();
+    void fetchRegionClusters(controller.signal)
+      .then((rows) => {
+        if (!controller.signal.aborted) setRegionClusters(rows);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setRegionClusters([]);
+      });
+    return () => controller.abort();
   }, []);
 
   const bbox = useMemo(
