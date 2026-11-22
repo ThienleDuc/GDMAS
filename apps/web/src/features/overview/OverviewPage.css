@@ -273,6 +273,12 @@
   line-height: var(--leading-sm);
 }
 
+.ov-forecast__basis {
+  margin: var(--space-1) 0 0;
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+}
+
 /* Highlight các điểm quan trọng trong card dự báo */
 .ov-forecast__highlight {
   display: inline-block;

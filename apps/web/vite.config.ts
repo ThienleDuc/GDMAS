@@ -56,9 +56,15 @@ export default defineConfig(({ mode }) => {
       host: true,
       // Opt-in: dev mock (apply: "serve") chặn trước, còn lại đi qua proxy →
       // trình duyệt chỉ cần một origin, không còn CORS tới localhost:8000.
-      proxy: apiProxyTarget
-        ? { "/api": { target: apiProxyTarget, changeOrigin: true } }
-        : undefined,
+      // /tile: đưa tile CARTO về cùng origin để trình duyệt chặn CDN vẫn có bản đồ.
+      proxy: {
+        ...(apiProxyTarget ? { "/api": { target: apiProxyTarget, changeOrigin: true } } : {}),
+        "/tile": {
+          target: "https://a.basemaps.cartocdn.com",
+          changeOrigin: true,
+          rewrite: (tilePath: string) => tilePath.replace(/^\/tile/u, ""),
+        },
+      },
       watch: {
         usePolling: true,
         interval: 1000,

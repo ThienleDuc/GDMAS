@@ -11,7 +11,11 @@ interface SeismicMapProps {
   children?: React.ReactNode;
 }
 
-const TILE_URL = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+// Dev: cùng origin qua Vite proxy `/tile` (tránh chặn CDN ở client).
+// Production: URL tuyệt đối như cũ (không có proxy khi build tĩnh).
+const TILE_URL = import.meta.env.DEV
+  ? "/tile/dark_all/{z}/{x}/{y}{r}.png"
+  : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
 const ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
 

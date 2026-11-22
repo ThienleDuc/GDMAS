@@ -9,11 +9,7 @@ import {
   SeismicMap,
 } from "../../components/map/index.ts";
 import { ALL_COUNTRIES } from "../earthquakes/country-filter.ts";
-import {
-  ALL_REGIONS,
-  countriesFromPlaces,
-  filterByCountryAndRegion,
-} from "../earthquakes/region-filter.ts";
+import { filterByCountryAndRegion } from "../earthquakes/region-filter.ts";
 import { useCatalogSelection } from "../earthquakes/useCatalogSelection.ts";
 import { toMapEarthquake, viewportToBbox } from "../../lib/transforms/map-data.ts";
 import {
@@ -23,7 +19,7 @@ import {
   type MapViewState,
 } from "../../lib/transforms/map-types.ts";
 import { getEarthquakes } from "../../services/earthquake-api.ts";
-import { getCountryCatalog, getRegionCatalog } from "../../services/geo-catalog-api.ts";
+import { getRegionCatalog } from "../../services/geo-catalog-api.ts";
 import {
   applySseEvent,
   buildEarthquakeQuery,
@@ -49,8 +45,7 @@ export const MonitoringMapPage: React.FC = () => {
   const [tileError, setTileError] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [regionClusters, setRegionClusters] = useState<RegionClusterRow[]>([]);
-  // Danh mục quốc gia/khu vực do BE suy từ place — nguồn chuẩn cho bộ lọc (I5).
-  const [catalogCountries, setCatalogCountries] = useState<string[]>([]);
+  // Danh mục khu vực do BE suy từ place (quốc gia lấy từ header/URL).
   const [catalogRegions, setCatalogRegions] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const { country, region, setRegion, setSelection } = useCatalogSelection();
@@ -64,19 +59,6 @@ export const MonitoringMapPage: React.FC = () => {
       })
       .catch(() => {
         if (!controller.signal.aborted) setRegionClusters([]);
-      });
-    return () => controller.abort();
-  }, []);
-
-  // BE trả danh mục đã tách sẵn; fallback để trống → vẫn dùng dữ liệu suy từ events/cụm.
-  useEffect(() => {
-    const controller = new AbortController();
-    getCountryCatalog(controller.signal)
-      .then((catalog) => {
-        if (!controller.signal.aborted) setCatalogCountries(catalog.data.map((item) => item.country));
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setCatalogCountries([]);
       });
     return () => controller.abort();
   }, []);
@@ -108,18 +90,6 @@ export const MonitoringMapPage: React.FC = () => {
   const params = useMemo(
     () => buildEarthquakeQuery(filters, country === ALL_COUNTRIES ? bbox : null),
     [filters, bbox, country],
-  );
-
-  const countries = useMemo(
-    () =>
-      [
-        ...new Set([
-          ...catalogCountries,
-          ...countriesFromPlaces(events),
-          ...regionClusters.map((item) => item.country),
-        ]),
-      ].sort((left, right) => left.localeCompare(right)),
-    [catalogCountries, events, regionClusters],
   );
 
   const load = useCallback(async () => {
@@ -171,11 +141,6 @@ export const MonitoringMapPage: React.FC = () => {
   const handleTimeRangeChange = useCallback((timeRange: MapFilters["timeRange"]) => {
     setFilters((prev) => ({ ...prev, timeRange }));
   }, []);
-
-  const handleCountryChange = useCallback(
-    (value: string) => setSelection(value, ALL_REGIONS),
-    [setSelection],
-  );
 
   const handleClusterSelect = useCallback(
     (cluster: RegionClusterRow) => setSelection(cluster.country, cluster.region),
@@ -231,12 +196,10 @@ export const MonitoringMapPage: React.FC = () => {
             onRefresh={handleRefresh}
           />
           <MapRegionPanel
-            countries={countries}
             regions={catalogRegions}
             clusters={regionClusters}
             country={country}
             region={region}
-            onCountryChange={handleCountryChange}
             onRegionChange={setRegion}
             onClusterSelect={handleClusterSelect}
           />

@@ -4,6 +4,7 @@ import type { ClassificationsResponse } from "../../contracts/classifications.ts
 import type { ClustersResponse } from "../../contracts/clusters.ts";
 import type { EarthquakeItem, StatisticsResponse } from "../../contracts/earthquake.ts";
 import type { PredictionsResponse } from "../../contracts/predictions.ts";
+import type { CountryCatalogResponse, RegionCatalogResponse } from "../../contracts/geo-catalog.ts";
 import { isApiEmptyEnvelope } from "../../contracts/common.ts";
 import { geoQuery, type GeoFilter } from "../../contracts/geo-filter.ts";
 import { ApiError } from "../../lib/api-client.ts";
@@ -15,6 +16,7 @@ import {
   getSeasonalityAnalysis,
   getTrendAnalysis,
 } from "../../services/earthquake-api.ts";
+import { getCountryCatalog, getRegionCatalog } from "../../services/geo-catalog-api.ts";
 
 interface OverviewState {
   trend: TrendResponse | null;
@@ -22,6 +24,8 @@ interface OverviewState {
   predictions: PredictionsResponse | null;
   classifications: ClassificationsResponse | null;
   latestEvents: EarthquakeItem[];
+  countryCatalog: CountryCatalogResponse | null;
+  regionCatalog: RegionCatalogResponse | null;
   loading: boolean;
   error: string | null;
   unavailable: string[];
@@ -33,6 +37,8 @@ const INITIAL_STATE: OverviewState = {
   predictions: null,
   classifications: null,
   latestEvents: [],
+  countryCatalog: null,
+  regionCatalog: null,
   loading: true,
   error: null,
   unavailable: [],
@@ -75,8 +81,10 @@ export function useOverviewData(filter?: GeoFilter | null): OverviewData {
         { limit: 5, sort_by: "event_time", order: "desc", ...geoQuery(filter) },
         controller.signal,
       ),
+      getCountryCatalog(controller.signal),
+      getRegionCatalog(filter?.country ?? undefined, controller.signal),
     ])
-      .then(([trend, seasonality, predictions, classifications, events]) => {
+      .then(([trend, seasonality, predictions, classifications, events, countries, regions]) => {
         if (controller.signal.aborted) return;
 
         const unavailable: string[] = [];
@@ -111,6 +119,14 @@ export function useOverviewData(filter?: GeoFilter | null): OverviewData {
           predictions: pick(predictions, "GET /api/v1/predictions"),
           classifications: pick(classifications, "GET /api/v1/classifications"),
           latestEvents: latest,
+          countryCatalog:
+            countries.status === "fulfilled" && Array.isArray(countries.value?.data)
+              ? countries.value
+              : null,
+          regionCatalog:
+            regions.status === "fulfilled" && Array.isArray(regions.value?.data)
+              ? regions.value
+              : null,
           loading: false,
           error,
           unavailable,

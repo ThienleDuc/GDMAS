@@ -11,7 +11,9 @@ const read = (relativePath: string): string =>
 test("TC-01: Vite config có proxy opt-in cho /api tới VITE_API_PROXY_TARGET", () => {
   const source = read("apps/web/vite.config.ts");
   assert.match(source, /VITE_API_PROXY_TARGET/u);
-  assert.match(source, /proxy:\s*apiProxyTarget/u);
+  // Cập nhật 2026-11-23: proxy giờ là object chứa cả /api (opt-in) và /tile (luôn bật).
+  assert.match(source, /proxy:\s*\{/u);
+  assert.match(source, /\.\.\.\(apiProxyTarget \? \{/u);
   assert.match(source, /["']\/api["']\s*:\s*\{\s*target:\s*apiProxyTarget,\s*changeOrigin:\s*true/u);
 });
 
