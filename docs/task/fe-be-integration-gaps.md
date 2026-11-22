@@ -37,8 +37,8 @@ Bảng dưới đây phân biệt rõ: **Field đã có trong schema repo → th
 | **GAP-07** | `/patterns` P5 thiếu `metric_name`, `model_version`, `evaluation_metrics`, `generated_at`; P6 thiếu `model_version`, `evaluation_metrics` | `patterns.ts:9-17`; `chart-types.ts:138-163`; `contracts/README.md:98` | `routes/patterns.py:103-157`; DB đã có (`models/prediction.py:25,31-39,57-63`) | Typed view FE đọc `undefined`; UI hiện "chưa có dữ liệu kiểm định" dù DB có số | Trung bình | `tai` + `thien` | ✅ **Đã xong code + validation** — ghi chú contracts cập nhật, BE `/patterns` pass-through field (xem §5) |
 | **GAP-08** | `/predictions` thiếu top-level `confidence_level`; `/classifications` thiếu alias `probability_scores` | `predictions.ts:36`; `classifications.ts:15-16` | `routes/predictions.py:42-61,85-96` | Không chặn — FE đã adapter (`asPrediction`, `asClassification`) | Thấp | `tai` | Chờ thống nhất: FE adapter đủ dùng, ưu tiên giữ BE tối giản |
 | **GAP-09** | SSE chưa phát event `"alert"`; chưa gửi header `id:`/`retry:` | `sse.ts:8-15,25-27` | `realtime/sse.py:59-62`, phát `:192-304` | Không chặn — FE đăng ký cả tên lạ; reconnect backoff tự tính | Thấp | `tai` | Chờ quyết định bỏ `"alert"` khỏi contract hoặc phát thêm |
-| **GAP-10** | `time_series_preview[].time` là `"HH:MM"` thay vì ISO 8601 UTC | `earthquake.ts:56-60`; `API.md:211`; `earthquake.json:21` | `routes/statistics.py:52` `strftime("%H:%M")` | FE đọc chuỗi `string` nên không crash, nhưng lệch `I3` nếu dùng làm mốc thời gian | Trung bình | `thien` (FE) | **Cần làm (FE)** — user chọn sửa FE, không sửa BE: comment contract `earthquake.ts` xác định `time` là nhãn hiển thị, không parse ISO |
-| **GAP-11** | Empty state `/patterns` mâu thuẫn nội bộ: prose `API.md` đòi `data:null`, schema `patterns.json` lại không định nghĩa `data` | `common.ts:95-104` `isApiEmptyEnvelope` | `routes/patterns.py:39-45` trả `{success:false,total_patterns:0,patterns:[],message}` | FE vẫn render Empty State được, nhưng contract không nhất quán | Trung bình | `thien` + `tai` | **Cần làm (docs)** — user "không sửa schema": chỉ cập nhật prose `docs/api/API.md` §2/§3.3 đúng shape empty thực tế |
+| **GAP-10** | `time_series_preview[].time` là `"HH:MM"` thay vì ISO 8601 UTC | `earthquake.ts:56-60`; `API.md:211`; `earthquake.json:21` | `routes/statistics.py:52` `strftime("%H:%M")` | FE đọc chuỗi `string` nên không crash, nhưng lệch `I3` nếu dùng làm mốc thời gian | Trung bình | `thien` (FE) | ✅ **Đã xong** — comment contract `earthquake.ts`: `time` là nhãn `HH:MM`, không parse ISO (xem §5) |
+| **GAP-11** | Empty state `/patterns` mâu thuẫn nội bộ: prose `API.md` đòi `data:null`, schema `patterns.json` lại không định nghĩa `data` | `common.ts:95-104` `isApiEmptyEnvelope` | `routes/patterns.py:39-45` trả `{success:false,total_patterns:0,patterns:[],message}` | FE vẫn render Empty State được, nhưng contract không nhất quán | Trung bình | `thien` + `tai` | ✅ **Đã xong** — prose `docs/api/API.md` §2/§3.3 đúng shape empty `/patterns`, không sửa schema (xem §5) |
 | **GAP-12** | `/system/status` thiếu `records_processed`, `error_message`, `generated_at`; `/health` thiếu `degraded/unhealthy`, `uptime_seconds` | `system-status.ts:7-13,38-40,53`; `health.ts:6-16` | `routes/system.py:67-75,84-131` | Không chặn — FE coi `last_run` thiếu là `unknown` | Thấp | `tai` | Chờ RD-16 kéo API vào UI rồi mới biết field nào thực cần |
 
 ---
@@ -188,4 +188,21 @@ Mỗi task use additive (không migration, không đổi chữ ký hàm cũ), k�
 - **Cách làm:** helper thuần `dataRefreshKey(event)` trong `header-data.ts`; `DashboardLayout` derive key từ `sse.data` → `HeaderActions` → `DataRefreshLabel` (prop tùy chọn); effect mở toast khi key đổi; countdown chỉ `onRefresh()`. Giữ nguyên toast/CSS (không CSS lại).
 - **Test:** `apps/web/tests/header-sse-refresh.test.ts` mới (3 case: key, event khác, wiring + countdown không bắn toast); FE **215/215** PASS, build PASS; notes OK; scope OK.
 - **Bài học:** chỉ đổi nguồn kích hoạt, không đổi UI — CSS toast cũ giữ nguyên theo yêu cầu.
-- **Còn lại (cần quyết định/ngoài scope implementation tự động):** GAP-08 (alias `/predictions` — FE adapter đủ dùng), GAP-09 (event `"alert"` / header `id`,`retry` — cần chọn bỏ khỏi contract hay phát thêm), GAP-12 (field optional `/system/status` — cần BE đổi). GAP-10/11 (comment contract + prose API.md) là nhỏ, trong scope — làm tiếp.
+- **Còn lại (cần quyết định/ngoài scope implementation tự động):** GAP-08 (alias `/predictions` — FE adapter đủ dùng), GAP-09 (event `"alert"` / header `id`,`retry` — cần chọn bỏ khỏi contract hay phát thêm), GAP-12 (field optional `/system/status` — cần BE đổi).
+
+### GAP-10/11 — Ghi chú hợp đồng — ✅ CODE XONG (2026-11-22)
+
+- **Nhánh:** `docs/2026-11-22-contract-notes-thien`
+- **Proposal / Plan / Testcase:** `2026-11-22-contract-notes-thien` (§9 Approved)
+- **Đã làm:** FE contract `earthquake.ts` comment `HourlyTimeSeriesPoint.time` là nhãn `HH:MM`, không parse ISO (GAP-10 — user chọn sửa FE, không sửa BE); `docs/api/API.md` §2/§3.3 prose đúng shape empty `/patterns` `{success:false,total_patterns:0,patterns:[],message}` **không có `data`** (GAP-11 — user chọn không sửa schema).
+- **Test:** `apps/web/tests/api-contract-notes.test.ts` (2 source assertions); FE **217/217** + build; scripts docs test 10/10; notes OK.
+- **Không đổi:** runtime, type, BE, `contracts/schemas/**`.
+
+---
+
+## 6. Trạng thái tổng kết
+
+| Nhóm | Trạng thái |
+|---|---|
+| GAP-01, 02, 03, 04, 05, 06, 07, 13, 10, 11 | ✅ code + validation + merge vào `develop` |
+| GAP-08, 09, 12 | ⏸ Cần quyết định/ngoài scope tự động — hỏi người dùng ở cuối phiên |
