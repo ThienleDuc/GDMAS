@@ -15,7 +15,10 @@ import {
   type EarthquakeFilters,
 } from "./earthquake-view.ts";
 import { mapRangeToInterval } from "./earthquake-insights.ts";
-import { ALL_COUNTRIES, countriesFromItems, filterItemsByCountry } from "./country-filter.ts";
+import { countriesFromItems } from "./country-filter.ts";
+import { geoQuery } from "../../contracts/geo-filter.ts";
+import { ALL_REGIONS, filterByCountryAndRegion, regionsFromItems } from "./region-filter.ts";
+import { useCatalogSelection } from "./useCatalogSelection.ts";
 import { AsyncStatePanel } from "./components/AsyncStatePanel.tsx";
 import { EarthquakeDetailPanel, type DetailState } from "./components/EarthquakeDetailPanel.tsx";
 import { EarthquakeFilterBar, type EarthquakeFilterValues } from "./components/EarthquakeFilterBar.tsx";
@@ -49,7 +52,8 @@ export const EarthquakesPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [timezone] = useState<TimezoneMode>(() => getStoredTimezone());
   const [refreshKey, setRefreshKey] = useState(0);
-  const [selectedCountry, setSelectedCountry] = useState(ALL_COUNTRIES);
+  // Nguồn sự thật là URL ?country=&region= — đồng bộ với header/bản đồ.
+  const { country: selectedCountry, region: selectedRegion, setSelection } = useCatalogSelection();
   const [chartItems, setChartItems] = useState<EarthquakeItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detail, setDetail] = useState<EarthquakeItem | null>(null);
@@ -81,12 +85,21 @@ export const EarthquakesPage: React.FC = () => {
     [appliedForm],
   );
 
+  const geo = useMemo(
+    () => ({ country: selectedCountry, region: selectedRegion }),
+    [selectedCountry, selectedRegion],
+  );
+
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
 
-    fetchPage(buildEarthquakeQuery(filters, page, DEFAULT_PAGE_SIZE), undefined, controller.signal)
+    fetchPage(
+      { ...buildEarthquakeQuery(filters, page, DEFAULT_PAGE_SIZE), ...geoQuery(geo) },
+      undefined,
+      controller.signal,
+    )
       .then((result) => {
         if (controller.signal.aborted) return;
         setItems(result.data);
@@ -107,12 +120,16 @@ export const EarthquakesPage: React.FC = () => {
       });
 
     return () => controller.abort();
-  }, [filters, page, refreshKey]);
+  }, [filters, page, refreshKey, selectedCountry, selectedRegion]);
 
   // Chart aggregates over all events in the selected time window, not only the current table page.
   useEffect(() => {
     const controller = new AbortController();
-    fetchPage(buildEarthquakeQuery(filters, 1, CHART_PAGE_SIZE), undefined, controller.signal)
+    fetchPage(
+      { ...buildEarthquakeQuery(filters, 1, CHART_PAGE_SIZE), ...geoQuery(geo) },
+      undefined,
+      controller.signal,
+    )
       .then((result) => {
         if (!controller.signal.aborted) setChartItems(result.data);
       })
@@ -120,23 +137,24 @@ export const EarthquakesPage: React.FC = () => {
         if (!controller.signal.aborted) setChartItems([]);
       });
     return () => controller.abort();
-  }, [filters, refreshKey]);
+  }, [filters, refreshKey, selectedCountry, selectedRegion]);
 
   const countries = useMemo(() => countriesFromItems(chartItems), [chartItems]);
-  const chartFiltered = useMemo(
-    () => filterItemsByCountry(chartItems, selectedCountry),
+  const regions = useMemo(
+    () => regionsFromItems(chartItems, selectedCountry),
     [chartItems, selectedCountry],
   );
-  const visibleItems = useMemo(() => filterItemsByCountry(items, selectedCountry), [items, selectedCountry]);
+  const chartFiltered = useMemo(
+    () => filterByCountryAndRegion(chartItems, selectedCountry, selectedRegion),
+    [chartItems, selectedCountry, selectedRegion],
+  );
+  const visibleItems = useMemo(
+    () => filterByCountryAndRegion(items, selectedCountry, selectedRegion),
+    [items, selectedCountry, selectedRegion],
+  );
   const rows = useMemo(() => visibleItems.map((item) => formatEventRow(item, timezone)), [visibleItems, timezone]);
   const viewState = deriveViewState({ loading, error, data: rows });
-  const insights = useEarthquakeInsights(mapRangeToInterval(appliedForm.range), refreshKey);
-
-  useEffect(() => {
-    if (selectedCountry !== ALL_COUNTRIES && !countries.includes(selectedCountry)) {
-      setSelectedCountry(ALL_COUNTRIES);
-    }
-  }, [countries, selectedCountry]);
+  const insights = useEarthquakeInsights(mapRangeToInterval(appliedForm.range), refreshKey, geo);
 
   // RD-13: nạp chi tiết sự kiện theo dòng đã chọn — abort khi đổi dòng/unmount (tránh race).
   useEffect(() => {
@@ -175,7 +193,13 @@ export const EarthquakesPage: React.FC = () => {
   };
 
   const handleCountryChange = (country: string) => {
-    setSelectedCountry(country);
+    setSelection(country, ALL_REGIONS);
+    setPage(1);
+    setSelectedId(null);
+  };
+
+  const handleRegionChange = (region: string) => {
+    setSelection(selectedCountry, region);
     setPage(1);
     setSelectedId(null);
   };
@@ -194,6 +218,9 @@ export const EarthquakesPage: React.FC = () => {
         countries={countries}
         selectedCountry={selectedCountry}
         onCountryChange={handleCountryChange}
+        regions={regions}
+        selectedRegion={selectedRegion}
+        onRegionChange={handleRegionChange}
         loading={insights.loading}
         error={insights.error?.message ?? null}
         unavailable={insights.unavailable}

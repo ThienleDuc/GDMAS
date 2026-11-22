@@ -1,6 +1,7 @@
 import logging
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -9,6 +10,10 @@ from gdmas.api.errors import error_response
 from gdmas.api.routes.system import _iso
 from gdmas.db.connection import get_db
 from gdmas.models.prediction import ClassificationResult, PredictionResult
+from gdmas.services.analysis.filtered import (
+    InsufficientDataError,
+    build_filtered_forecast,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +26,22 @@ def _empty(message: str) -> dict:
 
 
 @router.get("/predictions")
-def get_latest_prediction(db: Session = Depends(get_db)):
+def get_latest_prediction(
+    country: str | None = Query(None, description="Lọc theo quốc gia"),
+    region: str | None = Query(None, description="Lọc theo khu vực"),
+    db: Session = Depends(get_db),
+):
     """Pattern 5: dự báo định lượng ngày kế tiếp (t+1) mới nhất."""
+    if country or region:
+        try:
+            return {
+                "success": True,
+                "data": build_filtered_forecast(db, country, region, datetime.now(UTC))[
+                    "prediction"
+                ],
+            }
+        except InsufficientDataError as exc:
+            return _empty(str(exc))
     try:
         row = (
             db.query(PredictionResult)
@@ -64,8 +83,22 @@ def get_latest_prediction(db: Session = Depends(get_db)):
 
 
 @router.get("/classifications")
-def get_latest_classification(db: Session = Depends(get_db)):
+def get_latest_classification(
+    country: str | None = Query(None, description="Lọc theo quốc gia"),
+    region: str | None = Query(None, description="Lọc theo khu vực"),
+    db: Session = Depends(get_db),
+):
     """Pattern 6: nhãn mức độ hoạt động địa chấn ngày kế tiếp (t+1) mới nhất."""
+    if country or region:
+        try:
+            return {
+                "success": True,
+                "data": build_filtered_forecast(db, country, region, datetime.now(UTC))[
+                    "classification"
+                ],
+            }
+        except InsufficientDataError as exc:
+            return _empty(str(exc))
     try:
         row = (
             db.query(ClassificationResult)

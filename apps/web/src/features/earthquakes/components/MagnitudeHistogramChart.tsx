@@ -7,6 +7,10 @@ interface MagnitudeHistogramChartProps {
   countries: string[];
   selectedCountry: string;
   onCountryChange: (country: string) => void;
+  /** Optional — giữ tương thích caller cũ (I2). */
+  regions?: string[];
+  selectedRegion?: string;
+  onRegionChange?: (region: string) => void;
 }
 
 export const MagnitudeHistogramChart: React.FC<MagnitudeHistogramChartProps> = ({
@@ -14,6 +18,9 @@ export const MagnitudeHistogramChart: React.FC<MagnitudeHistogramChartProps> = (
   countries,
   selectedCountry,
   onCountryChange,
+  regions = [],
+  selectedRegion = "all",
+  onRegionChange,
 }) => {
   const bins = buildMagnitudeHistogram(items);
   const max = Math.max(1, ...bins.map((item) => item.count));
@@ -33,6 +40,20 @@ export const MagnitudeHistogramChart: React.FC<MagnitudeHistogramChartProps> = (
             <option key={country} value={country}>{country}</option>
           ))}
         </select>
+        {onRegionChange && (
+          <select
+            className="ds-select"
+            aria-label="Lọc theo khu vực"
+            value={selectedRegion}
+            onChange={(event) => onRegionChange(event.target.value)}
+            disabled={selectedCountry === "all" || regions.length === 0}
+          >
+            <option value="all">Tất cả khu vực</option>
+            {regions.map((region) => (
+              <option key={region} value={region}>{region}</option>
+            ))}
+          </select>
+        )}
       </header>
       <p className="text-caption">{items.length} trận</p>
       {items.length ? (

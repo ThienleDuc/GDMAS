@@ -99,6 +99,9 @@ export interface QueryEarthquakeParams {
   min_depth?: number;
   max_depth?: number;
   search?: string;
+  /** Quốc gia/khu vực do BE suy từ place (xem §3.2 API.md). */
+  country?: string;
+  region?: string;
   sort_by?: "event_time" | "magnitude" | "depth_km";
   order?: "asc" | "desc";
   start_time?: string;

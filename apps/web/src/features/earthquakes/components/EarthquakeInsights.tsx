@@ -10,6 +10,10 @@ interface EarthquakeInsightsProps {
   countries: string[];
   selectedCountry: string;
   onCountryChange: (country: string) => void;
+  /** Khu vực — optional để giữ tương thích caller cũ (I2). */
+  regions?: string[];
+  selectedRegion?: string;
+  onRegionChange?: (region: string) => void;
   loading: boolean;
   error: string | null;
   unavailable: string[];
@@ -31,6 +35,9 @@ export const EarthquakeInsights: React.FC<EarthquakeInsightsProps> = ({
   countries,
   selectedCountry,
   onCountryChange,
+  regions = [],
+  selectedRegion = "all",
+  onRegionChange,
   loading,
   error,
   unavailable,
@@ -56,6 +63,9 @@ export const EarthquakeInsights: React.FC<EarthquakeInsightsProps> = ({
         countries={countries}
         selectedCountry={selectedCountry}
         onCountryChange={onCountryChange}
+        regions={regions}
+        selectedRegion={selectedRegion}
+        onRegionChange={onRegionChange}
       />
       <div className="eq-overview__kpis">
         <KpiCard label="Tổng số trận" value={stats?.total_events} />

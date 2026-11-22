@@ -470,6 +470,44 @@
           "summary": "Get Earthquake Statistics",
           "description": "Chỉ số KPI và chuỗi thời gian cho Dashboard.\n\nDB rỗng trả toàn số 0 và time_series_preview rỗng; DB lỗi trả 500 DATABASE_ERROR.",
           "operationId": "get_earthquake_statistics_api_v1_statistics_earthquakes_get",
+          "parameters": [
+            {
+              "name": "country",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo quốc gia",
+                "title": "Country"
+              },
+              "description": "Lọc theo quốc gia"
+            },
+            {
+              "name": "region",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo khu vực",
+                "title": "Region"
+              },
+              "description": "Lọc theo khu vực"
+            }
+          ],
           "responses": {
             "200": {
               "description": "Successful Response",
@@ -477,6 +515,16 @@
                 "application/json": {
                   "schema": {
                     "$ref": "#/components/schemas/StatisticsResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
                   }
                 }
               }
@@ -612,12 +660,60 @@
           "summary": "Get Latest Prediction",
           "description": "Pattern 5: dự báo định lượng ngày kế tiếp (t+1) mới nhất.",
           "operationId": "get_latest_prediction_api_v1_predictions_get",
+          "parameters": [
+            {
+              "name": "country",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo quốc gia",
+                "title": "Country"
+              },
+              "description": "Lọc theo quốc gia"
+            },
+            {
+              "name": "region",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo khu vực",
+                "title": "Region"
+              },
+              "description": "Lọc theo khu vực"
+            }
+          ],
           "responses": {
             "200": {
               "description": "Successful Response",
               "content": {
                 "application/json": {
                   "schema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
                 }
               }
             }
@@ -632,12 +728,60 @@
           "summary": "Get Latest Classification",
           "description": "Pattern 6: nhãn mức độ hoạt động địa chấn ngày kế tiếp (t+1) mới nhất.",
           "operationId": "get_latest_classification_api_v1_classifications_get",
+          "parameters": [
+            {
+              "name": "country",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo quốc gia",
+                "title": "Country"
+              },
+              "description": "Lọc theo quốc gia"
+            },
+            {
+              "name": "region",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo khu vực",
+                "title": "Region"
+              },
+              "description": "Lọc theo khu vực"
+            }
+          ],
           "responses": {
             "200": {
               "description": "Successful Response",
               "content": {
                 "application/json": {
                   "schema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
                 }
               }
             }
@@ -699,6 +843,42 @@
                 "title": "End Time"
               },
               "description": "ISO 8601 UTC"
+            },
+            {
+              "name": "country",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo quốc gia",
+                "title": "Country"
+              },
+              "description": "Lọc theo quốc gia"
+            },
+            {
+              "name": "region",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo khu vực",
+                "title": "Region"
+              },
+              "description": "Lọc theo khu vực"
             }
           ],
           "responses": {
@@ -753,6 +933,42 @@
                 "default": "count",
                 "title": "Metric"
               }
+            },
+            {
+              "name": "country",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo quốc gia",
+                "title": "Country"
+              },
+              "description": "Lọc theo quốc gia"
+            },
+            {
+              "name": "region",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo khu vực",
+                "title": "Region"
+              },
+              "description": "Lọc theo khu vực"
             }
           ],
           "responses": {
@@ -785,12 +1001,60 @@
           "summary": "Get Seasonality",
           "description": "Pattern 3: tính chu kỳ / mùa vụ.",
           "operationId": "get_seasonality_api_v1_analysis_seasonality_get",
+          "parameters": [
+            {
+              "name": "country",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo quốc gia",
+                "title": "Country"
+              },
+              "description": "Lọc theo quốc gia"
+            },
+            {
+              "name": "region",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo khu vực",
+                "title": "Region"
+              },
+              "description": "Lọc theo khu vực"
+            }
+          ],
           "responses": {
             "200": {
               "description": "Successful Response",
               "content": {
                 "application/json": {
                   "schema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
                 }
               }
             }
@@ -805,12 +1069,60 @@
           "summary": "Get Correlation",
           "description": "Pattern 4: ma trận tương quan.",
           "operationId": "get_correlation_api_v1_analysis_correlation_get",
+          "parameters": [
+            {
+              "name": "country",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo quốc gia",
+                "title": "Country"
+              },
+              "description": "Lọc theo quốc gia"
+            },
+            {
+              "name": "region",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo khu vực",
+                "title": "Region"
+              },
+              "description": "Lọc theo khu vực"
+            }
+          ],
           "responses": {
             "200": {
               "description": "Successful Response",
               "content": {
                 "application/json": {
                   "schema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
                 }
               }
             }

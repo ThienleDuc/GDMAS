@@ -20,6 +20,13 @@
     gap: var(--space-4);
   }
 
+  .stat-page__filters {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
   .stat-page__title {
     margin: 0;
     color: var(--foreground);
