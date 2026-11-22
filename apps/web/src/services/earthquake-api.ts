@@ -134,9 +134,10 @@ export async function getEarthquakeStatistics(
 /**
  * Kích hoạt đồng bộ hóa dữ liệu trực tiếp từ USGS Feed
  */
-export async function syncUsgsData(): Promise<SyncResponse> {
+export async function syncUsgsData(signal?: AbortSignal): Promise<SyncResponse> {
   return fetchApi<SyncResponse>("/api/v1/earthquakes/sync", {
     method: "POST",
+    signal,
   });
 }
 

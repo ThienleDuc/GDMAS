@@ -80,7 +80,7 @@ Các route này **đã có trên BE và khớp contract FE**, nhưng service FE 
 ## 4. Nhật ký triển khai (đọc đầu tiên ở phiên tiếp theo)
 
 > Mỗi proposal hoàn thành ghi 1 mục ở đây để phiên sau **không phải phân tích lại từ đầu**.
-> Thứ tự proposal đã chia: **(1) RD-15** ✅ · **(2) RD-13** ✅ · **(3) RD-17** ✅ · **(4) RD-16** ✅ · (5) RD-14.
+> Thứ tự proposal đã chia: **(1) RD-15** ✅ · **(2) RD-13** ✅ · **(3) RD-17** ✅ · **(4) RD-16** ✅ · **(5) RD-14** ✅ — **hoàn tất toàn bộ file task**.
 > RD-01…RD-12 chỉ là kiểm chứng hợp đồng, không cần proposal riêng.
 
 ### Proposal 1 — RD-15: Fallback cụm thật từ `/patterns` — ✅ ĐÃ GIẢI QUYẾT (2026-11-22)
@@ -141,4 +141,33 @@ Các route này **đã có trên BE và khớp contract FE**, nhưng service FE 
   - `HeaderActions.tsx`: thêm 1 widget trước `RealtimeClock` (giữ thứ tự Clock → Theme); `layout.css`: class `.layout__system-*` chỉ CSS token.
   - **Không đổi:** BE/contracts, `/settings`, card strip trên `/`, service/contract FE, SSE/countdown/theme.
 - **Test:** `apps/web/tests/terminal-status.test.ts` (mới, 9 case: 7 key, missing `last_run` → unknown, stale/interrupted, summary, payload rỗng, wiring, không restore route); `pnpm test` → **202/202 pass**, `pnpm build` PASS; `notes_index --check` OK.
-- **Lưu ý cho phiên sau:** `postgres`/`api`/`frontend` từ BE **không có `last_run`** → luôn `unknown` dù `status:"running"/"active"` (đúng I3 — không suy diễn). `evaluateServiceFreshness` bỏ qua `status`, nên qty summary phải lọc cả `status` lẫn freshness (đã làm). Proposal cuối = **RD-14** (nút "Đồng bộ ngay" gọi `syncUsgsData()`, có xác nhận + disable khi chạy + refresh danh sách); cân nhắc chỉ cho vai trò vận hành.
+- **Lưu ý cho phiên sau:** `postgres`/`api`/`frontend` từ BE **không có `last_run`** → luôn `unknown` dù `status:"running"/"active"` (đúng I3 — không suy diễn). `evaluateServiceFreshness` bỏ qua `status`, nên summary phải lọc cả `status` lẫn freshness (đã làm).
+
+### Proposal 5 — RD-14: Nút "Đồng bộ ngay" từ USGS — ✅ ĐÃ GIẢI QUYẾT (2026-11-22)
+
+- **Nhánh:** `feat/2026-11-22-usgs-sync-button-thien`
+- **Proposal:** `.agents/notes/proposed/2026-11-22-usgs-sync-button-thien.md` (§9 Approved)
+- **Plan / Testcase:** `.agents/notes/implemented/2026-11-22-usgs-sync-button-thien/`, `.agents/notes/testcase/2026-11-22-usgs-sync-button-thien.md`
+- **Vấn đề đã đóng:** `syncUsgsData()` chỉ có định nghĩa, không consumer → người dùng không thể kích hoạt `POST /api/v1/earthquakes/sync` (đã có BE, ghi DB thật).
+- **Cách làm:**
+  - `features/earthquakes/usgs-sync.ts` (mới): state machine `syncReducer` (`idle→confirming→loading→done|error→idle`), `formatSyncMessage` (dùng `synced_count` thật, timestamp `Z`), `syncErrorMessage` (503/500/0).
+  - `components/UsgsSyncButton.tsx` (mới): bấm lần 1 → xác nhận inline "Đồng bộ dữ liệu USGS? Thao tác này ghi vào CSDL." + [Xác nhận]/[Hủy]; disable khi `syncing`; `AbortController` + `mountedRef`; success → `onSynced()` refresh; `role="status"`/`"alert"`. Không `window.confirm()`, không mock runtime.
+  - `EarthquakesPage.tsx/.css`: nút cạnh "Tải lại", `handleSynced` tăng `refreshKey`; CSS `.eq-sync-*` token-only.
+  - **Deviation bắt buộc:** `isApiEnvelope()` (`contracts/common.ts`) bắt buộc `data` → chặn payload `SyncResponse` `{success:true,message,synced_count,source,timestamp}` dù BE trả 200 (đã reproduce). Đã mở rộng accept shape `/sync` (giống RD-15). `syncUsgsData(signal?)` thêm tham số tùy chọn để abort.
+  - **Không đổi:** BE, `contracts/**` repo-level, docs API, dev-mock POST (vẫn 404), auth.
+- **Test:** `apps/web/tests/usgs-sync.test.ts` (mới, 7 case: 200 shape thật + POST, 503/500, signal, reducer, cancel, format, wiring, không mock runtime); `pnpm test` → **209/209 pass**, `pnpm build` PASS; `notes_index --check` OK; `scope` OK.
+- **Quyết định của user 2026-11-22:** website mở, ai cũng dùng được → **không làm auth**, `/sync` giữ public. Nút xác nhận 2 bước chỉ để tránh click nhầm (POST có tác dụng phụ ghi DB), không phải bảo mật. Không tạo role giả (I5).
+
+---
+
+## 5. Trạng thái tổng kết chuỗi proposal
+
+| Proposal | Task | Trạng thái |
+|---|---|---|
+| 1 | RD-15 — fallback cụm từ `/patterns` | ✅ merged (PR #55) |
+| 2 | RD-13 — panel chi tiết sự kiện | ✅ merged (PR #57) |
+| 3 | RD-17 — default SSE `/events/stream` | ✅ merged (PR #59) |
+| 4 | RD-16 — panel trạng thái 7 Terminals | ✅ merged (PR #61) |
+| 5 | RD-14 — nút đồng bộ USGS | ✅ hoàn tất code + validation, chờ commit/push |
+
+**Các gap còn lại** (không nằm trong file `ready.md`) xem [`fe-be-integration-gaps.md`](fe-be-integration-gaps.md) — GAP-05 (mock region clusters), GAP-08…GAP-12.
