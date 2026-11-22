@@ -8,6 +8,7 @@ import type { CorrelationResponse, SeasonalityResponse, TemporalResponse, TrendR
 import type { AnalysisInterval } from "../../contracts/common.ts";
 import type { ClassificationsResponse } from "../../contracts/classifications.ts";
 import type { PredictionsResponse } from "../../contracts/predictions.ts";
+import { useCatalogSelection } from "../earthquakes/useCatalogSelection.ts";
 import {
   asClassification,
   asPrediction,
@@ -75,20 +76,39 @@ function usePanel<T>(fetcher: (signal: AbortSignal) => Promise<T>, deps: React.D
 export const StatisticsDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [interval, setInterval] = useState<AnalysisInterval>("week");
   const window = useMemo(() => intervalToParams(interval), [interval]);
+  // ?country=&region= là nguồn sự thật chung — đổi phạm vi thì nạp lại 6 nguồn.
+  const { country, region } = useCatalogSelection();
+  const filter = useMemo(() => ({ country, region }), [country, region]);
+  const geo = { country, region };
 
   const temporal = usePanel<TemporalResponse>(
     (signal) =>
-      getTemporalAnalysis({ interval, start_time: window.start_time, end_time: window.end_time }, signal),
-    [interval, window],
+      getTemporalAnalysis(
+        { interval, start_time: window.start_time, end_time: window.end_time, ...geo },
+        signal,
+      ),
+    [interval, window, country, region],
   );
   const trend = usePanel<TrendResponse>(
-    (signal) => getTrendAnalysis({ resample_freq: "W", metric: "count" }, signal),
-    [],
+    (signal) => getTrendAnalysis({ resample_freq: "W", metric: "count", ...geo }, signal),
+    [country, region],
   );
-  const seasonality = usePanel<SeasonalityResponse>((signal) => getSeasonalityAnalysis({}, signal), []);
-  const correlation = usePanel<CorrelationResponse>((signal) => getCorrelationAnalysis({}, signal), []);
-  const predictions = usePanel<PredictionsResponse>((signal) => getPredictions(signal), []);
-  const classifications = usePanel<ClassificationsResponse>((signal) => getClassifications(signal), []);
+  const seasonality = usePanel<SeasonalityResponse>(
+    (signal) => getSeasonalityAnalysis(geo, signal),
+    [country, region],
+  );
+  const correlation = usePanel<CorrelationResponse>(
+    (signal) => getCorrelationAnalysis(geo, signal),
+    [country, region],
+  );
+  const predictions = usePanel<PredictionsResponse>(
+    (signal) => getPredictions(signal, filter),
+    [country, region],
+  );
+  const classifications = usePanel<ClassificationsResponse>(
+    (signal) => getClassifications(signal, filter),
+    [country, region],
+  );
 
   const temporalData = metricsFor(temporal.data);
   const trendData = metricsFor(trend.data);

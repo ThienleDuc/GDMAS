@@ -1,7 +1,7 @@
 import logging
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -14,6 +14,7 @@ from gdmas.schemas.earthquake import (
     HourlyTimeSeriesPoint,
     StatisticsResponse,
 )
+from gdmas.services.analysis.filtered import scope
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,12 @@ BUCKET_HOURS = 3
 BUCKET_COUNT = 8  # 8 khoảng x 3 giờ = 24 giờ gần nhất
 
 
-def _time_series_24h(db: Session, now_utc: datetime) -> list[HourlyTimeSeriesPoint]:
+def _time_series_24h(
+    db: Session,
+    now_utc: datetime,
+    country: str | None = None,
+    region: str | None = None,
+) -> list[HourlyTimeSeriesPoint]:
     """Chuỗi 8 khoảng 3 giờ trong 24 giờ gần nhất, tính từ dữ liệu thật (UTC)."""
     start = now_utc - timedelta(hours=BUCKET_HOURS * BUCKET_COUNT)
     bucket_seconds = BUCKET_HOURS * 3600
@@ -32,10 +38,14 @@ def _time_series_24h(db: Session, now_utc: datetime) -> list[HourlyTimeSeriesPoi
         / bucket_seconds
     ).label("bucket")
     rows = (
-        db.query(
-            bucket,
-            func.count(EarthquakeEvent.id),
-            func.avg(EarthquakeEvent.magnitude),
+        scope(
+            db.query(
+                bucket,
+                func.count(EarthquakeEvent.id),
+                func.avg(EarthquakeEvent.magnitude),
+            ),
+            country,
+            region,
         )
         .filter(
             EarthquakeEvent.event_time >= start,
@@ -57,7 +67,11 @@ def _time_series_24h(db: Session, now_utc: datetime) -> list[HourlyTimeSeriesPoi
 
 
 @router.get("/earthquakes", response_model=StatisticsResponse)
-def get_earthquake_statistics(db: Session = Depends(get_db)):
+def get_earthquake_statistics(
+    country: str | None = Query(None, description="Lọc theo quốc gia"),
+    region: str | None = Query(None, description="Lọc theo khu vực"),
+    db: Session = Depends(get_db),
+):
     """Chỉ số KPI và chuỗi thời gian cho Dashboard.
 
     DB rỗng trả toàn số 0 và time_series_preview rỗng; DB lỗi trả 500 DATABASE_ERROR.
@@ -66,39 +80,52 @@ def get_earthquake_statistics(db: Session = Depends(get_db)):
     one_day_ago = now_utc - timedelta(hours=24)
 
     try:
-        total = db.query(func.count(EarthquakeEvent.id)).scalar() or 0
+        total = (
+            scope(db.query(func.count(EarthquakeEvent.id)), country, region).scalar()
+            or 0
+        )
         strong = (
-            db.query(func.count(EarthquakeEvent.id))
+            scope(db.query(func.count(EarthquakeEvent.id)), country, region)
             .filter(EarthquakeEvent.magnitude >= 5.0)
             .scalar()
             or 0
         )
         moderate = (
-            db.query(func.count(EarthquakeEvent.id))
+            scope(db.query(func.count(EarthquakeEvent.id)), country, region)
             .filter(EarthquakeEvent.magnitude >= 4.0, EarthquakeEvent.magnitude < 5.0)
             .scalar()
             or 0
         )
         minor = (
-            db.query(func.count(EarthquakeEvent.id))
+            scope(db.query(func.count(EarthquakeEvent.id)), country, region)
             .filter(EarthquakeEvent.magnitude < 4.0)
             .scalar()
             or 0
         )
         recent_24h = (
-            db.query(func.count(EarthquakeEvent.id))
+            scope(db.query(func.count(EarthquakeEvent.id)), country, region)
             .filter(EarthquakeEvent.event_time >= one_day_ago)
             .scalar()
             or 0
         )
-        avg_mag = db.query(func.avg(EarthquakeEvent.magnitude)).scalar() or 0.0
-        max_mag = db.query(func.max(EarthquakeEvent.magnitude)).scalar() or 0.0
+        avg_mag = (
+            scope(
+                db.query(func.avg(EarthquakeEvent.magnitude)), country, region
+            ).scalar()
+            or 0.0
+        )
+        max_mag = (
+            scope(
+                db.query(func.max(EarthquakeEvent.magnitude)), country, region
+            ).scalar()
+            or 0.0
+        )
         latest = (
-            db.query(EarthquakeEvent.event_time)
+            scope(db.query(EarthquakeEvent.event_time), country, region)
             .order_by(EarthquakeEvent.event_time.desc())
             .first()
         )
-        series = _time_series_24h(db, now_utc) if total > 0 else []
+        series = _time_series_24h(db, now_utc, country, region) if total > 0 else []
     except SQLAlchemyError as exc:
         logger.error("Lỗi CSDL khi thống kê: %s", type(exc).__name__)
         return error_response(

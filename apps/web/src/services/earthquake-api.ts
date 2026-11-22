@@ -1,6 +1,7 @@
 import { ApiError, fetchApi } from "../lib/api-client.ts";
 import { clustersFromPatterns } from "../lib/transforms/cluster-fallback.ts";
 import { isUtcTimestamp, isWgs84Bounds } from "../contracts/common.ts";
+import { geoQuery, type GeoFilter } from "../contracts/geo-filter.ts";
 import type {
   ClassificationsResponse,
   ClustersResponse,
@@ -90,6 +91,8 @@ export async function getEarthquakes(
     min_depth: params.min_depth,
     max_depth: params.max_depth,
     search: params.search?.trim(),
+    country: params.country,
+    region: params.region,
     sort_by: params.sort_by,
     order: params.order,
     start_time: params.start_time,
@@ -127,8 +130,10 @@ export async function getEarthquakeDetail(
  */
 export async function getEarthquakeStatistics(
   signal?: AbortSignal,
+  filter?: GeoFilter | null,
 ): Promise<StatisticsResponse> {
-  return fetchApi<StatisticsResponse>("/api/v1/statistics/earthquakes", { signal });
+  const qs = buildQuery(geoQuery(filter));
+  return fetchApi<StatisticsResponse>(`/api/v1/statistics/earthquakes${qs}`, { signal });
 }
 
 /**
@@ -199,13 +204,20 @@ export async function getSystemStatusOptional(
 
 /** Pattern 1 — `GET /api/v1/analysis/temporal`. */
 export async function getTemporalAnalysis(
-  params: { interval?: "day" | "week" | "month"; start_time?: string; end_time?: string } = {},
+  params: {
+    interval?: "day" | "week" | "month";
+    start_time?: string;
+    end_time?: string;
+    country?: string;
+    region?: string;
+  } = {},
   signal?: AbortSignal,
 ): Promise<TemporalResponse> {
   const qs = buildQuery({
     interval: params.interval,
     start_time: params.start_time,
     end_time: params.end_time,
+    ...geoQuery(params),
   });
   return fetchApi<TemporalResponse>(`/api/v1/analysis/temporal${qs}`, { signal });
 }
@@ -223,12 +235,15 @@ export async function getTrendAnalysis(
     start_time?: string;
     /** @deprecated BE /analysis/trend không nhận end_time — xem API.md §3.3. */
     end_time?: string;
+    country?: string;
+    region?: string;
   } = {},
   signal?: AbortSignal,
 ): Promise<TrendResponse> {
   const qs = buildQuery({
     resample_freq: params.resample_freq,
     metric: params.metric,
+    ...geoQuery(params),
   });
   return fetchApi<TrendResponse>(`/api/v1/analysis/trend${qs}`, { signal });
 }
@@ -245,11 +260,13 @@ export async function getSeasonalityAnalysis(
     start_time?: string;
     /** @deprecated BE /analysis/seasonality không nhận end_time — xem API.md §3.3. */
     end_time?: string;
+    country?: string;
+    region?: string;
   } = {},
   signal?: AbortSignal,
 ): Promise<SeasonalityResponse> {
-  void params; // Chỉ giữ chữ ký; tuyệt đối không gửi param không được BE hỗ trợ.
-  return fetchApi<SeasonalityResponse>("/api/v1/analysis/seasonality", { signal });
+  const qs = buildQuery(geoQuery(params));
+  return fetchApi<SeasonalityResponse>(`/api/v1/analysis/seasonality${qs}`, { signal });
 }
 
 /**
@@ -262,25 +279,31 @@ export async function getCorrelationAnalysis(
     start_time?: string;
     /** @deprecated BE /analysis/correlation không nhận end_time — xem API.md §3.3. */
     end_time?: string;
+    country?: string;
+    region?: string;
   } = {},
   signal?: AbortSignal,
 ): Promise<CorrelationResponse> {
-  void params; // Chỉ giữ chữ ký; tuyệt đối không gửi param không được BE hỗ trợ.
-  return fetchApi<CorrelationResponse>("/api/v1/analysis/correlation", { signal });
+  const qs = buildQuery(geoQuery(params));
+  return fetchApi<CorrelationResponse>(`/api/v1/analysis/correlation${qs}`, { signal });
 }
 
 /** Pattern 5 — `GET /api/v1/predictions`. */
 export async function getPredictions(
   signal?: AbortSignal,
+  filter?: GeoFilter | null,
 ): Promise<PredictionsResponse> {
-  return fetchApi<PredictionsResponse>("/api/v1/predictions", { signal });
+  const qs = buildQuery(geoQuery(filter));
+  return fetchApi<PredictionsResponse>(`/api/v1/predictions${qs}`, { signal });
 }
 
 /** Pattern 6 — `GET /api/v1/classifications`. */
 export async function getClassifications(
   signal?: AbortSignal,
+  filter?: GeoFilter | null,
 ): Promise<ClassificationsResponse> {
-  return fetchApi<ClassificationsResponse>("/api/v1/classifications", { signal });
+  const qs = buildQuery(geoQuery(filter));
+  return fetchApi<ClassificationsResponse>(`/api/v1/classifications${qs}`, { signal });
 }
 
 /** Kết quả DBSCAN mới nhất — `GET /api/v1/clusters`. */

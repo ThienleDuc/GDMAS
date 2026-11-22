@@ -102,6 +102,7 @@ test("TC-05 — Overview không còn cửa sổ 14 ngày giả", () => {
   );
   assert.doesNotMatch(source, /toUtcIso/u);
   assert.doesNotMatch(source, /const\s+window\s*=/u);
-  assert.match(source, /getTrendAnalysis\(\{ resample_freq: "D" \}/u);
-  assert.match(source, /getSeasonalityAnalysis\(\{\}/u);
+  // Cập nhật 2026-11-23: giờ forward filter quốc gia/khu vực, vẫn không gửi cửa sổ giả.
+  assert.match(source, /getTrendAnalysis\(\{ resample_freq: "D", \.\.\.geoQuery\(filter\) \}/u);
+  assert.match(source, /getSeasonalityAnalysis\(geoQuery\(filter\)/u);
 });

@@ -4,6 +4,7 @@ import type { StatisticsResponse } from "../contracts/earthquake.ts";
 import type { TemporalResponse } from "../contracts/analysis.ts";
 import type { ClustersResponse } from "../contracts/clusters.ts";
 import { ApiError } from "../lib/api-client.ts";
+import { geoQuery, type GeoFilter } from "../contracts/geo-filter.ts";
 import { getClustersOptional, getEarthquakeStatistics, getTemporalAnalysis } from "../services/earthquake-api.ts";
 
 export interface EarthquakeInsightsState {
@@ -28,7 +29,11 @@ function isNotFound(reason: unknown): boolean {
   return reason instanceof ApiError && reason.status === 404;
 }
 
-export function useEarthquakeInsights(interval: AnalysisInterval, refreshKey = 0): EarthquakeInsightsState {
+export function useEarthquakeInsights(
+  interval: AnalysisInterval,
+  refreshKey = 0,
+  filter?: GeoFilter | null,
+): EarthquakeInsightsState {
   const [state, setState] = useState<EarthquakeInsightsState>(INITIAL_STATE);
 
   useEffect(() => {
@@ -36,8 +41,8 @@ export function useEarthquakeInsights(interval: AnalysisInterval, refreshKey = 0
     setState((previous) => ({ ...previous, loading: true, error: null, unavailable: [] }));
 
     Promise.allSettled([
-      getEarthquakeStatistics(controller.signal),
-      getTemporalAnalysis({ interval }, controller.signal),
+      getEarthquakeStatistics(controller.signal, filter),
+      getTemporalAnalysis({ interval, ...geoQuery(filter) }, controller.signal),
       getClustersOptional(controller.signal),
     ])
       .then(([statisticsResult, temporalResult, clustersResult]) => {
@@ -79,7 +84,7 @@ export function useEarthquakeInsights(interval: AnalysisInterval, refreshKey = 0
       });
 
     return () => controller.abort();
-  }, [interval, refreshKey]);
+  }, [interval, refreshKey, filter?.country, filter?.region]);
 
   return state;
 }

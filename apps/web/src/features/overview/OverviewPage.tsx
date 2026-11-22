@@ -27,8 +27,8 @@ import { useOverviewData } from "./useOverviewData.ts";
 
 /** Trang Tổng quan (Home `/`) — Bento dashboard từ API thật, không mock. */
 export const OverviewPage: React.FC = () => {
-  const data = useOverviewData();
-  const { country, setSelection } = useCatalogSelection();
+  const { country, region, setSelection } = useCatalogSelection();
+  const data = useOverviewData({ country, region });
   const sse = useSseMarkers();
   const timezone = getStoredTimezone();
 
@@ -65,7 +65,9 @@ export const OverviewPage: React.FC = () => {
               timeZone: timezone === "UTC" ? "UTC" : "Asia/Ho_Chi_Minh",
               dateStyle: "full",
             }).format(new Date())}
-            {isCountryMode ? " · Phạm vi: toàn cầu" : ` · Đang xem: ${country}`}
+            {isCountryMode
+              ? " · Phạm vi: toàn cầu"
+              : ` · Đang xem: ${country}${region !== "all" ? ` / ${region}` : ""}`}
           </p>
         </div>
         <div className="ov-hero__actions">

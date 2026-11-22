@@ -236,6 +236,14 @@ Danh mục khu vực trong một quốc gia, cũng suy từ `place`.
 #### `GET /api/v1/statistics/earthquakes`
 Thống kê nhanh các chỉ số địa chấn tổng quan phục vụ thẻ Dashboard (KPI Cards).
 
+- **Query Parameters (tùy chọn, bổ sung 2026-11-23):**
+  | Tên | Kiểu | Mặc định | Mô tả |
+  | :--- | :--- | :--- | :--- |
+  | `country` | string | - | Giới hạn KPI theo quốc gia do BE suy từ `place` |
+  | `region` | string | - | Giới hạn tiếp theo khu vực (dùng cùng `country`) |
+
+  Không truyền → số liệu toàn cục y hệt trước đây.
+
 - **Response (200 OK):**
 ```json
 {
@@ -259,6 +267,8 @@ Thống kê nhanh các chỉ số địa chấn tổng quan phục vụ thẻ Da
 ---
 
 ### 3.3. Nhóm 6 Patterns Phân Tích Chuỗi Thời Gian (Time-Series Analysis)
+
+> **Lọc phạm vi (bổ sung 2026-11-23):** `GET /api/v1/analysis/{temporal,trend,seasonality,correlation}`, `GET /api/v1/predictions` và `GET /api/v1/classifications` đều nhận 2 query param tùy chọn `country` và `region`. Khi có ít nhất một param, BE tính lại metrics/dự báo **on-the-fly từ sự kiện đã lọc** bằng chính hàm thuần của T3/T5 (`prepare_events` + `compute_*`, `build_series` + `forecast_next`/`classify_next`) — **không ghi snapshot, không đổi payload**. Không truyền → đúng đường cũ đọc bảng tổng hợp. Với P5/P6, artifact mô hình vẫn là bản huấn luyện toàn cầu; nếu phạm vi có ít hơn 10 ngày dữ liệu, BE trả Empty State `insufficient_data` (`success:false, data:null`) thay vì bịa số.
 
 #### Tổng hợp: `GET /api/v1/patterns`
 Trả về cả 6 bản ghi pattern trong một phản hồi, dùng làm hợp đồng chính cho FE (`contracts/schemas/patterns.json`).

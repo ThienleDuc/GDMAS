@@ -11,6 +11,7 @@ from gdmas.api.errors import error_response
 from gdmas.api.routes.predictions import _empty
 from gdmas.db.connection import get_db
 from gdmas.models.analysis import AnalysisResult
+from gdmas.services.analysis.filtered import compute_filtered_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +99,8 @@ def get_temporal(
     interval: str = Query("day", pattern="^(day|week|month)$"),
     start_time: str | None = Query(None, description="ISO 8601 UTC"),
     end_time: str | None = Query(None, description="ISO 8601 UTC"),
+    country: str | None = Query(None, description="Lọc theo quốc gia"),
+    region: str | None = Query(None, description="Lọc theo khu vực"),
     db: Session = Depends(get_db),
 ):
     """Pattern 1: line chart, scatter plot và histogram."""
@@ -148,6 +151,11 @@ def get_temporal(
             data["stats"] = stats
         return data
 
+    if country or region:
+        metrics = compute_filtered_metrics(
+            db, "temporal", country, region, interval=interval, start=start, end=end
+        )
+        return {"success": True, "data": build(metrics)}
     return _respond(db, "temporal", build, interval=interval, start=start, end=end)
 
 
@@ -155,6 +163,8 @@ def get_temporal(
 def get_trend(
     resample_freq: str = Query("M", pattern="^(D|W|M)$"),
     metric: str = Query("count", pattern="^(count|avg_magnitude|max_magnitude)$"),
+    country: str | None = Query(None, description="Lọc theo quốc gia"),
+    region: str | None = Query(None, description="Lọc theo khu vực"),
     db: Session = Depends(get_db),
 ):
     """Pattern 2: xu hướng sau re-sampling."""
@@ -209,12 +219,21 @@ def get_trend(
         data["status"] = source.get("status") or "computed"
         return data
 
+    if country or region:
+        metrics = compute_filtered_metrics(
+            db, "trend", country, region, interval=resample_freq, metric=metric
+        )
+        return {"success": True, "data": build(metrics)}
     # Chỉ nhận bản đúng tần suất yêu cầu; không có thì Empty State thay vì trả tần suất khác
     return _respond(db, "trend", build, interval=resample_freq, strict_interval=True)
 
 
 @router.get("/seasonality")
-def get_seasonality(db: Session = Depends(get_db)):
+def get_seasonality(
+    country: str | None = Query(None, description="Lọc theo quốc gia"),
+    region: str | None = Query(None, description="Lọc theo khu vực"),
+    db: Session = Depends(get_db),
+):
     """Pattern 3: tính chu kỳ / mùa vụ."""
 
     def build(m: dict[str, Any]) -> dict[str, Any]:
@@ -249,11 +268,18 @@ def get_seasonality(db: Session = Depends(get_db)):
                 data[field] = m[field]
         return data
 
+    if country or region:
+        metrics = compute_filtered_metrics(db, "seasonality", country, region)
+        return {"success": True, "data": build(metrics)}
     return _respond(db, "seasonality", build)
 
 
 @router.get("/correlation")
-def get_correlation(db: Session = Depends(get_db)):
+def get_correlation(
+    country: str | None = Query(None, description="Lọc theo quốc gia"),
+    region: str | None = Query(None, description="Lọc theo khu vực"),
+    db: Session = Depends(get_db),
+):
     """Pattern 4: ma trận tương quan."""
 
     def build(m: dict[str, Any]) -> dict[str, Any]:
@@ -270,4 +296,7 @@ def get_correlation(db: Session = Depends(get_db)):
                 data[field] = m[field]
         return data
 
+    if country or region:
+        metrics = compute_filtered_metrics(db, "correlation", country, region)
+        return {"success": True, "data": build(metrics)}
     return _respond(db, "correlation", build)
