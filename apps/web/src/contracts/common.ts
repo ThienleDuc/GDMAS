@@ -82,13 +82,19 @@ export interface EvaluationMetrics {
  * Hai shape hợp lệ theo `contracts/schemas/`:
  * 1. Envelope thường: `{ success: true, data: ... }`.
  * 2. Aggregate `GET /api/v1/patterns`: `{ success: true, total_patterns, patterns,
- *    clustering_summary? }` — **không có khóa `data`** (xem patterns.json). Guard cũ
- *    bắt buộc `data` nên `getPatterns()` ném "Envelope không hợp lệ" dù BE trả 200.
+ *    clustering_summary? }` — **không có khóa `data`** (xem patterns.json).
+ * 3. Aggregate `POST /api/v1/earthquakes/sync`: `{ success: true, message,
+ *    synced_count, source, timestamp }` — `SyncResponse` của BE.
+ * Guard cũ bắt buộc `data` nên các endpoint aggregate bị chặn dù BE trả 200.
  */
 export function isApiEnvelope<T = unknown>(value: unknown): value is ApiEnvelope<T> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
   if (!("success" in value) || (value as { success: unknown }).success !== true) return false;
-  return "data" in value || ("total_patterns" in value && "patterns" in value);
+  return (
+    "data" in value ||
+    ("total_patterns" in value && "patterns" in value) ||
+    ("synced_count" in value && "timestamp" in value)
+  );
 }
 
 /**

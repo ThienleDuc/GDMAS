@@ -28,6 +28,7 @@ import { EarthquakeInsights } from "./components/EarthquakeInsights.tsx";
 import { EarthquakePagination } from "./components/EarthquakePagination.tsx";
 import { EarthquakeTable } from "./components/EarthquakeTable.tsx";
 import { SeverityReferenceTable } from "./components/SeverityReferenceTable.tsx";
+import { UsgsSyncButton } from "./components/UsgsSyncButton.tsx";
 
 const INITIAL_FILTERS: EarthquakeFilterValues = {
   range: "day",
@@ -185,6 +186,12 @@ export const EarthquakesPage: React.FC = () => {
     setSelectedId(null);
   };
 
+  // RD-14: sau khi BE xác nhận ghi dữ liệu, refresh cùng nguồn với nút "Tải lại".
+  const handleSynced = useCallback(() => {
+    setRefreshKey((key) => key + 1);
+    setSelectedId(null);
+  }, []);
+
   const handleCountryChange = (country: string) => {
     setSelectedCountry(country);
     setPage(1);
@@ -203,6 +210,7 @@ export const EarthquakesPage: React.FC = () => {
             <RefreshCw className="h-4 w-4" />
             Tải lại
           </button>
+          <UsgsSyncButton onSynced={handleSynced} />
         </div>
       </header>
 
