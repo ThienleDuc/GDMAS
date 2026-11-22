@@ -35,7 +35,11 @@ function contractMockPlugin(enabled: boolean): Plugin {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
-  const mockEnabled = isContractMockEnabled({ ...process.env, ...env });
+  const resolvedEnv = { ...process.env, ...env };
+  const mockEnabled = isContractMockEnabled(resolvedEnv);
+  // Khi đặt, FE gọi /api/... cùng origin và Vite chuyển tiếp tới backend.
+  // Trong Docker dùng http://api:8000 (service name trên gdmas-net).
+  const apiProxyTarget = resolvedEnv.VITE_API_PROXY_TARGET;
 
   return {
     plugins: [contractMockPlugin(mockEnabled), tailwindcss(), react()],
@@ -50,6 +54,11 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: true,
+      // Opt-in: dev mock (apply: "serve") chặn trước, còn lại đi qua proxy →
+      // trình duyệt chỉ cần một origin, không còn CORS tới localhost:8000.
+      proxy: apiProxyTarget
+        ? { "/api": { target: apiProxyTarget, changeOrigin: true } }
+        : undefined,
       watch: {
         usePolling: true,
         interval: 1000,

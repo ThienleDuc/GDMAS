@@ -75,6 +75,7 @@ Trước khi cấu hình, đảm bảo 3 cổng mạng sau trên `localhost` kh�
 >
 > - Kiểm tra đúng phiên bản FE dùng: `cd apps/web && corepack pnpm -v` → `10.20.0`. Lệnh `pnpm -v` ở trên có thể trả về pnpm cài global (khác bản) nên chỉ dùng để đối chiếu ngưỡng §1.4.
 > - Chạy riêng FE: `cd apps/web && corepack pnpm dev` (Vite cổng `3000`). Chạy không cần BE: `VITE_API_MOCKING=enabled corepack pnpm dev`. Không dùng `PUBLIC_*` — Vite chỉ expose biến `VITE_*`.
+> - **Tránh lỗi CORS / `Status code: (null)`:** FE gọi BE qua `VITE_API_BASE_URL`. Với `docker compose`, cấu hình mặc định là `VITE_API_BASE_URL=/` + `VITE_API_PROXY_TARGET=http://api:8000`: mọi request `/api/...` (kể cả SSE) đi **cùng origin** qua Vite dev proxy, trình duyệt không cần truy cập trực tiếp `localhost:8000`. Khi chạy `pnpm dev` trên host, giữ `VITE_API_BASE_URL=http://localhost:8000`, để trống `VITE_API_PROXY_TARGET` và đảm bảo `CORS_ORIGINS` của BE chứa origin của FE (`http://localhost:3000`, `http://127.0.0.1:3000`).
 
 ### 1.5 Cấu hình Biến Môi trường Cục bộ (`.env` Configuration)
 
