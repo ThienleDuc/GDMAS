@@ -4,16 +4,17 @@
 
 ## Metadata
 - ID: 2026-11-22-terminal-status-panel-thien
-- Status: validation   <!-- planned | in_progress | blocked | validation | completed -->
+- Status: completed   <!-- planned | in_progress | blocked | validation | completed -->
 - Started: 2026-11-22
 - Last Updated: 2026-11-22
+- Merged: 2026-11-22 — PR #61, merge commit `6b9211ef562200df59f7a6b5f00dc170fb2a553a`
 - Owner: agent | thien
 
 ---
 
 ## Tiến độ
 Progress: 100%
-Current Phase: CHECKPOINT 1 — chờ người dùng commit/push hay giữ nguyên
+Current Phase: completed — PR #61 đã merge vào develop, nhánh local đã sync
 
 Completed:
 - Rẽ nhánh `feat/2026-11-22-terminal-status-panel-thien` từ `develop`
@@ -60,9 +61,9 @@ Blocked:
 ---
 
 ## Next Actions
-- CHECKPOINT 1: chờ người dùng commit/push (`tiếp tục workflow`) hoặc giữ nguyên/sửa thêm. Proposal cuối: RD-14.
+- Không còn — phiên tiếp theo bắt đầu proposal 5 (**RD-14**) từ `develop`; đọc mục 4 `docs/task/fe-be-integration-ready.md` để có ngữ cảnh. Hoàn tất chuỗi proposal của file ready.md.
 
 ---
 
 ## Last Update
-2026-11-22 — Hoàn tất RD-16 (panel 7 Terminals), validation 202/202 xanh, dừng CHECKPOINT 1.
+2026-11-22 — RD-16 hoàn tất: PR #61 merged (`6b9211e`), `sync` xong, status = completed.
