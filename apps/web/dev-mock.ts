@@ -35,7 +35,8 @@ export function resolveContractMock(
     body: JSON.stringify(value),
   });
 
-  if (pathname === "/api/v1/stream/earthquakes") {
+  // Cả 2 route SSE dùng chung generator trên BE — phục vụ cả chuẩn lẫn legacy (RULE-03).
+  if (pathname === "/api/v1/events/stream" || pathname === "/api/v1/stream/earthquakes") {
     const event = loadFixture("sse-event_sample.json") as { event: string; data: unknown };
     return {
       status: 200,

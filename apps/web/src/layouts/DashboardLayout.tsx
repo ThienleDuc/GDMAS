@@ -27,7 +27,8 @@ export const DashboardLayout: React.FC = () => {
   const location = useLocation();
 
   // Giữ một kết nối SSE duy nhất tại shell; page bản đồ chỉ đọc qua context.
-  const sse = useSSE("/api/v1/stream/earthquakes");
+  // RD-17: dùng default chuẩn /api/v1/events/stream từ services/sse-api.ts (giữ 1 kết nối tại shell).
+  const sse = useSSE();
 
   return (
     <div className="layout layout--dashboard app-layout">

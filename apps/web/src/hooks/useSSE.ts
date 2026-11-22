@@ -1,15 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import type { SSEEventPayload } from "../contracts";
-import {
-  createSseSource,
-  isKnownSseEvent,
-  resolveSseUrl,
-  type SseStatus,
-} from "../lib/sse.ts";
+import { createSseSource, isKnownSseEvent, type SseStatus } from "../lib/sse.ts";
+import { getEventsStreamUrl } from "../services/sse-api.ts";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-const ENV_ENDPOINT = import.meta.env.VITE_SSE_ENDPOINT as string | undefined;
-const DEFAULT_ENDPOINT = "/api/v1/stream/earthquakes";
+/** Giữ tương thích: consumer cũ có thể truyền route legacy tường minh (RULE-03). */
+export { LEGACY_STREAM_ENDPOINT } from "../services/sse-api.ts";
 
 export interface UseSSEResult {
   data: SSEEventPayload | null;
@@ -30,7 +25,7 @@ export interface UseSSEResult {
  * - Backoff 1s→2s→4s…→30s + jitter, tối đa 8 lần.
  * - Lắng nghe hợp tên sự kiện của cả `/stream/earthquakes` và `/events/stream`.
  */
-export function useSSE(endpoint: string = ENV_ENDPOINT || DEFAULT_ENDPOINT): UseSSEResult {
+export function useSSE(endpoint?: string): UseSSEResult {
   const [data, setData] = useState<SSEEventPayload | null>(null);
   const [status, setStatus] = useState<SseStatus>("connecting");
   const [lastEventTime, setLastEventTime] = useState<Date | null>(null);
@@ -40,7 +35,7 @@ export function useSSE(endpoint: string = ENV_ENDPOINT || DEFAULT_ENDPOINT): Use
   const reconnect = useCallback(() => setReconnectKey((key) => key + 1), []);
 
   useEffect(() => {
-    const targetUrl = resolveSseUrl(endpoint, API_BASE_URL, DEFAULT_ENDPOINT);
+    const targetUrl = getEventsStreamUrl(endpoint);
     const connection = createSseSource({
       url: targetUrl,
       onPayload: (payload) => {
