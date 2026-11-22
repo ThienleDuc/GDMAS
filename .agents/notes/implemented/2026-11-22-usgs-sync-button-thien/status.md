@@ -4,16 +4,17 @@
 
 ## Metadata
 - ID: 2026-11-22-usgs-sync-button-thien
-- Status: validation   <!-- planned | in_progress | blocked | validation | completed -->
+- Status: completed   <!-- planned | in_progress | blocked | validation | completed -->
 - Started: 2026-11-22
 - Last Updated: 2026-11-22
+- Merged: 2026-11-22 — PR #63, merge commit `66bbde2d63154b4a0f8a40ae3336aa03ef3827fb`
 - Owner: agent | thien
 
 ---
 
 ## Tiến độ
 Progress: 100%
-Current Phase: CHECKPOINT 1 — chờ người dùng commit/push hay giữ nguyên
+Current Phase: completed — PR #63 đã merge vào develop, nhánh local đã sync
 
 Completed:
 - Rẽ nhánh `feat/2026-11-22-usgs-sync-button-thien` từ `develop`
@@ -61,9 +62,9 @@ Blocked:
 ---
 
 ## Next Actions
-- CHECKPOINT 1: chờ người dùng commit/push (`tiếp tục workflow`) hoặc giữ nguyên/sửa thêm. Đây là proposal cuối của `fe-be-integration-ready.md`.
+- Không còn — **toàn bộ 5 proposal của `docs/task/fe-be-integration-ready.md` đã hoàn tất và merge vào `develop`**. Các gap còn lại xem `docs/task/fe-be-integration-gaps.md`.
 
 ---
 
 ## Last Update
-2026-11-22 — Hoàn tất RD-14 (nút đồng bộ USGS), validation 209/209 xanh, dừng CHECKPOINT 1.
+2026-11-22 — RD-14 hoàn tất: PR #63 merged (`66bbde2`), `sync` xong, status = completed. Chuỗi 5 proposal đóng.
