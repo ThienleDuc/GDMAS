@@ -1,15 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { RefreshCw } from "lucide-react";
 import type { EarthquakeItem } from "../../contracts/earthquake.ts";
 import { useEarthquakeInsights } from "../../hooks/useEarthquakeInsights.ts";
 import { getEarthquakeDetail } from "../../services/earthquake-api.ts";
 import { ApiError } from "../../lib/api-client.ts";
 import { isNotFound } from "./earthquake-detail.ts";
-import {
-  getStoredTimezone,
-  setStoredTimezone,
-  type TimezoneMode,
-} from "../../lib/formatters.ts";
+import { getStoredTimezone, type TimezoneMode } from "../../lib/formatters.ts";
 import {
   buildEarthquakeQuery,
   CHART_PAGE_SIZE,
@@ -28,7 +23,6 @@ import { EarthquakeInsights } from "./components/EarthquakeInsights.tsx";
 import { EarthquakePagination } from "./components/EarthquakePagination.tsx";
 import { EarthquakeTable } from "./components/EarthquakeTable.tsx";
 import { SeverityReferenceTable } from "./components/SeverityReferenceTable.tsx";
-import { UsgsSyncButton } from "./components/UsgsSyncButton.tsx";
 
 const INITIAL_FILTERS: EarthquakeFilterValues = {
   range: "day",
@@ -53,7 +47,7 @@ export const EarthquakesPage: React.FC = () => {
   const [error, setError] = useState<ApiError | null>(null);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [timezone, setTimezone] = useState<TimezoneMode>(() => getStoredTimezone());
+  const [timezone] = useState<TimezoneMode>(() => getStoredTimezone());
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedCountry, setSelectedCountry] = useState(ALL_COUNTRIES);
   const [chartItems, setChartItems] = useState<EarthquakeItem[]>([]);
@@ -175,22 +169,10 @@ export const EarthquakesPage: React.FC = () => {
   const handleCloseDetail = useCallback(() => setSelectedId(null), []);
   const handleRetryDetail = useCallback(() => setDetailRetryKey((key) => key + 1), []);
 
-  const handleTimezoneChange = () => {
-    const next: TimezoneMode = timezone === "UTC" ? "UTC+7" : "UTC";
-    setStoredTimezone(next);
-    setTimezone(next);
-  };
-
   const handleRetry = () => {
     setRefreshKey((key) => key + 1);
     setSelectedId(null);
   };
-
-  // RD-14: sau khi BE xác nhận ghi dữ liệu, refresh cùng nguồn với nút "Tải lại".
-  const handleSynced = useCallback(() => {
-    setRefreshKey((key) => key + 1);
-    setSelectedId(null);
-  }, []);
 
   const handleCountryChange = (country: string) => {
     setSelectedCountry(country);
@@ -202,16 +184,6 @@ export const EarthquakesPage: React.FC = () => {
     <section className="eq-page">
       <header className="eq-page__heading">
         <h1 className="eq-page__title">Danh mục Động đất</h1>
-        <div className="eq-page__actions">
-          <button className="ds-button ds-button-secondary" onClick={handleTimezoneChange} type="button">
-            {timezone === "UTC" ? "Hiện UTC" : "Hiện UTC+7"}
-          </button>
-          <button className="ds-button ds-button-secondary" onClick={handleRetry} type="button">
-            <RefreshCw className="h-4 w-4" />
-            Tải lại
-          </button>
-          <UsgsSyncButton onSynced={handleSynced} />
-        </div>
       </header>
 
       <EarthquakeFilterBar value={form} onChange={handleFilterChange} onApply={handleApplyFilters} />

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { timeRangeLabel } from "../../lib/transforms/map-data.ts";
 import type { MapFilters, TimeRangePreset } from "../../lib/transforms/map-types.ts";
 
-const PRESETS: ReadonlyArray<TimeRangePreset> = ["24h", "7d", "30d", "all"];
+// Giới hạn trên là 30 ngày — không còn tuỳ chọn "all" (toàn bộ lịch sử).
+const PRESETS: ReadonlyArray<TimeRangePreset> = ["24h", "7d", "30d"];
 const DEBOUNCE_MS = 400;
 
 interface MapControlsPanelProps {

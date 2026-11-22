@@ -123,11 +123,14 @@ test("TC-06 — format message giữ timestamp Z, lỗi 503 có thông báo riê
   assert.match(syncErrorMessage(new Error("offline")), /Không thể đồng bộ/u);
 });
 
-test("TC-07 — wiring trang /earthquakes, vẫn cấm table thô", () => {
+// Cập nhật 2026-11-23: khối eq-page__actions (gồm nút sync) bị xoá theo yêu cầu UI.
+// Test vẫn giữ kiểm chứng cấm table thô và khẳng định khối actions không còn.
+test("TC-07 — trang /earthquakes bỏ actions, vẫn cấm table thô", () => {
   const sourceRoot = resolve(import.meta.dirname, "../src");
   const page = readFileSync(resolve(sourceRoot, "features/earthquakes/EarthquakesPage.tsx"), "utf8");
 
-  assert.match(page, /<UsgsSyncButton onSynced=\{handleSynced\} \/>/u);
+  assert.doesNotMatch(page, /eq-page__actions/u);
+  assert.doesNotMatch(page, /<UsgsSyncButton\b/u);
   assert.doesNotMatch(page, /<table\b/u);
 });
 

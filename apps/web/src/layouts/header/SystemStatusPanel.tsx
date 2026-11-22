@@ -58,7 +58,6 @@ export const SystemStatusPanel: React.FC = () => {
 
   return (
     <details
-      className="layout__system"
       onToggle={(event) => {
         if (event.currentTarget.open) setReloadKey((key) => key + 1);
       }}
