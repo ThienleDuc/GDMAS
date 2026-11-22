@@ -276,3 +276,76 @@ def test_sync_db_error_returns_500(broken_client, monkeypatch):
     resp = broken_client.post(f"{URL}/sync")
     assert resp.status_code == 500
     assert resp.json()["error"]["code"] == "DATABASE_ERROR"
+
+
+# ---------- country/region (2026-11-22-be-country-region-derivation-thien) ----------
+def test_list_exposes_country_and_region(client, db):
+    add_event(db, 1, place="Honshu, Japan", country="Japan", region="Honshu")
+    item = client.get(URL).json()["data"][0]
+    assert item["place"] == "Honshu, Japan"
+    assert item["country"] == "Japan"
+    assert item["region"] == "Honshu"
+
+
+def test_list_filters_by_country_and_region(client, db):
+    add_event(db, 1, place="Honshu, Japan", country="Japan", region="Honshu")
+    add_event(db, 2, place="Java, Indonesia", country="Indonesia", region="Java")
+
+    japan = client.get(URL, params={"country": "Japan"}).json()
+    assert _ids_from_body(japan) == {"ev0001"}
+    assert japan["metadata"]["total"] == 1
+
+    honshu = client.get(URL, params={"country": "Japan", "region": "Honshu"}).json()
+    assert _ids_from_body(honshu) == {"ev0001"}
+
+    mismatch = client.get(URL, params={"country": "Japan", "region": "Java"}).json()
+    assert mismatch["data"] == []
+
+
+def test_sync_derives_country_and_region_from_place(client, monkeypatch):
+    feat = _feature("us-region-1", 4.2)
+    feat["properties"]["place"] = "12 km NE of San Francisco, CA"
+    _patch_usgs(monkeypatch, {"features": [feat]})
+    resp = client.post(f"{URL}/sync")
+    assert resp.status_code == 200
+    item = client.get(URL).json()["data"][0]
+    assert item["country"] == "USA"
+    assert item["region"] == "San Francisco"
+
+
+def _ids_from_body(body):
+    return {e["source_event_id"] for e in body["data"]}
+
+
+def test_country_catalog_groups_by_country_and_count(client, db):
+    add_event(db, 1, country="USA", region="Igiugig")
+    add_event(db, 2, country="USA", region="Anchorage")
+    add_event(db, 3, country="Japan", region="Honshu")
+    add_event(db, 4, country=None, region=None)
+
+    resp = client.get(f"{URL}/countries")
+    assert resp.status_code == 200
+    assert resp.json() == {
+        "success": True,
+        "data": [
+            {"country": "USA", "count": 2},
+            {"country": "Japan", "count": 1},
+        ],
+    }
+
+
+def test_region_catalog_optionally_filters_by_country(client, db):
+    add_event(db, 1, country="USA", region="Igiugig")
+    add_event(db, 2, country="USA", region="Anchorage")
+    add_event(db, 3, country="Japan", region="Honshu")
+
+    all_regions = client.get(f"{URL}/regions").json()["data"]
+    assert {row["region"] for row in all_regions} == {"Igiugig", "Anchorage", "Honshu"}
+
+    japan = client.get(f"{URL}/regions", params={"country": "Japan"}).json()["data"]
+    assert japan == [{"region": "Honshu", "count": 1}]
+
+
+def test_catalogs_are_empty_on_empty_db(client):
+    assert client.get(f"{URL}/countries").json()["data"] == []
+    assert client.get(f"{URL}/regions").json()["data"] == []

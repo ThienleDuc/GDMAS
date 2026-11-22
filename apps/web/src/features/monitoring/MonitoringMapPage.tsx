@@ -23,6 +23,7 @@ import {
   type MapViewState,
 } from "../../lib/transforms/map-types.ts";
 import { getEarthquakes } from "../../services/earthquake-api.ts";
+import { getCountryCatalog, getRegionCatalog } from "../../services/geo-catalog-api.ts";
 import {
   applySseEvent,
   buildEarthquakeQuery,
@@ -48,6 +49,9 @@ export const MonitoringMapPage: React.FC = () => {
   const [tileError, setTileError] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [regionClusters, setRegionClusters] = useState<RegionClusterRow[]>([]);
+  // Danh mục quốc gia/khu vực do BE suy từ place — nguồn chuẩn cho bộ lọc (I5).
+  const [catalogCountries, setCatalogCountries] = useState<string[]>([]);
+  const [catalogRegions, setCatalogRegions] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const { country, region, setRegion, setSelection } = useCatalogSelection();
 
@@ -63,6 +67,31 @@ export const MonitoringMapPage: React.FC = () => {
       });
     return () => controller.abort();
   }, []);
+
+  // BE trả danh mục đã tách sẵn; fallback để trống → vẫn dùng dữ liệu suy từ events/cụm.
+  useEffect(() => {
+    const controller = new AbortController();
+    getCountryCatalog(controller.signal)
+      .then((catalog) => {
+        if (!controller.signal.aborted) setCatalogCountries(catalog.data.map((item) => item.country));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setCatalogCountries([]);
+      });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getRegionCatalog(country, controller.signal)
+      .then((catalog) => {
+        if (!controller.signal.aborted) setCatalogRegions(catalog.data.map((item) => item.region));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setCatalogRegions([]);
+      });
+    return () => controller.abort();
+  }, [country]);
 
   const bbox = useMemo(
     () =>
@@ -83,10 +112,14 @@ export const MonitoringMapPage: React.FC = () => {
 
   const countries = useMemo(
     () =>
-      [...new Set([...countriesFromPlaces(events), ...regionClusters.map((item) => item.country)])].sort(
-        (left, right) => left.localeCompare(right),
-      ),
-    [events, regionClusters],
+      [
+        ...new Set([
+          ...catalogCountries,
+          ...countriesFromPlaces(events),
+          ...regionClusters.map((item) => item.country),
+        ]),
+      ].sort((left, right) => left.localeCompare(right)),
+    [catalogCountries, events, regionClusters],
   );
 
   const load = useCallback(async () => {
@@ -199,6 +232,7 @@ export const MonitoringMapPage: React.FC = () => {
           />
           <MapRegionPanel
             countries={countries}
+            regions={catalogRegions}
             clusters={regionClusters}
             country={country}
             region={region}

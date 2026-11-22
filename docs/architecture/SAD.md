@@ -131,8 +131,10 @@ flowchart LR
 
 - **Nhiệm vụ:** Kết nối định kỳ 5 phút/lần tới USGS GeoJSON Feed, kiểm tra tính hợp lệ của dữ liệu, chuẩn hóa trường và thực thi Upsert vào bảng `earthquake_events`.
 - **Độ tin cậy:** Khử trùng lặp qua ràng buộc `UNIQUE (source, source_event_id)` và cập nhật lại thông số nếu USGS có hiệu chỉnh sau đó.
-- **Tổ chức nội bộ:** `ingestion/parser.py` chuẩn hóa GeoJSON và loại feature không hợp lệ; `ingestion/upsert.py` khử trùng lặp trong batch và ghi theo chiến lược ERD §4; `ingestion/service.py` điều phối nguồn chính, fallback và nhật ký `service_runs`. `runner.py` tiếp tục chạy độc lập ở Terminal 2.
+- **Tổ chức nội bộ:** `ingestion/parser.py` chuẩn hóa GeoJSON và loại feature không hợp lệ; `ingestion/geo.py` tách `place` thành `country`/`region` (xem bên dưới); `ingestion/upsert.py` khử trùng lặp trong batch và ghi theo chiến lược ERD §4; `ingestion/service.py` điều phối nguồn chính, fallback và nhật ký `service_runs`. `runner.py` tiếp tục chạy độc lập ở Terminal 2.
 - **Biên dữ liệu:** ID vượt 64 ký tự bị loại thay vì cắt để tránh gộp nhầm sự kiện. Độ sâu thiếu phần tử thứ ba dùng `0.0`; độ sâu được cung cấp nhưng không phải số hữu hạn bị loại. Số nguyên vượt miền `float` không làm hỏng cả batch: feature lỗi được tính vào `skipped_invalid`, các feature hợp lệ vẫn được xử lý.
+- **Backfill lịch sử (bổ sung 2026-11-23):** worker T2 mặc định chỉ lấy `all_hour` theo `settings.USGS_FEED_URL`, nên DB ban đầu quá hẹp để danh mục phản ánh toàn cầu. Lệnh một lần `cd apps/api && uv run python -m gdmas.services.ingestion.backfill` tái dùng `IngestionService` với feed `all_month` (parse → upsert → log `service_runs`), không nhân bản logic, không chạy tự động. Kết quả thực tế trên DB dev: +9.427 sự kiện, danh mục từ 1 → 102 quốc gia. Module `ingestion/backfill.py` chỉ chạy tay — không nhúng vào `main.py` (I1).
+- **Phân loại quốc gia/khu vực (bổ sung 2026-11-22):** USGS chỉ trả `place` (chuỗi địa danh tự do), không có field `country`/`region`. `ingestion/geo.py` là module thuần (không I/O/mạng) port bảng heuristic từ FE: `derive_country()` (pattern quốc gia + mã **và tên** bang Mỹ) và `derive_region()` (bỏ tiền tố khoảng cách/hướng, bỏ đoạn quốc gia). Cùng một helper được dùng ở `parser.py` (T2) **và** route `POST /api/v1/earthquakes/sync` (T6) để hai đường nhập không lệch nhãn. Không dùng prefix `id` (network code `us`/`ak`/`nc`…), không reverse-geocode; không trích được thì trả `"Khác"` — **không bịa dữ liệu**. Cột DB và backfill xem ERD §2.1, §5 (migration `002_add_country_region`). Quyết định này `Overrides:` phần §4.5 của proposal `2026-11-21-monitoring-leaflet-map-markers-thien` (FE tự suy) — xem proposal `2026-11-22-be-country-region-derivation-thien` §9.
 
 ### 3. Data Analysis Service
 
@@ -155,6 +157,9 @@ flowchart LR
 ### 6. Database API
 
 - **Nhiệm vụ:** Cung cấp cổng giao tiếp REST API duy nhất cho Frontend. Xác thực tham số đầu vào, truy vấn dữ liệu từ PostgreSQL, định dạng theo Envelope chuẩn và phát luồng Server-Sent Events (SSE).
+- **Lọc theo quốc gia/khu vực:** `GET /api/v1/earthquakes` bổ sung 2 query param tùy chọn `country` và `region` (mặc định `None` = không lọc), áp dụng `WHERE` trên 2 cột đã suy diễn **trước** `count()`/phân trang để hỗ trợ đúng tổng số trang. Payload list/detail trả thêm `country?`/`region?` (giữ nguyên `place` và `raw_data`). FE ưu tiên field BE, vẫn dùng helper cũ làm fallback (RULE-03). Chi tiết hợp đồng tại `docs/api/API.md` §3.2 và `contracts/schemas/earthquake.json`.
+- **Danh mục phục vụ bộ lọc:** `GET /api/v1/earthquakes/countries` và `GET /api/v1/earthquakes/regions?country=...` trả các nhãn đã tách kèm `count` (nhóm `GROUP BY` trên 2 cột suy diễn, sắp theo số sự kiện giảm dần). Đây là nguồn chuẩn cho dropdown quốc gia/khu vực của FE (thay vì FE tự dựng từ trang dữ liệu đang nạp); FE vẫn fallback về `/clusters` + helper suy từ `place` khi endpoint lỗi. Hợp đồng: `contracts/schemas/geo-catalog.json`.
+- **Đồng bộ trực tiếp:** route `POST /api/v1/earthquakes/sync` dùng chung `ingestion/geo.py` với T2 — không tự parse `place` riêng (tránh drift giữa hai đường nhập T2/T6).
 
 ### 7. Frontend Client
 
@@ -183,7 +188,7 @@ flowchart LR
         │
         ▼ (Mỗi 5 phút)
 [Data Ingestion Worker]
-        │
+        │ (ingestion/geo.py: place → country / region)
         ▼ (Upsert / Deduplicate)
 [(PostgreSQL Database)] ◄──────────────────────────────────────────────┐
    │         │                                                        │
@@ -198,7 +203,7 @@ flowchart LR
    │
    ▼ (Truy vấn)
 [Database API (FastAPI)]
-   │
+   │ (lọc ?country=&region= trên cột đã suy diễn; response có country/region)
    ▼ (REST JSON / SSE Stream)
 [Frontend Client (React/Vite)] ───► [Người dùng hiển thị bản đồ & 6 biểu đồ]
 ```
@@ -304,6 +309,8 @@ GDMAS/
 │   │   │   ├── schemas/                  # Pydantic Schemas xác thực dữ liệu
 │   │   │   ├── services/                 # 4 Services xử lý nghiệp vụ độc lập (chạy trên từng terminal riêng):
 │   │   │   │   ├── ingestion/            # Thu thập dữ liệu USGS (Chu kỳ 5 phút/lần)
+│   │   │   │   │   ├── backfill.py       # CLI nạp 1 lần feed all_month (tái dùng IngestionService)
+│   │   │   │   │   ├── geo.py            # Suy country/region từ place (dùng chung T2 + T6 sync)
 │   │   │   │   │   ├── parser.py         # Chuẩn hóa và kiểm tra GeoJSON
 │   │   │   │   │   ├── upsert.py         # Khử trùng lặp và Upsert PostgreSQL
 │   │   │   │   │   ├── service.py        # Điều phối chu kỳ, fallback và nhật ký

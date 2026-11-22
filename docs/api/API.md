@@ -159,6 +159,8 @@ Truy vấn danh sách sự kiện động đất có phân trang và hỗ trợ 
   | `min_depth` | float | Không | - | Độ sâu tối thiểu (km) |
   | `max_depth` | float | Không | - | Độ sâu tối đa (km) |
   | `search` | string | Không | - | Tìm theo khu vực (`place`) hoặc mã sự kiện (`source_event_id`), không phân biệt hoa thường |
+  | `country` | string | Không | - | Lọc theo quốc gia do BE suy từ `place` (vd. `Japan`); không truyền → không lọc |
+  | `region` | string | Không | - | Lọc theo khu vực do BE suy từ `place` (vd. `Honshu`); dùng cùng `country` |
   | `min_lat` / `max_lat` | float | Không | - | Phạm vi vĩ độ bounding box |
   | `min_lon` / `max_lon` | float | Không | - | Phạm vi kinh độ bounding box |
   | `sort_by` | string | Không | `event_time` | Trường sắp xếp (`event_time`, `magnitude`, `depth_km`) |
@@ -180,6 +182,8 @@ Truy vấn danh sách sự kiện động đất có phân trang và hỗ trợ 
       "magnitude": 5.8,
       "magnitude_type": "mww",
       "place": "82 km ENE of Tokyo, Japan",
+      "country": "Japan",
+      "region": "Tokyo",
       "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000m123",
       "ingested_at": "2026-11-06T10:50:00Z"
     }
@@ -197,6 +201,37 @@ Truy vấn danh sách sự kiện động đất có phân trang và hỗ trợ 
 Lấy thông tin chi tiết một sự kiện động đất theo ID nội bộ hoặc mã nguồn `source_event_id`.
 
 - **Response (200 OK):** Trả về đối tượng sự kiện đầy đủ, bao gồm cả trường `raw_data` chứa GeoJSON gốc nếu có.
+
+#### `GET /api/v1/earthquakes/countries`
+Danh mục quốc gia do BE suy từ `place`, dùng để dựng bộ lọc toàn cục (không phải FE tự suy từ trang dữ liệu đang nạp). Sắp theo số sự kiện giảm dần, rồi tên chữ cái.
+
+- **Query Parameters:** không có.
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    { "country": "USA", "count": 18 },
+    { "country": "Japan", "count": 4 }
+  ]
+}
+```
+DB rỗng trả `data: []`.
+
+#### `GET /api/v1/earthquakes/regions`
+Danh mục khu vực trong một quốc gia, cũng suy từ `place`.
+
+- **Query Parameters:** `country` (string, không bắt buộc) — nếu truyền thì chỉ trả khu vực của quốc gia đó.
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    { "region": "Anchorage", "count": 6 },
+    { "region": "Igiugig", "count": 2 }
+  ]
+}
+```
 
 #### `GET /api/v1/statistics/earthquakes`
 Thống kê nhanh các chỉ số địa chấn tổng quan phục vụ thẻ Dashboard (KPI Cards).

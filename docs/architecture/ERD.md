@@ -48,6 +48,8 @@ erDiagram
         double_precision magnitude
         varchar magnitude_type
         text place
+        varchar country
+        varchar region
         text source_url
         jsonb raw_data
     }
@@ -140,11 +142,14 @@ Lưu trữ toàn bộ các trận động đất thu thập từ USGS.
 | `depth_km` | `DOUBLE PRECISION`| `NOT NULL` | - | Độ sâu chấn tiêu (km) |
 | `magnitude` | `DOUBLE PRECISION`| `NOT NULL` | - | Độ lớn địa chấn |
 | `magnitude_type` | `VARCHAR(16)` | `NULL` | - | Thang đo độ lớn (`ml`, `mww`, `mb`...) |
-| `place` | `TEXT` | `NULL` | - | Mô tả vị trí địa lý |
+| `place` | `TEXT` | `NULL` | - | Mô tả vị trí địa lý (chuỗi tự do từ USGS) |
+| `country` | `VARCHAR(128)` | `NULL` | - | Quốc gia **suy từ `place`** lúc nhập; `"Khác"` khi không xác định |
+| `region` | `VARCHAR(128)` | `NULL` | - | Khu vực trong quốc gia, cũng suy từ `place`; `"Khác"` khi không xác định |
 | `source_url` | `TEXT` | `NULL` | - | Đường dẫn chi tiết trên trang USGS |
 | `raw_data` | `JSONB` | `NULL` | - | Toàn bộ GeoJSON Feature gốc |
 
 - **Ràng buộc duy nhất:** `UNIQUE (source, source_event_id)` nhằm phục vụ Upsert khử trùng lặp.
+- **Trường suy diễn (derived):** USGS GeoJSON **không** cung cấp field `country`/`region` — chỉ có `place`. Hai cột này do `services/ingestion/geo.py` tách từ `place` (bảng pattern quốc gia + mã/tên bang Mỹ), được dùng chung bởi T2 ingestion và route `POST /api/v1/earthquakes/sync` của T6 để tránh lệch nhãn. Prefix `id` (`us`, `ak`, `nc`…) là **network code**, không được dùng làm quốc gia. Không reverse-geocode theo toạ độ; giá trị không trích được là `"Khác"` (không bịa dữ liệu). Migration `002_add_country_region` backfill lại dữ liệu cũ bằng chính helper này. Xem `docs/api/API.md` §3.2 để biết query param lọc tương ứng và 2 endpoint danh mục `GET /api/v1/earthquakes/countries` / `/regions` (nhóm theo 2 cột này để FE dựng bộ lọc — hợp đồng `contracts/schemas/geo-catalog.json`).
 
 ---
 
@@ -263,7 +268,10 @@ CREATE INDEX idx_earthquake_events_coordinates ON earthquake_events (latitude, l
 -- 5. Index tìm kiếm nhanh theo mã sự kiện nguồn
 CREATE UNIQUE INDEX idx_earthquake_events_source_unique ON earthquake_events (source, source_event_id);
 
--- 6. Index truy vấn kết quả phân tích theo loại và thời gian
+-- 6. Composite Index cho lọc server-side theo quốc gia/khu vực (bổ sung 2026-11-22)
+CREATE INDEX idx_earthquake_events_country_region ON earthquake_events (country, region);
+
+-- 7. Index truy vấn kết quả phân tích theo loại và thời gian
 CREATE INDEX idx_analysis_results_type_period ON analysis_results (analysis_type, period_end DESC);
 CREATE INDEX idx_prediction_results_target_date ON prediction_results (target_date DESC);
 CREATE INDEX idx_classification_results_target_date ON classification_results (target_date DESC);
@@ -281,11 +289,11 @@ Cú pháp SQL Upsert chuẩn được áp dụng trong `Data Ingestion Service`:
 INSERT INTO earthquake_events (
     source, source_event_id, event_time, source_updated_at,
     latitude, longitude, depth_km, magnitude, magnitude_type,
-    place, source_url, raw_data, ingested_at
+    place, country, region, source_url, raw_data, ingested_at
 ) VALUES (
     'USGS', :source_event_id, :event_time, :source_updated_at,
     :latitude, :longitude, :depth_km, :magnitude, :magnitude_type,
-    :place, :source_url, :raw_data, NOW()
+    :place, :country, :region, :source_url, :raw_data, NOW()
 )
 ON CONFLICT (source, source_event_id) DO UPDATE SET
     source_updated_at = EXCLUDED.source_updated_at,
@@ -295,6 +303,8 @@ ON CONFLICT (source, source_event_id) DO UPDATE SET
     magnitude         = EXCLUDED.magnitude,
     magnitude_type    = EXCLUDED.magnitude_type,
     place             = EXCLUDED.place,
+    country           = EXCLUDED.country,
+    region            = EXCLUDED.region,
     source_url        = EXCLUDED.source_url,
     raw_data          = EXCLUDED.raw_data,
     ingested_at       = NOW()
@@ -315,4 +325,11 @@ Tuân thủ nguyên tắc **Không sửa mã nguồn hiện tại – Chỉ bổ
    uv run alembic revision -m "add_spatial_gist_indexes"
    ```
 3. Luôn viết đầy đủ hai hàm `upgrade()` và `downgrade()` trong từng file migration để hỗ trợ rollback an toàn khi cần thiết.
+4. **Giới hạn độ dài revision ID:** cột `alembic_version.version_num` là `VARCHAR(32)` → revision ID tối đa 32 ký tự. Ví dụ đã gặp: `002_add_earthquake_country_region` (34 ký tự) bị `StringDataRightTruncation` khi ghi version; dùng `002_add_country_region`.
+5. **Backfill dữ liệu cũ:** khi thêm cột suy diễn, thực hiện `UPDATE` ngay trong `upgrade()` bằng chính helper thuần của BE (`derive_place_fields`) thay vì viết regex SQL riêng, nhằm bảo đảm FE/BE cùng một nhãn phân loại.
+
+| Revision | Nội dung |
+| :--- | :--- |
+| `001_initial_gdmas_schema` | Schema ban đầu (7 bảng). **Không sửa.** |
+| `002_add_country_region` | Thêm `country`, `region` + index `idx_earthquake_events_country_region` cho `earthquake_events`; backfill từ `place`. |
 

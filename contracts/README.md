@@ -50,9 +50,11 @@ contracts/
 ### 3.1 Thực thể Động đất (`schemas/earthquake.json`)
 Mô tả một sự kiện địa chấn đơn lẻ theo shape canonical từ `docs/api/API.md` §3.2 và BE `apps/api/src/gdmas/schemas/earthquake.py`. ID nội bộ là integer; `source_event_id` là mã USGS. Timestamp dùng UTC ISO 8601 `Z`, tọa độ WGS84.
 
-- Trường canonical: `id`, `source`, `source_event_id`, `event_time`, `latitude`, `longitude`, `depth_km`, `magnitude`, `magnitude_type?`, `place?`, `source_url?`, `ingested_at?`, `raw_data?`.
+- Trường canonical: `id`, `source`, `source_event_id`, `event_time`, `latitude`, `longitude`, `depth_km`, `magnitude`, `magnitude_type?`, `place?`, `country?`, `region?`, `source_url?`, `ingested_at?`, `raw_data?`.
+- `country?` / `region?` được BE suy từ `place` lúc nhập (USGS không trả field này); giá trị không xác định là `"Khác"` — **không bịa dữ liệu**. FE giữ helper suy từ `place` làm fallback khi field vắng.
 - Alias legacy (`time`, `depth`, `status`) chỉ optional để tương thích payload cũ; test/mock mới chỉ dùng canonical.
 - Sample payload: [`examples/earthquake_sample.json`](examples/earthquake_sample.json).
+- **Danh mục lọc (`schemas/geo-catalog.json`):** `GET /api/v1/earthquakes/countries` trả `data: [{country, count}]`; `GET /api/v1/earthquakes/regions?country=...` trả `data: [{region, count}]`. Cả hai lấy từ cột đã suy diễn của BE (không phải FE tự dựng từ trang dữ liệu đang nạp); `count` là số sự kiện thực tế, DB rỗng trả `data: []`. FE giữ fallback suy từ `place`/cụm khi endpoint lỗi (RULE-03).
 
 ### 3.2 Hợp đồng Luồng Sự kiện Realtime (`schemas/sse-event.json`)
 Mô tả cấu trúc gói tin đẩy qua `GET /api/v1/stream/earthquakes` (mặc định) và `GET /api/v1/events/stream`. Fixture mẫu nằm tại [`examples/sse-event_sample.json`](examples/sse-event_sample.json) và chỉ dùng cho test/offline, không import runtime.

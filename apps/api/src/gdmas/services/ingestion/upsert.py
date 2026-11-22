@@ -25,6 +25,8 @@ UPDATABLE_COLUMNS: tuple[str, ...] = (
     "magnitude",
     "magnitude_type",
     "place",
+    "country",
+    "region",
     "source_url",
     "raw_data",
 )

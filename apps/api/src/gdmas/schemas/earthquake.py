@@ -14,6 +14,8 @@ class EarthquakeBase(BaseModel):
     magnitude: float
     magnitude_type: str | None = None
     place: str | None = None
+    country: str | None = None
+    region: str | None = None
     source_url: str | None = None
 
 
@@ -37,6 +39,26 @@ class EarthquakeListResponse(BaseModel):
     success: bool = True
     data: list[EarthquakeResponse]
     metadata: EarthquakeMetadata
+
+
+class CountryCount(BaseModel):
+    country: str
+    count: int
+
+
+class RegionCount(BaseModel):
+    region: str
+    count: int
+
+
+class CountryListResponse(BaseModel):
+    success: bool = True
+    data: list[CountryCount]
+
+
+class RegionListResponse(BaseModel):
+    success: bool = True
+    data: list[RegionCount]
 
 
 class HourlyTimeSeriesPoint(BaseModel):

@@ -6,6 +6,8 @@ import type { RegionClusterRow } from "../../features/monitoring/region-clusters
 
 interface MapRegionPanelProps {
   countries: string[];
+  /** Danh mục khu vực do BE suy từ place (bổ sung — fallback vẫn là clusters). */
+  regions?: string[];
   clusters: RegionClusterRow[];
   country: string;
   region: string;
@@ -17,6 +19,7 @@ interface MapRegionPanelProps {
 /** Panel lọc: QUỐC GIA = combobox có tìm kiếm, KHU VỰC = danh sách nút bấm. */
 export function MapRegionPanel({
   countries,
+  regions = [],
   clusters,
   country,
   region,
@@ -39,6 +42,10 @@ export function MapRegionPanel({
   const countryOptions = countries.filter((item) => item.toLowerCase().includes(normalized));
   const visibleClusters = clusters.filter(
     (item) => country === ALL_COUNTRIES || item.country === country,
+  );
+  // Khu vực BE trả thêm mà cụm chưa có — vẫn cho phép chọn lọc.
+  const extraRegions = regions.filter(
+    (name) => !visibleClusters.some((cluster) => cluster.region === name),
   );
 
   const selectCountry = (value: string) => {
@@ -96,7 +103,7 @@ export function MapRegionPanel({
       </div>
 
       <div className="gm-region-panel__group">
-        <span className="gm-region-panel__label">Khu vực · cụm từ API (mô phỏng)</span>
+        <span className="gm-region-panel__label">Khu vực</span>
         <div className="gm-region-panel__list" role="list">
           <button
             type="button"
@@ -143,7 +150,20 @@ export function MapRegionPanel({
               </button>
             );
           })}
-          {visibleClusters.length === 0 && (
+          {extraRegions.map((name) => (
+            <button
+              key={`region:${name}`}
+              type="button"
+              className={`gm-region-panel__item gm-region-panel__item--region ${region === name ? "is-active" : ""}`}
+              aria-pressed={region === name}
+              onClick={() => onRegionChange(name)}
+            >
+              <span className="gm-region-panel__region-body">
+                <span className="gm-region-panel__name" title={name}>{name}</span>
+              </span>
+            </button>
+          ))}
+          {visibleClusters.length === 0 && extraRegions.length === 0 && (
             <span className="gm-region-panel__empty">Không có cụm phù hợp</span>
           )}
         </div>
