@@ -116,6 +116,12 @@ test("TC-10: earthquake list/detail and SSE are served from contract fixtures", 
   assert.ok(sse);
   assert.match(sse.headers["Content-Type"], /text\/event-stream/u);
   assert.match(sse.body, /event: earthquake_detected\ndata:/u);
+
+  // RD-17: route SSE chuẩn cũng phải có fixture (legacy vẫn giữ).
+  const sseStandard = resolveContractMock("GET", "/api/v1/events/stream", fixture);
+  assert.ok(sseStandard);
+  assert.match(sseStandard.headers["Content-Type"], /text\/event-stream/u);
+  assert.match(sseStandard.body, /event: earthquake_detected\ndata:/u);
 });
 
 test("TC-11: unsupported API path gets contract-shaped 404; non-API and non-GET pass through", () => {

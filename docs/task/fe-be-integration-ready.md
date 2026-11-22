@@ -80,7 +80,7 @@ Các route này **đã có trên BE và khớp contract FE**, nhưng service FE 
 ## 4. Nhật ký triển khai (đọc đầu tiên ở phiên tiếp theo)
 
 > Mỗi proposal hoàn thành ghi 1 mục ở đây để phiên sau **không phải phân tích lại từ đầu**.
-> Thứ tự proposal đã chia: **(1) RD-15** ✅ · **(2) RD-13** ✅ · (3) RD-17 · (4) RD-16 · (5) RD-14.
+> Thứ tự proposal đã chia: **(1) RD-15** ✅ · **(2) RD-13** ✅ · **(3) RD-17** ✅ · (4) RD-16 · (5) RD-14.
 > RD-01…RD-12 chỉ là kiểm chứng hợp đồng, không cần proposal riêng.
 
 ### Proposal 1 — RD-15: Fallback cụm thật từ `/patterns` — ✅ ĐÃ GIẢI QUYẾT (2026-11-22)
@@ -113,3 +113,18 @@ Các route này **đã có trên BE và khớp contract FE**, nhưng service FE 
   - **Không đổi:** `apps/api/**`, `contracts/**` repo-level, `services/earthquake-api.ts`, `/monitoring`, Leaflet/SSE, `useCatalogSelection`.
 - **Test:** `apps/web/tests/earthquake-detail.test.ts` (mới, 5 case) + bổ sung `apps/web/tests/earthquakes-page.test.ts` TC-12; `pnpm test` → **189/189 pass**, `pnpm build` PASS; `notes_index.py --check` OK.
 - **Lưu ý cho phiên sau:** BE trả object thuần (không envelope) → `fetchApi` chấp nhận; 404 → `ApiError(404)` → panel "Không tìm thấy sự kiện"; `contracts/examples/earthquake_sample.json` có `raw_data:null` nên test phải tự dựng GeoJSON. Tiếp theo = proposal 3 **RD-17** (đổi default SSE sang `/api/v1/events/stream`, giữ legacy fallback) — rẽ nhánh mới từ `develop`, không cần đọc lại audit.
+
+### Proposal 3 — RD-17: Endpoint SSE chuẩn làm default — ✅ ĐÃ GIẢI QUYẾT (2026-11-22)
+
+- **Nhánh:** `feat/2026-11-22-sse-standard-endpoint-thien`
+- **Proposal:** `.agents/notes/proposed/2026-11-22-sse-standard-endpoint-thien.md` (§9 Approved)
+- **Plan / Testcase:** `.agents/notes/implemented/2026-11-22-sse-standard-endpoint-thien/`, `.agents/notes/testcase/2026-11-22-sse-standard-endpoint-thien.md`
+- **Vấn đề đã đóng:** `useSSE()` giữ hằng riêng `DEFAULT_ENDPOINT = "/api/v1/stream/earthquakes"` và `DashboardLayout` truyền tường minh route legacy, trong khi `services/sse-api.ts` đã có `getEventsStreamUrl()` trả route chuẩn → hai nguồn cấu hình (drift RD-17).
+- **Cách làm:**
+  - `hooks/useSSE.ts`: bỏ 3 hằng cục bộ + import `resolveSseUrl`; ủy quyền cho `getEventsStreamUrl(endpoint)`; giữ nguyên chữ ký `useSSE(endpoint?: string)`; re-export `LEGACY_STREAM_ENDPOINT` để consumer cũ truyền tường minh (I2/RULE-03).
+  - `layouts/DashboardLayout.tsx`: `useSSE()` — dùng default chuẩn; vẫn 1 kết nối tại shell + `SseMarkersProvider` + `sse.reconnect` (I1).
+  - **Không đổi:** `services/sse-api.ts`, `lib/sse.ts` (kể cả fallback legacy của `resolveSseUrl`), BE, event names, packet, backoff, `/monitoring`, `.env*`, `dev-mock.ts`.
+- **Test:** `apps/web/tests/sse-default.test.ts` (mới, 6 case: default chuẩn, override legacy, connectEventsStream legacy, source assertions hook/shell); `pnpm test` → **194/194 pass**, `pnpm build` PASS; `notes_index.py --check` OK; `scope` OK.
+- **Legacy vẫn dùng được qua 3 đường:** (a) `useSSE(LEGACY_STREAM_ENDPOINT)` (constant được re-export), (b) `VITE_SSE_ENDPOINT=/api/v1/stream/earthquakes`, (c) BE giữ cả 2 route dùng chung generator.
+- **Bổ sung theo duyệt user:** `.env.example` đổi `VITE_SSE_ENDPOINT` sang `/api/v1/events/stream` (comment nhắc legacy override); `dev-mock.ts` phục vụ thêm `/api/v1/events/stream` nhưng vẫn giữ nhánh legacy; `dev-mock.test.ts` thêm case route chuẩn. Không đụng file `.env` local hay BE.
+- **Tiếp theo:** proposal 4 = **RD-16** (nạp `getHealth`/`getSystemStatus` vào panel trạng thái 7 Terminals). Proposal 5 = RD-14 (nút đồng bộ USGS). Rẽ nhánh mới từ `develop`; dùng nhật ký này, không phân tích lại audit.
