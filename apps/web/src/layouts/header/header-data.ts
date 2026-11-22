@@ -4,6 +4,7 @@
  */
 
 import type { ClustersResponse } from "../../contracts/clusters.ts";
+import type { SSEEventPayload } from "../../contracts/sse.ts";
 import type {
   ServiceHealth,
   ServiceKey,
@@ -52,6 +53,15 @@ export function nextCountdownTick(remainingSeconds: number): number {
 
 /** Thời gian tự đóng của toast báo cập nhật (giây). */
 export const TOAST_SECONDS = 5;
+
+/**
+ * Key đổi mỗi lần SSE xác nhận worker T2 hoàn thành chu kỳ 5 phút (GAP-13).
+ * Toast "Dữ liệu đã được cập nhật" bắn theo key này thay vì đồng hồ cục bộ.
+ */
+export function dataRefreshKey(event: SSEEventPayload | null | undefined): string | null {
+  if (!event || event.event !== "ingestion_cycle_completed") return null;
+  return `${event.timestamp ?? ""}:${event.id ?? ""}`;
+}
 
 /** Giây tiếp theo của toast; chạm 0 thì dừng (component sẽ ẩn toast). */
 export function nextToastTick(seconds: number): number {

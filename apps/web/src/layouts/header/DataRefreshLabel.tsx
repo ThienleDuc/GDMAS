@@ -5,16 +5,19 @@ import { RefreshToast } from "./RefreshToast.tsx";
 
 interface DataRefreshLabelProps {
   onRefresh: () => void;
+  /** Key đổi khi SSE xác nhận dữ liệu vừa cập nhật (GAP-13) — toast bắn theo key này. */
+  dataRefreshKey?: string | null;
 }
 
 /**
- * Đồng hồ đếm ngược chu kỳ cập nhật 5 phút — chạy độc lập, không phụ thuộc trạng thái SSE
- * nên không bị nhấp nháy. Khi về 0: mở lại SSE để lấy sự kiện mới + hiện toast 5 giây.
+ * Đồng hồ đếm ngược chu kỳ 5 phút chạy độc lập (không nhấp nháy theo SSE). Khi về 0 chỉ mở lại
+ * SSE để nhận sự kiện mới. Toast "Dữ liệu đã được cập nhật" bắn theo SSE thật, không theo đồng hồ.
  */
-export const DataRefreshLabel: React.FC<DataRefreshLabelProps> = ({ onRefresh }) => {
+export const DataRefreshLabel: React.FC<DataRefreshLabelProps> = ({ onRefresh, dataRefreshKey }) => {
   const [remaining, setRemaining] = useState(REFRESH_CYCLE_SECONDS);
   const [toastOpen, setToastOpen] = useState(false);
   const lastRemaining = useRef(remaining);
+  const lastRefreshKey = useRef<string | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => setRemaining((current) => nextCountdownTick(current)), 1000);
@@ -24,10 +27,15 @@ export const DataRefreshLabel: React.FC<DataRefreshLabelProps> = ({ onRefresh })
   useEffect(() => {
     if (lastRemaining.current !== remaining && remaining === REFRESH_CYCLE_SECONDS) {
       onRefresh();
-      setToastOpen(true);
     }
     lastRemaining.current = remaining;
   }, [remaining, onRefresh]);
+
+  useEffect(() => {
+    if (!dataRefreshKey || dataRefreshKey === lastRefreshKey.current) return;
+    lastRefreshKey.current = dataRefreshKey;
+    setToastOpen(true);
+  }, [dataRefreshKey]);
 
   const closeToast = useCallback(() => setToastOpen(false), []);
 
