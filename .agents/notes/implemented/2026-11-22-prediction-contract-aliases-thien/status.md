@@ -2,7 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-prediction-contract-aliases-thien
-- Status: validation
+- Status: completed
+- Merged: 2026-11-22 — PR #79, merge commit `4a97affd7d5f28e892fdc897ec2293b4afa5af3a`
 - Started: 2026-11-22
 - Last Updated: 2026-11-22
 - Owner: agent | thien

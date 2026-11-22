@@ -2,7 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-sse-contract-events-thien
-- Status: validation
+- Status: completed
+- Merged: 2026-11-22 — PR #80, merge commit `7a911725f8143a06b8d34447151650a782b8638f`
 - Started: 2026-11-22
 - Last Updated: 2026-11-22
 - Owner: agent | thien
