@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-22-patterns-empty-envelope-guard-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-22
 - Last Updated: 2026-11-22
 - Owner: agent | thien
@@ -60,4 +60,4 @@ Blocked:
 ---
 
 ## Last Update
-2026-11-22 — Validation xanh; chuyển `validation`, dừng CHECKPOINT 1.
+2026-11-22 — Validation xanh; CHECKPOINT 1 & 2 xác nhận; PR #83 merge vào develop tại `079d6dd` → `completed`.
