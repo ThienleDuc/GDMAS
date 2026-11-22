@@ -8,6 +8,7 @@ import json
 import logging
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
+from itertools import count
 from typing import Any
 
 from fastapi import Request
@@ -56,10 +57,30 @@ def _event_to_dict(ev: EarthquakeEvent) -> dict[str, Any]:
     }
 
 
-def _packet(event: str, data: dict[str, Any]) -> dict[str, str]:
-    """Đóng gói theo contracts/schemas/sse-event.json: {event, data, timestamp}."""
-    payload = {"event": event, "data": data, "timestamp": utc_now_iso()}
-    return {"event": event, "data": json.dumps(payload)}
+SSE_RETRY_MS = 5_000
+_packet_ids = count(1)
+
+
+def _packet(event: str, data: dict[str, Any]) -> dict[str, Any]:
+    """Đóng gói theo contracts/schemas/sse-event.json: {event, data, timestamp, id?, retry?}.
+
+    `id` tăng dần giúp FE chống trùng khi reconnect; `retry` là gợi ý reconnect (ms).
+    Cả hai được phát ở wire (header id:/retry:) **và** trong inner JSON để FE parse.
+    """
+    event_id = f"gdmas-{next(_packet_ids)}"
+    payload = {
+        "event": event,
+        "data": data,
+        "timestamp": utc_now_iso(),
+        "id": event_id,
+        "retry": SSE_RETRY_MS,
+    }
+    return {
+        "event": event,
+        "data": json.dumps(payload),
+        "id": event_id,
+        "retry": SSE_RETRY_MS,
+    }
 
 
 # FE `applySseEvent` (apps/web/src/features/monitoring/monitoring-view.ts:112-118)
@@ -89,7 +110,7 @@ def _marker_fields(events: list[dict[str, Any]]) -> dict[str, Any]:
     return {key: first[key] for key in _EVENT_MARKER_FIELDS if key in first}
 
 
-def _cleared_packet() -> dict[str, str]:
+def _cleared_packet() -> dict[str, Any]:
     return _packet(
         "database_cleared",
         {
@@ -195,7 +216,7 @@ def get_latest_state(
         }
 
 
-def _drain_queue(client_queue: asyncio.Queue) -> dict[str, str] | None:
+def _drain_queue(client_queue: asyncio.Queue) -> dict[str, Any] | None:
     try:
         return client_queue.get_nowait()
     except asyncio.QueueEmpty:
@@ -204,7 +225,7 @@ def _drain_queue(client_queue: asyncio.Queue) -> dict[str, str] | None:
 
 async def earthquake_event_generator(
     request: Request,
-) -> AsyncGenerator[dict[str, str], None]:
+) -> AsyncGenerator[dict[str, Any], None]:
     """Generator SSE dùng chung: heartbeat, earthquake_detected, earthquake_alert,
     ingestion_cycle_completed, database_cleared."""
     client_queue: asyncio.Queue = asyncio.Queue()
@@ -309,17 +330,18 @@ async def earthquake_event_generator(
             # Cảnh báo ưu tiên: M >= 4.5 (độc lập với nhánh ở trên)
             alerts = [e for e in new_events if (e["magnitude"] or 0) >= ALERT_MAGNITUDE]
             if alerts:
-                yield _packet(
-                    "earthquake_alert",
-                    {
-                        "title": f"Cảnh Báo Động Đất M ≥ {ALERT_MAGNITUDE}",
-                        "message": f"Có {len(alerts)} sự kiện có độ lớn từ {ALERT_MAGNITUDE} trở lên.",
-                        "alert_events": alerts,
-                        "max_magnitude": max(e["magnitude"] for e in alerts),
-                        "total_events": current_total,
-                        **_marker_fields(alerts),
-                    },
-                )
+                alert_data = {
+                    "title": f"Cảnh Báo Động Đất M ≥ {ALERT_MAGNITUDE}",
+                    "message": f"Có {len(alerts)} sự kiện có độ lớn từ {ALERT_MAGNITUDE} trở lên.",
+                    "alert_events": alerts,
+                    "max_magnitude": max(e["magnitude"] for e in alerts),
+                    "total_events": current_total,
+                    **_marker_fields(alerts),
+                }
+                yield _packet("earthquake_alert", alert_data)
+                # GAP-09: contract sse-event.json liệt kê thêm tên "alert" (alias) —
+                # FE đã đăng ký cả tên này và tự dedup theo source_event_id (GAP-06).
+                yield _packet("alert", alert_data)
 
             if not new_run_info and not new_events:
                 yield _packet(
