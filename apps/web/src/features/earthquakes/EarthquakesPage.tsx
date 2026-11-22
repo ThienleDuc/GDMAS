@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import type { EarthquakeItem } from "../../contracts/earthquake.ts";
 import { useEarthquakeInsights } from "../../hooks/useEarthquakeInsights.ts";
+import { getEarthquakeDetail } from "../../services/earthquake-api.ts";
 import { ApiError } from "../../lib/api-client.ts";
+import { isNotFound } from "./earthquake-detail.ts";
 import {
   getStoredTimezone,
   setStoredTimezone,
@@ -20,6 +22,7 @@ import {
 import { mapRangeToInterval } from "./earthquake-insights.ts";
 import { ALL_COUNTRIES, countriesFromItems, filterItemsByCountry } from "./country-filter.ts";
 import { AsyncStatePanel } from "./components/AsyncStatePanel.tsx";
+import { EarthquakeDetailPanel, type DetailState } from "./components/EarthquakeDetailPanel.tsx";
 import { EarthquakeFilterBar, type EarthquakeFilterValues } from "./components/EarthquakeFilterBar.tsx";
 import { EarthquakeInsights } from "./components/EarthquakeInsights.tsx";
 import { EarthquakePagination } from "./components/EarthquakePagination.tsx";
@@ -53,6 +56,11 @@ export const EarthquakesPage: React.FC = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedCountry, setSelectedCountry] = useState(ALL_COUNTRIES);
   const [chartItems, setChartItems] = useState<EarthquakeItem[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [detail, setDetail] = useState<EarthquakeItem | null>(null);
+  const [detailState, setDetailState] = useState<DetailState>("idle");
+  const [detailMessage, setDetailMessage] = useState<string | undefined>(undefined);
+  const [detailRetryKey, setDetailRetryKey] = useState(0);
 
   // Filter values are drafts; only the SVG apply button commits them.
   const handleFilterChange = useCallback((key: keyof EarthquakeFilterValues, value: string) => {
@@ -62,6 +70,7 @@ export const EarthquakesPage: React.FC = () => {
   const handleApplyFilters = useCallback(() => {
     setAppliedForm(form);
     setPage(1);
+    setSelectedId(null);
   }, [form]);
 
   const filters = useMemo<EarthquakeFilters>(
@@ -134,17 +143,52 @@ export const EarthquakesPage: React.FC = () => {
     }
   }, [countries, selectedCountry]);
 
+  // RD-13: nạp chi tiết sự kiện theo dòng đã chọn — abort khi đổi dòng/unmount (tránh race).
+  useEffect(() => {
+    if (selectedId === null) return;
+    const controller = new AbortController();
+    setDetail(null);
+    setDetailState("loading");
+    setDetailMessage(undefined);
+
+    getEarthquakeDetail(selectedId, controller.signal)
+      .then((item) => {
+        if (controller.signal.aborted) return;
+        setDetail(item);
+        setDetailState("ready");
+      })
+      .catch((reason: unknown) => {
+        if (controller.signal.aborted) return;
+        if (isNotFound(reason)) {
+          setDetailState("not_found");
+        } else {
+          setDetailState("error");
+          setDetailMessage(reason instanceof ApiError ? reason.message : "Lỗi không xác định.");
+        }
+      });
+
+    return () => controller.abort();
+  }, [selectedId, detailRetryKey]);
+
+  const handleSelectEvent = useCallback((id: number) => setSelectedId(id), []);
+  const handleCloseDetail = useCallback(() => setSelectedId(null), []);
+  const handleRetryDetail = useCallback(() => setDetailRetryKey((key) => key + 1), []);
+
   const handleTimezoneChange = () => {
     const next: TimezoneMode = timezone === "UTC" ? "UTC+7" : "UTC";
     setStoredTimezone(next);
     setTimezone(next);
   };
 
-  const handleRetry = () => setRefreshKey((key) => key + 1);
+  const handleRetry = () => {
+    setRefreshKey((key) => key + 1);
+    setSelectedId(null);
+  };
 
   const handleCountryChange = (country: string) => {
     setSelectedCountry(country);
     setPage(1);
+    setSelectedId(null);
   };
 
   return (
@@ -180,8 +224,24 @@ export const EarthquakesPage: React.FC = () => {
         <div className="eq-data-row__main">
           {viewState === "ready" ? (
             <>
-              <EarthquakeTable rows={rows} timezone={timezone} />
-              <EarthquakePagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+              <EarthquakeTable rows={rows} timezone={timezone} onSelect={handleSelectEvent} />
+              <EarthquakePagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                onPageChange={(next) => {
+                  setPage(next);
+                  setSelectedId(null);
+                }}
+              />
+              <EarthquakeDetailPanel
+                state={detailState}
+                item={detail}
+                timezone={timezone}
+                message={detailMessage}
+                onClose={handleCloseDetail}
+                onRetry={handleRetryDetail}
+              />
             </>
           ) : (
             <AsyncStatePanel

@@ -4,9 +4,11 @@ import type { EventRow } from "../earthquake-view.ts";
 interface EarthquakeTableProps {
   rows: EventRow[];
   timezone: string;
+  /** Tùy chọn — khi truyền, mỗi dòng trở thành nút chọn chi tiết (I2). */
+  onSelect?: (id: number) => void;
 }
 
-export const EarthquakeTable: React.FC<EarthquakeTableProps> = ({ rows, timezone }) => (
+export const EarthquakeTable: React.FC<EarthquakeTableProps> = ({ rows, timezone, onSelect }) => (
   <div className="eq-table-card">
     <div className="ds-table-wrapper">
       <table className="ds-table">
@@ -22,7 +24,24 @@ export const EarthquakeTable: React.FC<EarthquakeTableProps> = ({ rows, timezone
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr key={row.id}>
+          <tr
+            key={row.id}
+            className={onSelect ? "eq-row-selectable" : undefined}
+            onClick={onSelect ? () => onSelect(row.id) : undefined}
+            onKeyDown={
+              onSelect
+                ? (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelect(row.id);
+                    }
+                  }
+                : undefined
+            }
+            role={onSelect ? "button" : undefined}
+            tabIndex={onSelect ? 0 : undefined}
+            aria-label={onSelect ? `Xem chi tiết sự kiện ${row.id}` : undefined}
+          >
             <td>{row.time}</td>
             <td>{row.place}</td>
             <td className="numeric">
