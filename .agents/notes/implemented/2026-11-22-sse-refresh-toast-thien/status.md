@@ -2,7 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-sse-refresh-toast-thien
-- Status: validation
+- Status: completed
+- Merged: 2026-11-22 — PR #75, merge commit `a01cdee75330f74526eed1e4f6aae46cb7ee1ab8`
 - Started: 2026-11-22
 - Last Updated: 2026-11-22
 - Owner: agent | thien
@@ -11,7 +12,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: READY — commit/merge tự động theo chỉ thị user
+Current Phase: completed — PR #75 đã merge vào develop, nhánh local đã sync
 
 Completed:
 - Rẽ nhánh `feat/2026-11-22-sse-refresh-toast-thien` từ `develop`
