@@ -128,6 +128,22 @@ test("TC-10: page composes the extracted presentational components", () => {
   assert.doesNotMatch(page, /RANGE_PRESETS\.map/u);
 });
 
+test("TC-12: RD-13 detail panel wiring uses getEarthquakeDetail without raw table", () => {
+  const sourceRoot = resolve(import.meta.dirname, "../src");
+  const page = readFileSync(resolve(sourceRoot, "features/earthquakes/EarthquakesPage.tsx"), "utf8");
+  const table = readFileSync(
+    resolve(sourceRoot, "features/earthquakes/components/EarthquakeTable.tsx"),
+    "utf8",
+  );
+
+  assert.match(page, /getEarthquakeDetail/u);
+  assert.match(page, /<EarthquakeDetailPanel/u);
+  assert.match(page, /onSelect=\{handleSelectEvent\}/u);
+  assert.match(page, /new AbortController\(\)/u);
+  assert.match(table, /onSelect\?: \(id: number\) => void/u);
+  assert.doesNotMatch(page, /<table\b/u);
+});
+
 test("TC-11: page CSS is colocated and centrally imported; index.css remains imports-only", () => {
   const sourceRoot = resolve(import.meta.dirname, "../src");
   const cssPath = resolve(sourceRoot, "features/earthquakes/EarthquakesPage.css");

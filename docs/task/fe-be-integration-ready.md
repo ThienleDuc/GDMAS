@@ -80,7 +80,7 @@ Các route này **đã có trên BE và khớp contract FE**, nhưng service FE 
 ## 4. Nhật ký triển khai (đọc đầu tiên ở phiên tiếp theo)
 
 > Mỗi proposal hoàn thành ghi 1 mục ở đây để phiên sau **không phải phân tích lại từ đầu**.
-> Thứ tự proposal đã chia: **(1) RD-15** ✅ · (2) RD-13 · (3) RD-17 · (4) RD-16 · (5) RD-14.
+> Thứ tự proposal đã chia: **(1) RD-15** ✅ · **(2) RD-13** ✅ · (3) RD-17 · (4) RD-16 · (5) RD-14.
 > RD-01…RD-12 chỉ là kiểm chứng hợp đồng, không cần proposal riêng.
 
 ### Proposal 1 — RD-15: Fallback cụm thật từ `/patterns` — ✅ ĐÃ GIẢI QUYẾT (2026-11-22)
@@ -98,3 +98,18 @@ Các route này **đã có trên BE và khớp contract FE**, nhưng service FE 
 - **Kết luận cho các consumer:** không cần sửa — tự nhận cụm thật; `unavailable` chỉ còn đúng khi cả 2 nguồn đều rỗng/404.
 - **Còn lại cho phiên sau:** RD-13, RD-14, RD-16, RD-17 chưa làm (xem bảng §2 ở trên). Bắt đầu proposal 2 = **RD-13** (gắn chi tiết sự kiện từ `getEarthquakeDetail()` vào popup/bảng), rẽ nhánh mới từ `develop`. Không cần đọc lại audit FE↔BE — dùng trực tiếp bảng §1/§2 + nhật ký này.
 - **Lưu ý:** `clustering_summary` legacy từ `demo_seeder` có `name` tiếng Việt ("Vành đai Thái Bình Dương - Nhật Bản") → `countryFromPlace()` có thể không map được sang "Japan"; đây là dữ liệu thật, **không được bịa `dominant_place`** (thuộc GAP-01 phía BE).
+
+### Proposal 2 — RD-13: Panel chi tiết sự kiện — ✅ ĐÃ GIẢI QUYẾT (2026-11-22)
+
+- **Nhánh:** `feat/2026-11-22-earthquake-detail-panel-thien`
+- **Proposal:** `.agents/notes/proposed/2026-11-22-earthquake-detail-panel-thien.md` (§9 Approved)
+- **Plan / Testcase:** `.agents/notes/implemented/2026-11-22-earthquake-detail-panel-thien/`, `.agents/notes/testcase/2026-11-22-earthquake-detail-panel-thien.md`
+- **Vấn đề đã đóng:** `getEarthquakeDetail()` (`earthquake-api.ts:118-123`) chỉ có định nghĩa, không consumer — bảng `/earthquakes` không hiển thị được `magnitude_type`, `source_url`, `ingested_at`, `raw_data` dù BE `GET /earthquakes/{id}` đã trả thật.
+- **Cách làm:**
+  - Thêm helper thuần `apps/web/src/features/earthquakes/earthquake-detail.ts`: `detailFields(item, timezone)`, `rawDataSummary(item)`, `isNotFound(error)` — chỉ field có giá trị, UTC/WGS84 đúng, không số giả.
+  - Thêm `components/EarthquakeDetailPanel.tsx` — 4 trạng thái `loading / not_found / error / ready`; `<details>` chứa `JSON.stringify(raw_data)` khi có; `role="status"/"alert"`.
+  - `components/EarthquakeTable.tsx`: thêm prop **tùy chọn** `onSelect?: (id:number)=>void` (I2 — giữ nguyên props cũ), `<tr>` có click/Enter/Space + `role="button"`/`tabIndex`.
+  - `EarthquakesPage.tsx`: state `selectedId/detail/detailState/detailMessage/detailRetryKey`; effect gọi `getEarthquakeDetail(selectedId, signal)` với `AbortController` (tránh race), clear selection khi đổi filter/trang/quốc gia/retry; render panel dưới bảng. CSS mới trong `EarthquakesPage.css` chỉ dùng token, không hardcode màu.
+  - **Không đổi:** `apps/api/**`, `contracts/**` repo-level, `services/earthquake-api.ts`, `/monitoring`, Leaflet/SSE, `useCatalogSelection`.
+- **Test:** `apps/web/tests/earthquake-detail.test.ts` (mới, 5 case) + bổ sung `apps/web/tests/earthquakes-page.test.ts` TC-12; `pnpm test` → **189/189 pass**, `pnpm build` PASS; `notes_index.py --check` OK.
+- **Lưu ý cho phiên sau:** BE trả object thuần (không envelope) → `fetchApi` chấp nhận; 404 → `ApiError(404)` → panel "Không tìm thấy sự kiện"; `contracts/examples/earthquake_sample.json` có `raw_data:null` nên test phải tự dựng GeoJSON. Tiếp theo = proposal 3 **RD-17** (đổi default SSE sang `/api/v1/events/stream`, giữ legacy fallback) — rẽ nhánh mới từ `develop`, không cần đọc lại audit.

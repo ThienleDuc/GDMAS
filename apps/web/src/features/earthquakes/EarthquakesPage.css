@@ -424,6 +424,64 @@
       animation: none;
     }
   }
+
+  /* RD-13 — panel chi tiết sự kiện (chỉ dùng CSS token, không hardcode màu) */
+  .eq-table-card .eq-row-selectable {
+    cursor: pointer;
+  }
+
+  .eq-table-card .eq-row-selectable:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
+  }
+
+  .eq-detail-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .eq-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-3);
+    margin: 0;
+    padding: var(--space-4);
+  }
+
+  .eq-detail-item {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .eq-detail-item dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: var(--text-sm);
+  }
+
+  .eq-detail-raw {
+    padding: 0 var(--space-4) var(--space-4);
+    color: var(--muted-foreground);
+    font-size: var(--text-xs);
+  }
+
+  .eq-detail-raw summary {
+    cursor: pointer;
+  }
+
+  .eq-detail-raw pre {
+    max-height: 16rem;
+    overflow: auto;
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--muted);
+  }
 }
 
 /* Thanh bar grow lên khi chuyển trang đến (component mount) */
