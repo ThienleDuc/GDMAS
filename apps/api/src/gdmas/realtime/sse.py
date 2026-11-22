@@ -62,6 +62,33 @@ def _packet(event: str, data: dict[str, Any]) -> dict[str, str]:
     return {"event": event, "data": json.dumps(payload)}
 
 
+# FE `applySseEvent` (apps/web/src/features/monitoring/monitoring-view.ts:112-118)
+# đọc trực tiếp payload.data.latitude / magnitude / event_time. Packet trước đây
+# chỉ có mảng new_events[] lồng nhau → marker realtime gần như không được thêm.
+# Bổ sung field phẳng của sự kiện đầu, giữ nguyên mảng gốc (RULE-03 additive).
+_EVENT_MARKER_FIELDS = (
+    "id",
+    "source",
+    "source_event_id",
+    "event_time",
+    "latitude",
+    "longitude",
+    "depth_km",
+    "magnitude",
+    "magnitude_type",
+    "place",
+    "source_url",
+)
+
+
+def _marker_fields(events: list[dict[str, Any]]) -> dict[str, Any]:
+    """Field phẳng của sự kiện đầu tiên — trả {} khi không có sự kiện."""
+    if not events:
+        return {}
+    first = events[0]
+    return {key: first[key] for key in _EVENT_MARKER_FIELDS if key in first}
+
+
 def _cleared_packet() -> dict[str, str]:
     return _packet(
         "database_cleared",
@@ -275,6 +302,7 @@ async def earthquake_event_generator(
                         "records_processed": len(new_events),
                         "total_events": current_total,
                         "latest_event": state["latest"],
+                        **_marker_fields(new_events),
                     },
                 )
 
@@ -289,6 +317,7 @@ async def earthquake_event_generator(
                         "alert_events": alerts,
                         "max_magnitude": max(e["magnitude"] for e in alerts),
                         "total_events": current_total,
+                        **_marker_fields(alerts),
                     },
                 )
 

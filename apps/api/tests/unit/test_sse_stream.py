@@ -78,6 +78,60 @@ def test_strong_event_emits_earthquake_alert(monkeypatch):
     assert alert["max_magnitude"] == 4.5
 
 
+def test_earthquake_detected_has_flat_marker_fields(monkeypatch):
+    new = [
+        {
+            "id": 11,
+            "source_event_id": "us_test_001",
+            "event_time": "2026-11-22T03:00:00Z",
+            "latitude": -6.2,
+            "longitude": 106.8,
+            "depth_km": 24.5,
+            "magnitude": 4.0,
+            "place": "Java, Indonesia",
+        }
+    ]
+    packets = _collect(monkeypatch, _state(), [_state(new_events=new, max_id=11)])
+
+    packet = packets[-1]
+    assert packet["event"] == "earthquake_detected"
+    data = packet["data"]
+    assert data["latitude"] == -6.2
+    assert data["longitude"] == 106.8
+    assert data["magnitude"] == 4.0
+    assert data["event_time"] == "2026-11-22T03:00:00Z"
+    assert data["source_event_id"] == "us_test_001"
+    assert data["place"] == "Java, Indonesia"
+    assert data["new_events"] == new  # Mảng gốc vẫn giữ (RULE-03)
+
+
+def test_earthquake_alert_has_flat_marker_fields(monkeypatch):
+    alerts = [
+        {
+            "id": 12,
+            "source_event_id": "us_test_002",
+            "event_time": "2026-11-22T04:00:00Z",
+            "latitude": 38.2,
+            "longitude": 142.4,
+            "depth_km": 30.0,
+            "magnitude": 5.2,
+            "place": "Honshu, Japan",
+        }
+    ]
+    packets = _collect(monkeypatch, _state(), [_state(new_events=alerts, max_id=12)])
+
+    alert = packets[-1]["data"]
+    assert alert["latitude"] == 38.2
+    assert alert["longitude"] == 142.4
+    assert alert["magnitude"] == 5.2
+    assert alert["event_time"] == "2026-11-22T04:00:00Z"
+    assert alert["alert_events"] == alerts
+
+
+def test_marker_fields_are_empty_for_no_event():
+    assert sse._marker_fields([]) == {}
+
+
 def test_finished_ingestion_run_emits_cycle_completed(monkeypatch):
     run = {"records_processed": 3, "finished_at": None}
     packets = _collect(monkeypatch, _state(), [_state(new_run=run)])
