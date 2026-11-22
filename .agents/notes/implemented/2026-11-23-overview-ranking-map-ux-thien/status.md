@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-23-overview-ranking-map-ux-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-23
 - Last Updated: 2026-11-23
 - Owner: agent | thien
@@ -11,7 +11,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: validation — chờ CHECKPOINT 1
+Current Phase: completed — PR #94 đã merge vào develop (merge SHA `78eea77`)
 
 Completed:
 - Proposal §9 Approved (Overrides 2 proposal cũ)
@@ -43,7 +43,7 @@ Blocked: none
 - Ranking từ catalog chỉ có count → avg/max để null, không bịa; fallback cụm cũ giữ nguyên.
 
 ## Next Actions
-- CHECKPOINT 1: chờ `tiếp tục workflow` / dừng / sửa thêm.
+- none — đã merge PR #94 vào develop, đồng bộ xong. Cụm DBSCAN (T4) nằm ở proposal riêng.
 
 ## Last Update
-2026-11-23 — Validation xanh, dừng CHECKPOINT 1.
+2026-11-23 — PR #94 merged vào develop (`78eea77`); status → completed.
