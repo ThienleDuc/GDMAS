@@ -5,6 +5,7 @@ import { useSSE } from "../hooks/useSSE";
 import { SseMarkersProvider } from "../features/monitoring/sse-context.ts";
 import { NAV_META, routeLabel, type NavMeta } from "./navigation.ts";
 import { HeaderActions } from "./header/HeaderActions.tsx";
+import { dataRefreshKey } from "./header/header-data.ts";
 
 interface NavItem extends NavMeta {
   icon: React.ComponentType<{ className?: string }>;
@@ -29,6 +30,8 @@ export const DashboardLayout: React.FC = () => {
   // Giữ một kết nối SSE duy nhất tại shell; page bản đồ chỉ đọc qua context.
   // RD-17: dùng default chuẩn /api/v1/events/stream từ services/sse-api.ts (giữ 1 kết nối tại shell).
   const sse = useSSE();
+  // GAP-13: toast bắn theo event SSE thật (worker T2, 5 phút) — không theo đồng hồ cục bộ.
+  const sseRefreshKey = dataRefreshKey(sse.data);
 
   return (
     <div className="layout layout--dashboard app-layout">
@@ -85,7 +88,7 @@ export const DashboardLayout: React.FC = () => {
             <span className="layout__breadcrumb-current">{routeLabel(location.pathname)}</span>
           </div>
 
-          <HeaderActions onRefresh={sse.reconnect} />
+          <HeaderActions onRefresh={sse.reconnect} dataRefreshKey={sseRefreshKey} />
         </header>
 
         <main className="layout__content app-content">
