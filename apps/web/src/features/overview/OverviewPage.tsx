@@ -19,6 +19,8 @@ import {
   buildSeverityMix,
   buildTrendComparison,
   formatPrediction,
+  rankFromCountryCatalog,
+  rankFromRegionCatalog,
   rankRegionsForCountry,
   severityLabel,
   type RankRow,
@@ -36,7 +38,14 @@ export const OverviewPage: React.FC = () => {
   const severity = useMemo(() => buildSeverityMix(data.statistics), [data.statistics]);
   const trend = useMemo(() => buildTrendComparison(data.trend), [data.trend]);
   const seasonality = useMemo(() => buildSeasonalityBars(data.seasonality), [data.seasonality]);
-  const ranking = useMemo(() => rankRegionsForCountry(data.clusters, country), [data.clusters, country]);
+  // Ưu tiên danh mục sự kiện thật (có count); fallback cụm cũ khi catalog rỗng (I2/I5).
+  const ranking = useMemo(() => {
+    const fromCatalog =
+      country === ALL_COUNTRIES
+        ? rankFromCountryCatalog(data.countryCatalog)
+        : rankFromRegionCatalog(data.regionCatalog);
+    return fromCatalog.length > 0 ? fromCatalog : rankRegionsForCountry(data.clusters, country);
+  }, [country, data.countryCatalog, data.regionCatalog, data.clusters]);
   const latest = useMemo(() => buildLatestEvents(data.latestEvents), [data.latestEvents]);
   const prediction = useMemo(
     () => formatPrediction(data.predictions, data.classifications),
@@ -175,7 +184,11 @@ export const OverviewPage: React.FC = () => {
                 {prediction.predictedValue === null ? "—" : prediction.predictedValue.toLocaleString("vi-VN")}
               </p>
               <p className="ov-forecast__meta">
-                Khoảng tin cậy:{" "}
+                Khoảng tin cậy{" "}
+                {prediction.confidenceLevel !== null
+                  ? `${Math.round(prediction.confidenceLevel * 100)}%`
+                  : "(chưa xác định mức)"}
+                :{" "}
                 {prediction.lower !== null && prediction.upper !== null ? (
                   <span className="ov-forecast__highlight">
                     {prediction.lower} – {prediction.upper}
@@ -184,6 +197,9 @@ export const OverviewPage: React.FC = () => {
                   "Chưa có khoảng tin cậy"
                 )}
               </p>
+              {prediction.modelName && (
+                <p className="ov-forecast__basis">Dựa trên mô hình {prediction.modelName}</p>
+              )}
               <p className="ov-forecast__meta">
                 Mức rủi ro:{" "}
                 <strong className="ov-forecast__highlight">{prediction.riskLabel ?? "—"}</strong>

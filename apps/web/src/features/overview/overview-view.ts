@@ -9,6 +9,7 @@ import type { ClassificationsResponse } from "../../contracts/classifications.ts
 import type { ClustersResponse } from "../../contracts/clusters.ts";
 import type { EarthquakeItem, StatisticsResponse } from "../../contracts/earthquake.ts";
 import type { PredictionsResponse } from "../../contracts/predictions.ts";
+import type { CountryCatalogResponse, RegionCatalogResponse } from "../../contracts/geo-catalog.ts";
 import { isFiniteNumber, normalizeRiskLabel, buildTrendSeries } from "../../lib/transforms/chart-data.ts";
 import { ALL_COUNTRIES } from "../earthquakes/country-filter.ts";
 import { countryFromPlace } from "../earthquakes/country-clusters.ts";
@@ -90,6 +91,10 @@ export interface PredictionView {
   predictedValue: number | null;
   lower: number | null;
   upper: number | null;
+  /** Mức tin cậy do BE trả (0.95 → 95%); null khi payload không có. */
+  confidenceLevel: number | null;
+  /** Tên mô hình tạo ra khoảng — "dựa trên cái gì". */
+  modelName: string | null;
   riskLabel: string | null;
 }
 
@@ -320,6 +325,55 @@ export function formatPrediction(
     predictedValue: isFiniteNumber(data?.predicted_value) ? data!.predicted_value! : null,
     lower,
     upper,
+    confidenceLevel: isFiniteNumber(data?.confidence_level) ? data!.confidence_level! : null,
+    modelName: data?.model_name?.trim() || null,
     riskLabel: riskLabelVietnamese(normalizeRiskLabel(classifications?.data?.predicted_label)),
   };
+}
+
+/** Số mục tối đa hiển thị trên bảng xếp hạng (top N) — không render toàn bộ danh mục. */
+export const TOP_RANK_LIMIT = 5;
+
+/**
+ * Xếp hạng từ danh mục quốc gia do BE suy từ `place` (GET /earthquakes/countries).
+ * Catalog chỉ có `count` — để `avgMagnitude`/`maxMagnitude = null` thay vì bịa số (I5).
+ * Chỉ lấy top N theo số sự kiện giảm dần.
+ */
+export function rankFromCountryCatalog(
+  payload: CountryCatalogResponse | null | undefined,
+  limit: number = TOP_RANK_LIMIT,
+): RankRow[] {
+  if (!Array.isArray(payload?.data)) return [];
+  return [...payload.data]
+    .filter((row) => Boolean(row.country?.trim()))
+    .sort((left, right) => right.count - left.count || left.country.localeCompare(right.country))
+    .slice(0, limit)
+    .map((row) => ({
+      key: row.country,
+      label: row.country,
+      eventCount: row.count,
+      avgMagnitude: null,
+      maxMagnitude: null,
+      clusterIds: [],
+    }));
+}
+
+/** Xếp hạng khu vực trong quốc gia từ GET /earthquakes/regions?country=... (top N). */
+export function rankFromRegionCatalog(
+  payload: RegionCatalogResponse | null | undefined,
+  limit: number = TOP_RANK_LIMIT,
+): RankRow[] {
+  if (!Array.isArray(payload?.data)) return [];
+  return [...payload.data]
+    .filter((row) => Boolean(row.region?.trim()))
+    .sort((left, right) => right.count - left.count || left.region.localeCompare(right.region))
+    .slice(0, limit)
+    .map((row) => ({
+      key: row.region,
+      label: row.region,
+      eventCount: row.count,
+      avgMagnitude: null,
+      maxMagnitude: null,
+      clusterIds: [],
+    }));
 }

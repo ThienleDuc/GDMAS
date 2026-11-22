@@ -1,45 +1,30 @@
-import { useMemo, useState } from "react";
 import { ALL_COUNTRIES } from "../../features/earthquakes/country-filter.ts";
 import { ALL_REGIONS } from "../../features/earthquakes/region-filter.ts";
 import { magnitudeToColor } from "../../lib/transforms/map-data.ts";
 import type { RegionClusterRow } from "../../features/monitoring/region-clusters.ts";
 
 interface MapRegionPanelProps {
-  countries: string[];
-  /** Danh mục khu vực do BE suy từ place (bổ sung — fallback vẫn là clusters). */
+  /** Giữ optional để tương thích caller cũ — quốc gia giờ lấy từ header/URL (I2). */
+  countries?: string[];
+  onCountryChange?: (country: string) => void;
+  /** Danh mục khu vực do BE suy từ place (fallback vẫn là clusters). */
   regions?: string[];
   clusters: RegionClusterRow[];
   country: string;
   region: string;
-  onCountryChange: (country: string) => void;
   onRegionChange: (region: string) => void;
   onClusterSelect: (cluster: RegionClusterRow) => void;
 }
 
-/** Panel lọc: QUỐC GIA = combobox có tìm kiếm, KHU VỰC = danh sách nút bấm. */
+/** Panel lọc KHU VỰC — quốc gia lấy từ combobox trên header, không lặp lại ở đây. */
 export function MapRegionPanel({
-  countries,
   regions = [],
   clusters,
   country,
   region,
-  onCountryChange,
   onRegionChange,
   onClusterSelect,
 }: MapRegionPanelProps) {
-  const [countryQuery, setCountryQuery] = useState("");
-  const [countryOpen, setCountryOpen] = useState(false);
-
-  const countryCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const cluster of clusters) {
-      counts.set(cluster.country, (counts.get(cluster.country) ?? 0) + cluster.eventCount);
-    }
-    return counts;
-  }, [clusters]);
-
-  const normalized = countryQuery.trim().toLowerCase();
-  const countryOptions = countries.filter((item) => item.toLowerCase().includes(normalized));
   const visibleClusters = clusters.filter(
     (item) => country === ALL_COUNTRIES || item.country === country,
   );
@@ -48,59 +33,9 @@ export function MapRegionPanel({
     (name) => !visibleClusters.some((cluster) => cluster.region === name),
   );
 
-  const selectCountry = (value: string) => {
-    onCountryChange(value);
-    setCountryOpen(false);
-    setCountryQuery("");
-  };
-
   return (
     <section className="gm-region-panel" aria-label="Lọc theo quốc gia và khu vực">
       <h2 className="gm-region-panel__title">Khu vực giám sát</h2>
-
-      <div className="gm-region-panel__group">
-        <label className="gm-region-panel__label" htmlFor="gm-country-combo">Quốc gia</label>
-        <div className="gm-region-combo">
-          <input
-            id="gm-country-combo"
-            className="gm-region-combo__input"
-            type="text"
-            role="combobox"
-            aria-expanded={countryOpen}
-            aria-controls="gm-country-options"
-            autoComplete="off"
-            placeholder="Tìm quốc gia…"
-            value={countryOpen ? countryQuery : country === ALL_COUNTRIES ? "Tất cả" : country}
-            onFocus={() => {
-              setCountryOpen(true);
-              setCountryQuery("");
-            }}
-            onChange={(event) => {
-              setCountryQuery(event.target.value);
-              setCountryOpen(true);
-            }}
-            onBlur={() => window.setTimeout(() => setCountryOpen(false), 120)}
-          />
-          {countryOpen && (
-            <ul className="gm-region-combo__options" id="gm-country-options" role="listbox">
-              <li role="option" aria-selected={country === ALL_COUNTRIES}>
-                <button type="button" onClick={() => selectCountry(ALL_COUNTRIES)}>Tất cả</button>
-              </li>
-              {countryOptions.map((item) => (
-                <li key={item} role="option" aria-selected={country === item}>
-                  <button type="button" onClick={() => selectCountry(item)}>
-                    <span title={item}>{item}</span>
-                    <span className="gm-region-combo__count">{countryCounts.get(item) ?? 0}</span>
-                  </button>
-                </li>
-              ))}
-              {countryOptions.length === 0 && (
-                <li className="gm-region-combo__empty">Không tìm thấy quốc gia</li>
-              )}
-            </ul>
-          )}
-        </div>
-      </div>
 
       <div className="gm-region-panel__group">
         <span className="gm-region-panel__label">Khu vực</span>

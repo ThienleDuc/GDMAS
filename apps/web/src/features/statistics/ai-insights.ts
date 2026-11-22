@@ -27,6 +27,9 @@ export interface ExpertPredictionInput {
   confidence_interval?: { lower?: number | null; upper?: number | null } | null;
   lower_bound?: number | null;
   upper_bound?: number | null;
+  /** Mức tin cậy (0.95) và tên mô hình — dùng để ghi rõ cơ sở của khoảng. */
+  confidence_level?: number | null;
+  model_name?: string | null;
 }
 
 export interface ExpertClassificationInput {
@@ -267,12 +270,17 @@ function forecastInsight(
   const last = observed.length > 0 ? observed[observed.length - 1]?.value : null;
   const rising = isFiniteNumber(last) && (predicted ?? 0) > (last ?? 0);
   const target = data.target_date?.trim() || "ngày kế tiếp";
+  // Nêu rõ mức tin cậy và cơ sở (mô hình) thay vì chỉ ghi một đoạn số.
+  const confidenceLabel = isFiniteNumber(data.confidence_level)
+    ? `${Math.round((data.confidence_level as number) * 100)}%`
+    : "mức chưa xác định";
+  const modelLabel = data.model_name?.trim() || "mô hình dự báo";
 
   return {
     id: "forecast",
     pattern: "5",
     title: "Hồi quy & Dự báo",
-    comment: `Dự báo cho ${target}: ${formatNumber(predicted, 1)} (khoảng tin cậy 95%: ${formatNumber(
+    comment: `Dự báo cho ${target}: ${formatNumber(predicted, 1)} (khoảng tin cậy ${confidenceLabel} theo ${modelLabel}: ${formatNumber(
       lower,
       1,
     )} – ${formatNumber(upper, 1)}).${
@@ -282,7 +290,7 @@ function forecastInsight(
     evidence: [
       `Ngày dự báo ${target}`,
       `Giá trị ${formatNumber(predicted, 1)}`,
-      `Khoảng tin cậy ${formatNumber(lower, 1)} – ${formatNumber(upper, 1)}`,
+      `Khoảng tin cậy ${confidenceLabel} theo ${modelLabel}: ${formatNumber(lower, 1)} – ${formatNumber(upper, 1)}`,
       ...(isFiniteNumber(last) ? [`Quan sát gần nhất ${formatNumber(last, 1)}`] : []),
     ],
   };
