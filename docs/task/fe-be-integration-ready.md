@@ -80,7 +80,7 @@ Các route này **đã có trên BE và khớp contract FE**, nhưng service FE 
 ## 4. Nhật ký triển khai (đọc đầu tiên ở phiên tiếp theo)
 
 > Mỗi proposal hoàn thành ghi 1 mục ở đây để phiên sau **không phải phân tích lại từ đầu**.
-> Thứ tự proposal đã chia: **(1) RD-15** ✅ · **(2) RD-13** ✅ · **(3) RD-17** ✅ · (4) RD-16 · (5) RD-14.
+> Thứ tự proposal đã chia: **(1) RD-15** ✅ · **(2) RD-13** ✅ · **(3) RD-17** ✅ · **(4) RD-16** ✅ · (5) RD-14.
 > RD-01…RD-12 chỉ là kiểm chứng hợp đồng, không cần proposal riêng.
 
 ### Proposal 1 — RD-15: Fallback cụm thật từ `/patterns` — ✅ ĐÃ GIẢI QUYẾT (2026-11-22)
@@ -127,4 +127,18 @@ Các route này **đã có trên BE và khớp contract FE**, nhưng service FE 
 - **Test:** `apps/web/tests/sse-default.test.ts` (mới, 6 case: default chuẩn, override legacy, connectEventsStream legacy, source assertions hook/shell); `pnpm test` → **194/194 pass**, `pnpm build` PASS; `notes_index.py --check` OK; `scope` OK.
 - **Legacy vẫn dùng được qua 3 đường:** (a) `useSSE(LEGACY_STREAM_ENDPOINT)` (constant được re-export), (b) `VITE_SSE_ENDPOINT=/api/v1/stream/earthquakes`, (c) BE giữ cả 2 route dùng chung generator.
 - **Bổ sung theo duyệt user:** `.env.example` đổi `VITE_SSE_ENDPOINT` sang `/api/v1/events/stream` (comment nhắc legacy override); `dev-mock.ts` phục vụ thêm `/api/v1/events/stream` nhưng vẫn giữ nhánh legacy; `dev-mock.test.ts` thêm case route chuẩn. Không đụng file `.env` local hay BE.
-- **Tiếp theo:** proposal 4 = **RD-16** (nạp `getHealth`/`getSystemStatus` vào panel trạng thái 7 Terminals). Proposal 5 = RD-14 (nút đồng bộ USGS). Rẽ nhánh mới từ `develop`; dùng nhật ký này, không phân tích lại audit.
+- **Tiếp theo (đã làm, xem bên dưới):** proposal 4 = **RD-16** ✅ · proposal 5 = RD-14 (nút đồng bộ USGS). Rẽ nhánh mới từ `develop`; dùng nhật ký này, không phân tích lại audit.
+
+### Proposal 4 — RD-16: Panel trạng thái 7 Terminals — ✅ ĐÃ GIẢI QUYẾT (2026-11-22)
+
+- **Nhánh:** `feat/2026-11-22-terminal-status-panel-thien`
+- **Proposal:** `.agents/notes/proposed/2026-11-22-terminal-status-panel-thien.md` (§9 Approved)
+- **Plan / Testcase:** `.agents/notes/implemented/2026-11-22-terminal-status-panel-thien/`, `.agents/notes/testcase/2026-11-22-terminal-status-panel-thien.md`
+- **Vấn đề đã đóng:** `getHealthOptional`/`getSystemStatusOptional` chỉ có định nghĩa, không consumer runtime → trạng thái 7 Terminals không hiển thị dù BE có thật.
+- **Cách làm:**
+  - `layouts/header/header-data.ts`: thêm helper thuần `terminalStatusRows(payload, now?)` (map 7 key T1…T7 dùng `TERMINAL_KEYS`, `SERVICE_LABELS`, `TERMINAL_SPECS`, tái dùng `evaluateServiceFreshness`/`formatElapsedMinutes`), `summarizeTerminalRows(rows)` (chỉ đếm `active|running` **và** fresh), `terminalStatusLabel(status)`.
+  - `layouts/header/SystemStatusPanel.tsx` (mới): `<details>` chip `"Hệ thống {healthy}/{total}"`; fetch abortable `getSystemStatusOptional` + `getHealthOptional` khi mount và khi mở; 404 → "Chưa có dữ liệu trạng thái", 500 → `role="alert"` + retry; footer `data_feed` + `health.database`.
+  - `HeaderActions.tsx`: thêm 1 widget trước `RealtimeClock` (giữ thứ tự Clock → Theme); `layout.css`: class `.layout__system-*` chỉ CSS token.
+  - **Không đổi:** BE/contracts, `/settings`, card strip trên `/`, service/contract FE, SSE/countdown/theme.
+- **Test:** `apps/web/tests/terminal-status.test.ts` (mới, 9 case: 7 key, missing `last_run` → unknown, stale/interrupted, summary, payload rỗng, wiring, không restore route); `pnpm test` → **202/202 pass**, `pnpm build` PASS; `notes_index --check` OK.
+- **Lưu ý cho phiên sau:** `postgres`/`api`/`frontend` từ BE **không có `last_run`** → luôn `unknown` dù `status:"running"/"active"` (đúng I3 — không suy diễn). `evaluateServiceFreshness` bỏ qua `status`, nên qty summary phải lọc cả `status` lẫn freshness (đã làm). Proposal cuối = **RD-14** (nút "Đồng bộ ngay" gọi `syncUsgsData()`, có xác nhận + disable khi chạy + refresh danh sách); cân nhắc chỉ cho vai trò vận hành.

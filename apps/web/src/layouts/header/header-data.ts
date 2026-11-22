@@ -4,8 +4,20 @@
  */
 
 import type { ClustersResponse } from "../../contracts/clusters.ts";
+import type {
+  ServiceHealth,
+  ServiceKey,
+  SystemStatusResponse,
+} from "../../contracts/system-status.ts";
+import { SERVICE_LABELS } from "../../contracts/system-status.ts";
 import { groupClustersByCountry } from "../../features/earthquakes/country-clusters.ts";
-import { TERMINAL_SPECS } from "../../lib/transforms/settings-data.ts";
+import {
+  evaluateServiceFreshness,
+  formatElapsedMinutes,
+  TERMINAL_KEYS,
+  TERMINAL_SPECS,
+  type FreshnessState,
+} from "../../lib/transforms/settings-data.ts";
 
 export interface CountryOption {
   country: string;
@@ -56,4 +68,64 @@ export function countdownLabel(remainingSeconds: number): string {
   const minutes = Math.floor(total / 60);
   const seconds = total % 60;
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+/** Một dòng trong panel trạng thái 7 Terminals (RD-16). */
+export interface TerminalStatusRow {
+  key: ServiceKey;
+  terminalId: string;
+  name: string;
+  status: ServiceHealth;
+  freshness: FreshnessState;
+  freshnessLabel: string;
+  lastRunLabel: string;
+}
+
+/**
+ * Map payload `/api/v1/system/status` → 7 dòng T1…T7.
+ * Service thiếu (kể cả postgres/api/frontend vốn không có `last_run`) → `unknown`,
+ * không suy diễn "đang chạy" (I3, docs/architecture.md §9.4).
+ */
+export function terminalStatusRows(
+  payload: SystemStatusResponse | null | undefined,
+  now: Date = new Date(),
+): TerminalStatusRow[] {
+  return TERMINAL_KEYS.map((key) => {
+    const service = payload?.data?.services?.[key] ?? null;
+    const freshness = evaluateServiceFreshness(service, now);
+    return {
+      key,
+      terminalId: TERMINAL_SPECS[key].terminalId,
+      name: SERVICE_LABELS[key],
+      status: service?.status ?? "unknown",
+      freshness: freshness.state,
+      freshnessLabel: freshness.label,
+      lastRunLabel: formatElapsedMinutes(freshness.diffMinutes),
+    };
+  });
+}
+
+/** Nhãn tiếng Việt cho trạng thái dịch vụ (không bịa trạng thái lạ). */
+export function terminalStatusLabel(status: ServiceHealth): string {
+  const labels: Record<ServiceHealth, string> = {
+    running: "Đang chạy",
+    active: "Hoạt động",
+    idle: "Không hoạt động",
+    stopped: "Đã dừng",
+    error: "Lỗi",
+    unknown: "Không xác định",
+  };
+  return labels[status] ?? labels.unknown;
+}
+
+/** Chỉ đếm service `active|running` **và** dữ liệu còn tươi là healthy. */
+export function summarizeTerminalRows(
+  rows: readonly TerminalStatusRow[],
+): { healthy: number; total: number } {
+  const healthy = rows.filter(
+    (row) =>
+      (row.status === "active" || row.status === "running") &&
+      row.freshness === "fresh",
+  ).length;
+  return { healthy, total: rows.length };
 }

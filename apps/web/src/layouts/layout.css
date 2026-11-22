@@ -360,6 +360,64 @@
     color: var(--muted-foreground);
   }
 
+  /* RD-16 — panel trạng thái 7 Terminals (chỉ CSS token, không hardcode màu) */
+  .layout__system {
+    position: relative;
+    z-index: var(--z-dropdown);
+  }
+
+  .layout__system-summary {
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .layout__system-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .layout__system-body {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    display: flex;
+    width: min(22rem, 90vw);
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--card);
+    box-shadow: var(--shadow-md);
+  }
+
+  .layout__system-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .layout__system-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .layout__system-name {
+    color: var(--card-foreground);
+    font-size: var(--text-xs);
+    font-weight: var(--font-medium);
+  }
+
+  .layout__system-meta {
+    grid-column: 2;
+    color: var(--muted-foreground);
+    font-size: var(--text-xs);
+  }
+
   /* Chip ngữ cảnh — chỉ xuất hiện khi đang lọc quốc gia */
   .layout__filter-chip {
     display: inline-flex;
