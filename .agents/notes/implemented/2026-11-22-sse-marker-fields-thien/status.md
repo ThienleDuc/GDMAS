@@ -2,7 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-sse-marker-fields-thien
-- Status: validation
+- Status: completed
+- Merged: 2026-11-22 — PR #69, merge commit `735ddd2e6d587fa4145428d7f69ff8dd751b5179`
 - Started: 2026-11-22
 - Last Updated: 2026-11-22
 - Owner: agent | thien
@@ -11,7 +12,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: CHECKPOINT 1 — chờ người dùng commit/push hay giữ nguyên
+Current Phase: completed — PR #69 đã merge vào develop, nhánh local đã sync
 
 Completed:
 - Rẽ nhánh `feat/2026-11-22-sse-marker-fields-thien` từ `develop`
@@ -56,9 +57,9 @@ Blocked:
 ---
 
 ## Next Actions
-- CHECKPOINT 1: chờ người dùng commit/push (`tiếp tục workflow`) hoặc giữ nguyên/sửa thêm. Gap tiếp theo: GAP-07 (`/patterns` P5/P6).
+- Không còn — phiên tiếp theo bắt đầu GAP-07 (`/patterns` P5/P6) từ `develop`; đọc mục 5 `docs/task/fe-be-integration-gaps.md` để có ngữ cảnh.
 
 ---
 
 ## Last Update
-2026-11-22 — GAP-06 code + validation xanh (BE 310, FE 209), dừng CHECKPOINT 1.
+2026-11-22 — GAP-06 hoàn tất: PR #69 merged (`735ddd2`), `sync` xong, status = completed.
