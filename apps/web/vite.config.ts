@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import { isContractMockEnabled, resolveContractMock } from "./dev-mock.ts";
+import { resolveExamplesDir } from "./contract-paths.ts";
 import path from "path";
 
 function contractMockPlugin(enabled: boolean): Plugin {
@@ -12,7 +13,7 @@ function contractMockPlugin(enabled: boolean): Plugin {
     apply: "serve",
     configureServer(server) {
       if (!enabled) return;
-      const examplesDir = resolve(import.meta.dirname, "../../contracts/examples");
+      const examplesDir = resolveExamplesDir(import.meta.dirname);
       const readFixture = (filename: string): unknown =>
         JSON.parse(readFileSync(resolve(examplesDir, filename), "utf8"));
 
