@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-23-chart-country-region-filter-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-23
 - Last Updated: 2026-11-23
 - Owner: agent | thien
@@ -11,7 +11,7 @@
 
 ## Tiến độ
 Progress: 100%
-Current Phase: validation — chờ CHECKPOINT 1
+Current Phase: completed — PR #92 đã merge vào develop (merge SHA `f24b079`)
 
 Completed:
 - Proposal §9 Approved (Reviewer thien, `Overrides:` quyết định "giữ toàn cầu" của proposal 2026-11-21)
@@ -55,7 +55,7 @@ Blocked:
 - Không migration/worker: tái dùng hàm thuần T3/T5, giữ default path đọc snapshot (I2/I4).
 
 ## Next Actions
-- CHECKPOINT 1: báo cáo, chờ `tiếp tục workflow` / `dừng lại` / `sửa thêm`.
+- none — đã merge PR #92 vào develop, đồng bộ xong.
 
 ## Last Update
-2026-11-23 — Validation xanh, dừng CHECKPOINT 1.
+2026-11-23 — PR #92 merged vào develop (`f24b079`); status → completed.
