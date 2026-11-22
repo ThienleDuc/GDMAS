@@ -82,6 +82,16 @@ class ApiDocsContractTests(unittest.TestCase):
         self.assertIn("pattern_1", API_DOC)
         self.assertIn("clustering_summary", API_DOC)
 
+    def test_11_service_status_running_documented(self) -> None:
+        # BE system.py trả postgres.status = "running"; FE ServiceHealth chấp nhận.
+        self.assertIn("`unknown`, `running`", API_DOC)
+        self.assertIn("`postgres`", API_DOC)
+
+    def test_12_earthquakes_search_param_documented(self) -> None:
+        # BE earthquakes.py:63 có Query(search); FE QueryEarthquakeParams.search gửi param này.
+        self.assertIn("| `search` | string | Không |", API_DOC)
+        self.assertIn("source_event_id", API_DOC)
+
 
 if __name__ == "__main__":
     unittest.main()
