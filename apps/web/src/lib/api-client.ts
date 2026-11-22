@@ -95,6 +95,8 @@ export async function fetchApi<T>(path: string, init: RequestInit = {}): Promise
   // Các endpoint collection trả envelope; một số response detail cũ trả trực tiếp entity.
   // Nếu payload có marker `success` thì buộc phải là envelope chuẩn, còn raw entity được giữ tương thích.
   // Empty envelope (200 + success:false + data:null + message) là kết quả rỗng hợp lệ.
+  // Ngoại lệ: aggregate `GET /api/v1/patterns` rỗng không có khóa `data` — vẫn hợp lệ
+  // theo API.md §2; `isApiEmptyEnvelope()` nhận diện cả hai shape (GAP-11).
   if (
     typeof payload === "object" &&
     payload !== null &&

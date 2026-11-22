@@ -104,11 +104,21 @@ export function isApiEnvelope<T = unknown>(value: unknown): value is ApiEnvelope
 export function isApiEmptyEnvelope(value: unknown): boolean {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
   const candidate = value as Record<string, unknown>;
+  if (
+    candidate.success !== false ||
+    "error" in candidate ||
+    typeof candidate.message !== "string"
+  ) {
+    return false;
+  }
+  // Shape thường (audit B1): `{ success:false, data:null, message }`.
+  if (candidate.data === null) return true;
+  // Aggregate `GET /api/v1/patterns` rỗng (API.md §2, GAP-11): **không có khóa `data`**.
+  // Chấp nhận khi có đủ `total_patterns` + `patterns` — không nới cho payload lạ.
   return (
-    candidate.success === false &&
-    candidate.data === null &&
-    typeof candidate.message === "string" &&
-    !("error" in candidate)
+    !("data" in candidate) &&
+    typeof candidate.total_patterns === "number" &&
+    Array.isArray(candidate.patterns)
   );
 }
 
