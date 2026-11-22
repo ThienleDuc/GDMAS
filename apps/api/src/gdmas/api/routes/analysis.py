@@ -129,12 +129,24 @@ def get_temporal(
             bins = [{"bin": k, "count": v} for k, v in hist.items()]
         else:
             bins = hist
-        return {
+        data = {
             "interval": interval,
             "line_chart": m.get("line_chart", []),
             "scatter_plot": m.get("scatter_plot", []),
             "histogram": {"magnitude_bins": bins},
         }
+        # Pass-through field optional đã có trong analysis.json / T3
+        # (services/analysis/patterns.py:244-252). Không nội suy khi nguồn không có.
+        if m.get("status") is not None:
+            data["status"] = m["status"]
+        stats = {
+            key: m[key]
+            for key in ("data_points", "avg_magnitude", "max_magnitude", "avg_depth")
+            if key in m
+        }
+        if stats:
+            data["stats"] = stats
+        return data
 
     return _respond(db, "temporal", build, interval=interval, start=start, end=end)
 
@@ -184,8 +196,17 @@ def get_trend(
             "slope": source.get("slope"),
             "trend_direction": source.get("trend_direction"),
         }
-        if source.get("status") is not None:
-            data["status"] = source["status"]
+        # T3 đã tính các hệ số này (services/analysis/patterns.py:366-373) nhưng
+        # route trước đây bỏ qua → FE Pattern 2 / Chart A Overview hiện "—".
+        for field in ("intercept", "r_squared", "p_value"):
+            if source.get(field) is not None:
+                data[field] = source[field]
+        sample_size = source.get("sample_size")
+        if sample_size is None:
+            sample_size = source.get("complete_periods", source.get("data_points"))
+        if sample_size is not None:
+            data["sample_size"] = sample_size
+        data["status"] = source.get("status") or "computed"
         return data
 
     # Chỉ nhận bản đúng tần suất yêu cầu; không có thì Empty State thay vì trả tần suất khác
@@ -208,7 +229,7 @@ def get_seasonality(db: Session = Depends(get_db)):
                 }
                 for i, c in enumerate(m.get("seasonal_components", []))
             ]
-        return {
+        data = {
             "resample_freq": m.get("resample_freq", "M"),
             "components": {
                 "seasonal_line": line,
@@ -221,6 +242,12 @@ def get_seasonality(db: Session = Depends(get_db)):
                 "interpretation": comp.get("interpretation", m.get("interpretation")),
             },
         }
+        # Field optional đã có trong analysis.json; nguồn T3 tại
+        # services/analysis/patterns.py:470,473,482.
+        for field in ("status", "period", "data_points"):
+            if m.get(field) is not None:
+                data[field] = m[field]
+        return data
 
     return _respond(db, "seasonality", build)
 
@@ -230,10 +257,17 @@ def get_correlation(db: Session = Depends(get_db)):
     """Pattern 4: ma trận tương quan."""
 
     def build(m: dict[str, Any]) -> dict[str, Any]:
-        return {
+        data = {
             "variables": m.get("variables", []),
             "matrix": m.get("matrix", []),
             "method": m.get("method", "pearson"),
         }
+        # status/sample_size/note đã có trong analysis.json và được T3 tính tại
+        # services/analysis/patterns.py:572,577,579. Không thêm spearman_matrix/
+        # undefined_pairs/corr_mag_depth — analysis.json có additionalProperties:false.
+        for field in ("status", "sample_size", "note"):
+            if m.get(field) is not None:
+                data[field] = m[field]
+        return data
 
     return _respond(db, "correlation", build)
