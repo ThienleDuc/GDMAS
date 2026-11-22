@@ -210,12 +210,18 @@ export async function getTemporalAnalysis(
   return fetchApi<TemporalResponse>(`/api/v1/analysis/temporal${qs}`, { signal });
 }
 
-/** Pattern 2 — `GET /api/v1/analysis/trend`. */
+/**
+ * Pattern 2 — `GET /api/v1/analysis/trend`.
+ * API.md §3.3: BE chỉ nhận `resample_freq` và `metric`. Các tham số thời gian
+ * bên dưới chỉ giữ để tương thích caller cũ (RULE-03) — KHÔNG được forward.
+ */
 export async function getTrendAnalysis(
   params: {
     resample_freq?: "D" | "W" | "M";
     metric?: "count" | "avg_magnitude" | "max_magnitude";
+    /** @deprecated BE /analysis/trend không nhận start_time — xem API.md §3.3. */
     start_time?: string;
+    /** @deprecated BE /analysis/trend không nhận end_time — xem API.md §3.3. */
     end_time?: string;
   } = {},
   signal?: AbortSignal,
@@ -223,39 +229,44 @@ export async function getTrendAnalysis(
   const qs = buildQuery({
     resample_freq: params.resample_freq,
     metric: params.metric,
-    start_time: params.start_time,
-    end_time: params.end_time,
   });
   return fetchApi<TrendResponse>(`/api/v1/analysis/trend${qs}`, { signal });
 }
 
-/** Pattern 3 — `GET /api/v1/analysis/seasonality`. */
+/**
+ * Pattern 3 — `GET /api/v1/analysis/seasonality`.
+ * API.md §3.3: BE không nhận query param nào; giữ params cũ để tương thích (RULE-03).
+ */
 export async function getSeasonalityAnalysis(
   params: {
+    /** @deprecated BE /analysis/seasonality không nhận resample_freq — xem API.md §3.3. */
     resample_freq?: "D" | "W" | "M";
+    /** @deprecated BE /analysis/seasonality không nhận start_time — xem API.md §3.3. */
     start_time?: string;
+    /** @deprecated BE /analysis/seasonality không nhận end_time — xem API.md §3.3. */
     end_time?: string;
   } = {},
   signal?: AbortSignal,
 ): Promise<SeasonalityResponse> {
-  const qs = buildQuery({
-    resample_freq: params.resample_freq,
-    start_time: params.start_time,
-    end_time: params.end_time,
-  });
-  return fetchApi<SeasonalityResponse>(`/api/v1/analysis/seasonality${qs}`, { signal });
+  void params; // Chỉ giữ chữ ký; tuyệt đối không gửi param không được BE hỗ trợ.
+  return fetchApi<SeasonalityResponse>("/api/v1/analysis/seasonality", { signal });
 }
 
-/** Pattern 4 — `GET /api/v1/analysis/correlation`. */
+/**
+ * Pattern 4 — `GET /api/v1/analysis/correlation`.
+ * API.md §3.3: BE không nhận query param nào; giữ params cũ để tương thích (RULE-03).
+ */
 export async function getCorrelationAnalysis(
-  params: { start_time?: string; end_time?: string } = {},
+  params: {
+    /** @deprecated BE /analysis/correlation không nhận start_time — xem API.md §3.3. */
+    start_time?: string;
+    /** @deprecated BE /analysis/correlation không nhận end_time — xem API.md §3.3. */
+    end_time?: string;
+  } = {},
   signal?: AbortSignal,
 ): Promise<CorrelationResponse> {
-  const qs = buildQuery({
-    start_time: params.start_time,
-    end_time: params.end_time,
-  });
-  return fetchApi<CorrelationResponse>(`/api/v1/analysis/correlation${qs}`, { signal });
+  void params; // Chỉ giữ chữ ký; tuyệt đối không gửi param không được BE hỗ trợ.
+  return fetchApi<CorrelationResponse>("/api/v1/analysis/correlation", { signal });
 }
 
 /** Pattern 5 — `GET /api/v1/predictions`. */
