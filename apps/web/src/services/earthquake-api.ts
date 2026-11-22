@@ -1,4 +1,5 @@
 import { ApiError, fetchApi } from "../lib/api-client.ts";
+import { clustersFromPatterns } from "../lib/transforms/cluster-fallback.ts";
 import { isUtcTimestamp, isWgs84Bounds } from "../contracts/common.ts";
 import type {
   ClassificationsResponse,
@@ -276,12 +277,35 @@ export async function getClusters(signal?: AbortSignal): Promise<ClustersRespons
 }
 
 /**
- * Lấy cụm DBSCAN theo hướng "chịu được 404": ưu tiên `/api/v1/clusters`, nếu Backend
- * chưa triển khai thì trả `unavailable` để nơi gọi fallback sang `clustering_summary`
- * của `/api/v1/patterns` (dữ liệu thật đang có).
+ * Lấy cụm DBSCAN theo hướng "chịu được 404" (RD-15):
+ * 1. Ưu tiên `/api/v1/clusters`; 200 → trả nguyên kết quả (đường nhanh, không gọi thêm API).
+ * 2. Chỉ khi 404 HTTP thì fallback sang `clustering_summary` của `/api/v1/patterns`
+ *    (dữ liệu thật đang có — contracts/README.md §3.8.3), map alias legacy → canonical.
+ * 3. `/patterns` 404/500/rỗng → giữ nguyên `unavailable: true` của `/clusters`;
+ *    không ném lỗi mới để không đổi Error State của consumer.
+ *
+ * Bất biến: `!unavailable ⇒ data !== null && status === 200`.
+ * Không fallback khi `/clusters` trả 200 + empty envelope — đó là Empty State hợp lệ.
  */
 export async function getClustersOptional(
   signal?: AbortSignal,
 ): Promise<OptionalApiResult<ClustersResponse>> {
-  return getOptionalApi<ClustersResponse>("/api/v1/clusters", { signal });
+  const primary = await getOptionalApi<ClustersResponse>("/api/v1/clusters", { signal });
+  if (!primary.unavailable) return primary;
+
+  try {
+    const patterns = await getPatterns(signal);
+    const converted = clustersFromPatterns(patterns);
+    if (converted) {
+      return {
+        data: converted,
+        unavailable: false,
+        status: 200,
+        message: "Nguồn: GET /api/v1/patterns → clustering_summary",
+      };
+    }
+  } catch {
+    // Lỗi từ nguồn dự phòng không được đè lên lỗi 404 đã được xử lý của nguồn chính.
+  }
+  return primary;
 }

@@ -76,16 +76,19 @@ export interface EvaluationMetrics {
   classes?: string[];
 }
 
-/** Runtime guard for the documented success envelope. */
+/**
+ * Runtime guard cho envelope thành công.
+ *
+ * Hai shape hợp lệ theo `contracts/schemas/`:
+ * 1. Envelope thường: `{ success: true, data: ... }`.
+ * 2. Aggregate `GET /api/v1/patterns`: `{ success: true, total_patterns, patterns,
+ *    clustering_summary? }` — **không có khóa `data`** (xem patterns.json). Guard cũ
+ *    bắt buộc `data` nên `getPatterns()` ném "Envelope không hợp lệ" dù BE trả 200.
+ */
 export function isApiEnvelope<T = unknown>(value: unknown): value is ApiEnvelope<T> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value) &&
-    "success" in value &&
-    (value as { success: unknown }).success === true &&
-    "data" in value
-  );
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  if (!("success" in value) || (value as { success: unknown }).success !== true) return false;
+  return "data" in value || ("total_patterns" in value && "patterns" in value);
 }
 
 /**
