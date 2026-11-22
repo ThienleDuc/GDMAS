@@ -57,6 +57,8 @@ def get_latest_prediction(db: Session = Depends(get_db)):
             "model_version": row.model_version,
             "evaluation_metrics": row.evaluation_metrics or {},
             "generated_at": _iso(row.generated_at),
+            # GAP-08: field optional đã có trong predictions.json:30 — FE đọc trực tiếp.
+            "confidence_level": (row.evaluation_metrics or {}).get("confidence_level"),
         },
     }
 
@@ -88,6 +90,8 @@ def get_latest_classification(db: Session = Depends(get_db)):
             "target_date": row.target_date.isoformat(),
             "predicted_label": row.predicted_label,
             "probabilities": row.probability_scores or {},
+            # GAP-08: alias đã có trong classifications.json:27-31 (dùng trong payload /patterns).
+            "probability_scores": row.probability_scores or {},
             "model_name": row.model_name,
             "model_version": row.model_version,
             "evaluation_metrics": row.evaluation_metrics or {},
