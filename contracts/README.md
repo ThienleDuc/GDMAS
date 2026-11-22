@@ -95,7 +95,7 @@ Quy ước bắt buộc:
 - `status ∈ {COMPUTED, PENDING}`; `PENDING` hoặc `success: false` (CSDL trống) → Frontend **chỉ hiển thị Empty State**, không dùng số liệu dự phòng.
 - `metrics.status = insufficient_data` → `seasonal_line`/`matrix` có thể rỗng và `null`; FE hiển thị `interpretation`/`note` của backend.
 - Timestamp UTC ISO 8601 (hậu tố `Z`); tọa độ WGS84.
-- **Optional fields của Pattern 5** (BE có thể bổ sung sau, FE đã sẵn sàng đọc): `metric_name`, `model_version`, `evaluation_metrics.{mae,rmse,baseline_mae,confidence_level}`, `generated_at`. Khi thiếu, FE hiển thị "chưa có dữ liệu kiểm định" — không bịa số.
+- **Optional fields của Pattern 5** (`metric_name`, `model_version`, `evaluation_metrics.{mae,rmse,baseline_mae,confidence_level}`, `generated_at`) và **Pattern 6** (`model_version`, `evaluation_metrics`): endpoint `/patterns` đã trả từ 2026-11-22 (DB có sẵn), FE đọc trực tiếp. Khi giá trị là `null`, FE hiển thị "chưa có dữ liệu kiểm định" — không bịa số.
 
 Mock payload dùng cho test Frontend (offline): [`examples/patterns_sample.json`](examples/patterns_sample.json). Mock **không** được import vào runtime.
 
