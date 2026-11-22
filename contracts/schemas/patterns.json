@@ -192,7 +192,7 @@
     },
     "evaluationMetrics": {
       "type": "object",
-      "description": "Các khóa optional: BE hiện chưa trả đầy đủ cho Pattern 5 — FE phải hiển thị 'chưa có dữ liệu', không bịa số.",
+      "description": "Các khóa optional do mô hình/tracker ghi nhận. BE /patterns đã trả từ 2026-11-22; khi thiếu FE hiển thị 'chưa có dữ liệu', không bịa số.",
       "additionalProperties": true,
       "properties": {
         "mae": { "type": "number", "minimum": 0 },
@@ -217,12 +217,12 @@
         "model_name": { "$ref": "#/$defs/nullableString" },
         "metric_name": {
           "$ref": "#/$defs/nullableString",
-          "description": "Optional — BE hiện chưa trả; ví dụ daily_earthquake_count."
+          "description": "Optional — ví dụ daily_earthquake_count. BE /patterns đã trả từ 2026-11-22."
         },
         "model_version": { "$ref": "#/$defs/nullableString" },
         "evaluation_metrics": {
           "oneOf": [{ "$ref": "#/$defs/evaluationMetrics" }, { "type": "null" }],
-          "description": "Optional — BE hiện chưa trả cho /patterns; FE hiển thị 'chưa có dữ liệu kiểm định'."
+          "description": "Optional — BE /patterns đã trả từ 2026-11-22; khi null FE hiển thị 'chưa có dữ liệu kiểm định'."
         },
         "generated_at": { "$ref": "#/$defs/nullableString" }
       }

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
+from gdmas.api.routes.system import _iso
 from gdmas.db.connection import get_db
 from gdmas.models.analysis import AnalysisResult
 from gdmas.models.clustering import ClusteringResult
@@ -122,6 +123,20 @@ def get_all_patterns(db: Session = Depends(get_db)):
                 "model_name": prediction_record.model_name
                 if prediction_record
                 else None,
+                # Field optional đã có trong contracts/schemas/patterns.json — DB có sẵn,
+                # route trước đây bỏ qua (GAP-07).
+                "metric_name": prediction_record.metric_name
+                if prediction_record
+                else None,
+                "model_version": prediction_record.model_version
+                if prediction_record
+                else None,
+                "evaluation_metrics": prediction_record.evaluation_metrics
+                if prediction_record
+                else None,
+                "generated_at": _iso(prediction_record.generated_at)
+                if prediction_record
+                else None,
             }
             if prediction_record
             else {},
@@ -147,6 +162,12 @@ def get_all_patterns(db: Session = Depends(get_db)):
                 if classification_record
                 else {},
                 "model_name": classification_record.model_name
+                if classification_record
+                else None,
+                "model_version": classification_record.model_version
+                if classification_record
+                else None,
+                "evaluation_metrics": classification_record.evaluation_metrics
                 if classification_record
                 else None,
             }
