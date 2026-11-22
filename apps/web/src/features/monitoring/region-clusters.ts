@@ -3,6 +3,7 @@
  * Nguồn địa danh là `place` (BE không có field country/region riêng).
  */
 
+import type { ClusterSummary } from "../../contracts/clusters.ts";
 import { countryFromPlace } from "../earthquakes/country-clusters.ts";
 import { regionFromPlace } from "../earthquakes/region-filter.ts";
 
@@ -48,10 +49,67 @@ export function buildRegionClusters(items: readonly PlaceLike[]): RegionClusterR
       ...row,
       avgMagnitude: weighted > 0 ? Number((magnitudeSum / weighted).toFixed(2)) : null,
     }))
-    .sort(
-      (left, right) =>
-        right.eventCount - left.eventCount ||
-        left.country.localeCompare(right.country) ||
-        left.region.localeCompare(right.region),
-    );
+    .sort(sortRegionRows);
+}
+
+/**
+ * Gom cụm thật từ `/api/v1/clusters` (GAP-05) — mỗi cụm đã có `event_count`,
+ * `avg_magnitude`, `max_magnitude`, `dominant_place` (GAP-01). Không mở rộng
+ * thành từng sự kiện giả; dùng số đếm thật, magnitude thiếu → `null`.
+ */
+export function buildRegionClusterRows(
+  clusters: readonly ClusterSummary[],
+): RegionClusterRow[] {
+  const groups = new Map<string, RegionClusterRow & { magnitudeSum: number; weighted: number }>();
+
+  for (const cluster of clusters) {
+    const place = cluster.dominant_place || cluster.name || null;
+    const country = countryFromPlace(place);
+    const region = regionFromPlace(place, country);
+    const key = `${country}\u0000${region}`;
+    const group = groups.get(key) ?? {
+      country,
+      region,
+      eventCount: 0,
+      avgMagnitude: null,
+      maxMagnitude: null,
+      magnitudeSum: 0,
+      weighted: 0,
+    };
+
+    const count = Number.isFinite(cluster.event_count)
+      ? Math.max(0, Math.trunc(cluster.event_count))
+      : 0;
+    group.eventCount += count;
+    if (
+      count > 0 &&
+      typeof cluster.avg_magnitude === "number" &&
+      Number.isFinite(cluster.avg_magnitude)
+    ) {
+      group.magnitudeSum += cluster.avg_magnitude * count;
+      group.weighted += count;
+    }
+    if (
+      typeof cluster.max_magnitude === "number" &&
+      Number.isFinite(cluster.max_magnitude)
+    ) {
+      group.maxMagnitude = Math.max(group.maxMagnitude ?? cluster.max_magnitude, cluster.max_magnitude);
+    }
+    groups.set(key, group);
+  }
+
+  return [...groups.values()]
+    .map(({ magnitudeSum, weighted, ...row }) => ({
+      ...row,
+      avgMagnitude: weighted > 0 ? Number((magnitudeSum / weighted).toFixed(2)) : null,
+    }))
+    .sort(sortRegionRows);
+}
+
+function sortRegionRows(left: RegionClusterRow, right: RegionClusterRow): number {
+  return (
+    right.eventCount - left.eventCount ||
+    left.country.localeCompare(right.country) ||
+    left.region.localeCompare(right.region)
+  );
 }
