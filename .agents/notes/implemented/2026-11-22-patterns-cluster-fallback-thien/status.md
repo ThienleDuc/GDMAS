@@ -5,16 +5,17 @@
 
 ## Metadata
 - ID: 2026-11-22-patterns-cluster-fallback-thien
-- Status: validation   <!-- planned | in_progress | blocked | validation | completed -->
+- Status: completed   <!-- planned | in_progress | blocked | validation | completed -->
 - Started: 2026-11-22
 - Last Updated: 2026-11-22
+- Merged: 2026-11-22 — PR #55, merge commit `049deba96d8550462b886205ad9f70f513701b09`
 - Owner: agent | thien
 
 ---
 
 ## Tiến độ
 Progress: 100%
-Current Phase: CHECKPOINT 1 — chờ người dùng commit/push hay giữ nguyên
+Current Phase: completed — PR #55 đã merge vào develop, nhánh local đã sync
 
 Completed:
 - Rẽ nhánh `feat/2026-11-22-patterns-cluster-fallback-thien` từ `develop`
@@ -63,9 +64,9 @@ Blocked:
 ---
 
 ## Next Actions
-- CHECKPOINT 1: chờ người dùng commit/push (`tiếp tục workflow`) hoặc giữ nguyên/sửa thêm.
+- Không còn — phiên tiếp theo bắt đầu proposal 2 (**RD-13**) từ `develop`; đọc mục 4 `docs/task/fe-be-integration-ready.md` để có ngữ cảnh.
 
 ---
 
 ## Last Update
-2026-11-22 — Hoàn tất RD-15, validation xanh, dừng CHECKPOINT 1.
+2026-11-22 — RD-15 hoàn tất: PR #55 merged (`049deba`), `sync` xong, status = completed.
