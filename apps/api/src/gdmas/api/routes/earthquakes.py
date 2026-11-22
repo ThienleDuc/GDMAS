@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 import httpx
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import asc, desc, or_
+from sqlalchemy import asc, desc, func, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -13,11 +13,16 @@ from gdmas.core.config import settings
 from gdmas.db.connection import get_db
 from gdmas.models.earthquake import EarthquakeEvent
 from gdmas.schemas.earthquake import (
+    CountryCount,
+    CountryListResponse,
     EarthquakeListResponse,
     EarthquakeMetadata,
     EarthquakeResponse,
+    RegionCount,
+    RegionListResponse,
     SyncResponse,
 )
+from gdmas.services.ingestion.geo import derive_place_fields
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +68,8 @@ def list_earthquakes(
     min_depth: float | None = Query(None, description="Độ sâu tối thiểu (km)"),
     max_depth: float | None = Query(None, description="Độ sâu tối đa (km)"),
     search: str | None = Query(None, description="Tìm theo khu vực hoặc mã sự kiện"),
+    country: str | None = Query(None, description="Lọc theo quốc gia suy từ place"),
+    region: str | None = Query(None, description="Lọc theo khu vực suy từ place"),
     start_time: str | None = Query(None, description="Từ thời điểm (ISO 8601 UTC)"),
     end_time: str | None = Query(None, description="Đến thời điểm (ISO 8601 UTC)"),
     min_lat: float | None = Query(None, ge=-90, le=90),
@@ -132,6 +139,10 @@ def list_earthquakes(
                     EarthquakeEvent.source_event_id.ilike(f"%{search}%"),
                 )
             )
+        if country:
+            query = query.filter(EarthquakeEvent.country == country)
+        if region:
+            query = query.filter(EarthquakeEvent.region == region)
 
         sort_col = getattr(EarthquakeEvent, sort_by, EarthquakeEvent.event_time)
         query = query.order_by(desc(sort_col) if order == "desc" else asc(sort_col))
@@ -203,6 +214,7 @@ def sync_usgs_earthquakes(db: Session = Depends(get_db)):
             if existing:
                 continue
 
+            country, region = derive_place_fields(props.get("place"))
             db.add(
                 EarthquakeEvent(
                     source="USGS",
@@ -214,6 +226,8 @@ def sync_usgs_earthquakes(db: Session = Depends(get_db)):
                     magnitude=float(mag),
                     magnitude_type=props.get("magType"),
                     place=props.get("place"),
+                    country=country,
+                    region=region,
                     source_url=props.get("url"),
                     raw_data=feat,
                 )
@@ -231,6 +245,55 @@ def sync_usgs_earthquakes(db: Session = Depends(get_db)):
         synced_count=synced_items,
         source="USGS",
         timestamp=datetime.now(UTC),
+    )
+
+
+@router.get("/countries", response_model=CountryListResponse)
+def list_earthquake_countries(db: Session = Depends(get_db)):
+    """Danh mục quốc gia suy từ `place`, kèm số sự kiện — cho bộ lọc FE."""
+    try:
+        rows = (
+            db.query(EarthquakeEvent.country, func.count(EarthquakeEvent.id))
+            .filter(EarthquakeEvent.country.is_not(None))
+            .group_by(EarthquakeEvent.country)
+            .order_by(
+                func.count(EarthquakeEvent.id).desc(), EarthquakeEvent.country.asc()
+            )
+            .all()
+        )
+    except SQLAlchemyError as exc:
+        return _db_error(exc)
+
+    return CountryListResponse(
+        data=[CountryCount(country=country, count=count) for country, count in rows]
+    )
+
+
+@router.get("/regions", response_model=RegionListResponse)
+def list_earthquake_regions(
+    country: str | None = Query(None, description="Chỉ lấy khu vực của quốc gia này"),
+    db: Session = Depends(get_db),
+):
+    """Danh mục khu vực suy từ `place`, kèm số sự kiện — cho bộ lọc FE."""
+    query = db.query(EarthquakeEvent.region, func.count(EarthquakeEvent.id)).filter(
+        EarthquakeEvent.region.is_not(None)
+    )
+    if country:
+        query = query.filter(EarthquakeEvent.country == country)
+
+    try:
+        rows = (
+            query.group_by(EarthquakeEvent.region)
+            .order_by(
+                func.count(EarthquakeEvent.id).desc(), EarthquakeEvent.region.asc()
+            )
+            .all()
+        )
+    except SQLAlchemyError as exc:
+        return _db_error(exc)
+
+    return RegionListResponse(
+        data=[RegionCount(region=region, count=count) for region, count in rows]
     )
 
 

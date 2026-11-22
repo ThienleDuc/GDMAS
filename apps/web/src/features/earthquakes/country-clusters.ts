@@ -6,6 +6,9 @@
 import type { ClusterSummary } from "../../contracts/clusters.ts";
 import type { CountryClusterSummary } from "../../contracts/country-clusters.ts";
 
+/** Mã quốc gia ngắn ở cuối địa danh USGS — đồng bộ với BE geo.py. */
+const COUNTRY_CODES: Readonly<Record<string, string>> = { MX: "Mexico" };
+
 const COUNTRY_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
   [/california|alaska|hawaii|united states|\busa\b/i, "USA"],
   [/japan|honshu|hokkaido/i, "Japan"],
@@ -24,6 +27,20 @@ const COUNTRY_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
   [/china|taiwan/i, "China"],
 ];
 
+/** Tên bang Mỹ đầy đủ — "..., Tennessee" cũng là USA (Revision 2026-11-22). */
+const US_STATE_NAMES = new Set([
+  "alabama", "alaska", "arizona", "arkansas", "california", "colorado",
+  "connecticut", "delaware", "florida", "georgia", "hawaii", "idaho",
+  "illinois", "indiana", "iowa", "kansas", "kentucky", "louisiana",
+  "maine", "maryland", "massachusetts", "michigan", "minnesota",
+  "mississippi", "missouri", "montana", "nebraska", "nevada",
+  "new hampshire", "new jersey", "new mexico", "new york",
+  "north carolina", "north dakota", "ohio", "oklahoma", "oregon",
+  "pennsylvania", "rhode island", "south carolina", "south dakota",
+  "tennessee", "texas", "utah", "vermont", "virginia", "washington",
+  "west virginia", "wisconsin", "wyoming", "district of columbia",
+]);
+
 /** Mã bang Mỹ thường xuất hiện ở cuối địa danh USGS (Revision 2026-11-21). */
 const US_STATE_CODES = new Set([
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA",
@@ -39,7 +56,8 @@ export function countryFromPlace(place: string | null | undefined): string {
   // Ưu tiên đoạn cuối là mã bang Mỹ ("12 km NE of San Francisco, CA" → USA).
   const segments = place.split(",").map((part) => part.trim()).filter(Boolean);
   const last = segments[segments.length - 1];
-  if (last && US_STATE_CODES.has(last.toUpperCase())) return "USA";
+  if (last && COUNTRY_CODES[last.toUpperCase()]) return COUNTRY_CODES[last.toUpperCase()];
+  if (last && (US_STATE_CODES.has(last.toUpperCase()) || US_STATE_NAMES.has(last.toLowerCase()))) return "USA";
 
   for (const [pattern, country] of COUNTRY_PATTERNS) {
     if (pattern.test(place)) return country;

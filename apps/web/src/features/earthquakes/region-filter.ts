@@ -5,17 +5,20 @@
  */
 
 import { countryFromPlace } from "./country-clusters.ts";
-import { ALL_COUNTRIES } from "./country-filter.ts";
+import { ALL_COUNTRIES, countryOf } from "./country-filter.ts";
 
 export const ALL_REGIONS = "all";
 
-type PlaceLike = { place?: string | null };
+type PlaceLike = { place?: string | null; country?: string | null; region?: string | null };
 
-/** Danh sách quốc gia suy từ `place` — dùng chung cho EarthquakeItem và MapEarthquake. */
+/** Danh sách quốc gia — ưu tiên field BE, fallback suy từ `place`. */
 export function countriesFromPlaces<T extends PlaceLike>(items: readonly T[]): string[] {
-  return [...new Set(items.map((item) => countryFromPlace(item.place)))].sort((left, right) =>
-    left.localeCompare(right),
-  );
+  return [...new Set(items.map(countryOf))].sort((left, right) => left.localeCompare(right));
+}
+
+/** Ưu tiên region do BE suy từ `place`; giữ helper cũ làm fallback (I2/RULE-03). */
+export function regionOf(item: PlaceLike, country: string): string {
+  return item.region?.trim() || regionFromPlace(item.place, country);
 }
 
 /** Bỏ tiền tố khoảng cách/hướng: "12 km NE of San Francisco" → "San Francisco". */
@@ -52,8 +55,8 @@ export function regionFromPlace(place: string | null | undefined, country: strin
 export function regionsFromItems<T extends PlaceLike>(items: readonly T[], country: string): string[] {
   if (country === ALL_COUNTRIES) return [];
   const regions = items
-    .filter((item) => countryFromPlace(item.place) === country)
-    .map((item) => regionFromPlace(item.place, country));
+    .filter((item) => countryOf(item) === country)
+    .map((item) => regionOf(item, country));
   return [...new Set(regions)].sort((left, right) => left.localeCompare(right));
 }
 
@@ -64,7 +67,7 @@ export function filterByCountryAndRegion<T extends PlaceLike>(
   region: string,
 ): T[] {
   const inCountry =
-    country === ALL_COUNTRIES ? [...items] : items.filter((item) => countryFromPlace(item.place) === country);
+    country === ALL_COUNTRIES ? [...items] : items.filter((item) => countryOf(item) === country);
   if (country === ALL_COUNTRIES || region === ALL_REGIONS) return inCountry;
-  return inCountry.filter((item) => regionFromPlace(item.place, country) === region);
+  return inCountry.filter((item) => regionOf(item, country) === region);
 }

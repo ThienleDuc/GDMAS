@@ -3,11 +3,13 @@ import { ChevronDown } from "lucide-react";
 import { ALL_COUNTRIES } from "../../features/earthquakes/country-filter.ts";
 import { useCatalogSelection } from "../../features/earthquakes/useCatalogSelection.ts";
 import { getClustersOptional } from "../../services/earthquake-api.ts";
+import { getCountryCatalog } from "../../services/geo-catalog-api.ts";
 import { countriesFromClusters, type CountryOption } from "./header-data.ts";
 
 /**
- * Danh mục quốc gia theo cụm, lấy từ GET /api/v1/clusters (fallback /patterns theo contracts/README.md §3.8).
- * Lựa chọn ghi vào ?country= → mọi trang FE dùng chung; 404 → unavailable, không mock (I5).
+ * Danh mục quốc gia lấy từ GET /api/v1/earthquakes/countries (BE suy từ place).
+ * Fallback GET /api/v1/clusters → countriesFromClusters khi endpoint mới lỗi (RULE-03).
+ * Lựa chọn ghi vào ?country= → mọi trang FE dùng chung; không mock (I5).
  */
 export const GlobalCountryFilter: React.FC = () => {
   const { country, setCountry } = useCatalogSelection();
@@ -17,15 +19,33 @@ export const GlobalCountryFilter: React.FC = () => {
   useEffect(() => {
     const controller = new AbortController();
 
-    getClustersOptional(controller.signal)
-      .then((result) => {
+    const fromClusters = () =>
+      getClustersOptional(controller.signal)
+        .then((result) => {
+          if (controller.signal.aborted) return;
+          setUnavailable(result.unavailable || !result.data);
+          setOptions(countriesFromClusters(result.data ?? null));
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setUnavailable(true);
+        });
+
+    getCountryCatalog(controller.signal)
+      .then((catalog) => {
         if (controller.signal.aborted) return;
-        setUnavailable(result.unavailable || !result.data);
-        setOptions(countriesFromClusters(result.data ?? null));
+        const options: CountryOption[] = catalog.data.map((item) => ({
+          country: item.country,
+          eventCount: item.count,
+          clusterIds: [],
+        }));
+        if (options.length === 0) {
+          fromClusters();
+          return;
+        }
+        setOptions(options);
+        setUnavailable(false);
       })
-      .catch(() => {
-        if (!controller.signal.aborted) setUnavailable(true);
-      });
+      .catch(fromClusters);
 
     return () => controller.abort();
   }, []);

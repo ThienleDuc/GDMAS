@@ -133,6 +133,42 @@
               "description": "Tìm theo khu vực hoặc mã sự kiện"
             },
             {
+              "name": "country",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo quốc gia suy từ place",
+                "title": "Country"
+              },
+              "description": "Lọc theo quốc gia suy từ place"
+            },
+            {
+              "name": "region",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo khu vực suy từ place",
+                "title": "Region"
+              },
+              "description": "Lọc theo khu vực suy từ place"
+            },
+            {
               "name": "start_time",
               "in": "query",
               "required": false,
@@ -302,6 +338,80 @@
                 "application/json": {
                   "schema": {
                     "$ref": "#/components/schemas/SyncResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/earthquakes/countries": {
+        "get": {
+          "tags": [
+            "Earthquakes"
+          ],
+          "summary": "List Earthquake Countries",
+          "description": "Danh mục quốc gia suy từ `place`, kèm số sự kiện — cho bộ lọc FE.",
+          "operationId": "list_earthquake_countries_api_v1_earthquakes_countries_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CountryListResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/earthquakes/regions": {
+        "get": {
+          "tags": [
+            "Earthquakes"
+          ],
+          "summary": "List Earthquake Regions",
+          "description": "Danh mục khu vực suy từ `place`, kèm số sự kiện — cho bộ lọc FE.",
+          "operationId": "list_earthquake_regions_api_v1_earthquakes_regions_get",
+          "parameters": [
+            {
+              "name": "country",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Chỉ lấy khu vực của quốc gia này",
+                "title": "Country"
+              },
+              "description": "Chỉ lấy khu vực của quốc gia này"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/RegionListResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
                   }
                 }
               }
@@ -762,6 +872,45 @@
     },
     "components": {
       "schemas": {
+        "CountryCount": {
+          "properties": {
+            "country": {
+              "type": "string",
+              "title": "Country"
+            },
+            "count": {
+              "type": "integer",
+              "title": "Count"
+            }
+          },
+          "type": "object",
+          "required": [
+            "country",
+            "count"
+          ],
+          "title": "CountryCount"
+        },
+        "CountryListResponse": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "items": {
+                "$ref": "#/components/schemas/CountryCount"
+              },
+              "type": "array",
+              "title": "Data"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "CountryListResponse"
+        },
         "EarthquakeListResponse": {
           "properties": {
             "success": {
@@ -880,6 +1029,28 @@
                 }
               ],
               "title": "Place"
+            },
+            "country": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Country"
+            },
+            "region": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Region"
             },
             "source_url": {
               "anyOf": [
@@ -1037,6 +1208,45 @@
             "avg_mag"
           ],
           "title": "HourlyTimeSeriesPoint"
+        },
+        "RegionCount": {
+          "properties": {
+            "region": {
+              "type": "string",
+              "title": "Region"
+            },
+            "count": {
+              "type": "integer",
+              "title": "Count"
+            }
+          },
+          "type": "object",
+          "required": [
+            "region",
+            "count"
+          ],
+          "title": "RegionCount"
+        },
+        "RegionListResponse": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "items": {
+                "$ref": "#/components/schemas/RegionCount"
+              },
+              "type": "array",
+              "title": "Data"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "RegionListResponse"
         },
         "StatisticsResponse": {
           "properties": {
@@ -1232,6 +1442,22 @@
           "foreign_keys": []
         },
         {
+          "name": "country",
+          "type": "VARCHAR(128)",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "foreign_keys": []
+        },
+        {
+          "name": "region",
+          "type": "VARCHAR(128)",
+          "nullable": true,
+          "primary_key": false,
+          "server_default": null,
+          "foreign_keys": []
+        },
+        {
           "name": "source_url",
           "type": "TEXT",
           "nullable": true,
@@ -1255,6 +1481,14 @@
           [
             "earthquake_events.latitude",
             "earthquake_events.longitude"
+          ]
+        ],
+        [
+          "idx_earthquake_events_country_region",
+          false,
+          [
+            "earthquake_events.country",
+            "earthquake_events.region"
           ]
         ],
         [

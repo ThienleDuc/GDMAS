@@ -54,11 +54,24 @@ def test_parse_valid_feature_maps_columns_in_utc():
     assert row["depth_km"] == pytest.approx(24.5)
     assert row["magnitude"] == pytest.approx(5.8)
     assert row["magnitude_type"] == "mww"
+    assert row["country"] == "Japan"
+    assert row["region"] == "Near East Coast of Honshu"
+    assert row["place"] == "Near East Coast of Honshu, Japan"
     assert row["event_time"].tzinfo == UTC
     assert row["event_time"].isoformat() == "2026-11-11T00:00:00+00:00"
     assert row["source_updated_at"].tzinfo == UTC
     assert row["source_updated_at"] > row["event_time"]
     assert row["raw_data"]["id"] == "us7000test"
+
+
+def test_missing_place_still_gets_unknown_country_and_region():
+    feat = make_feature()
+    del feat["properties"]["place"]
+    row = parse_feature(feat)
+    assert row is not None
+    assert row["place"] is None
+    assert row["country"] == "Khác"
+    assert row["region"] == "Khác"
 
 
 def test_missing_updated_gives_none_source_updated_at():

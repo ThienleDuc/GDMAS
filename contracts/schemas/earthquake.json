@@ -15,6 +15,8 @@
     "magnitude": { "type": "number" },
     "magnitude_type": { "type": ["string", "null"] },
     "place": { "type": ["string", "null"] },
+    "country": { "type": ["string", "null"], "description": "Country derived from place at ingestion; 'Khác' when unknown" },
+    "region": { "type": ["string", "null"], "description": "Region within country derived from place; 'Khác' when unknown" },
     "source_url": { "type": ["string", "null"], "format": "uri" },
     "ingested_at": { "type": ["string", "null"], "format": "date-time", "description": "UTC ISO 8601 ingestion time" },
     "raw_data": { "type": ["object", "null"], "description": "Optional original source payload" },

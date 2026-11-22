@@ -35,6 +35,9 @@ export interface EarthquakeItem {
   magnitude: number;
   magnitude_type?: string;
   place?: string;
+  /** BE suy từ `place` lúc nhập (USGS không trả field này); fallback FE vẫn dùng khi vắng. */
+  country?: string | null;
+  region?: string | null;
   source_url?: string;
   ingested_at?: string;
   /** BE trả field này (schemas/earthquake.py:23) — khai báo để FE type khớp payload thật. */

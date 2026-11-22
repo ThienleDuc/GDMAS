@@ -5,8 +5,13 @@ import { countryFromPlace } from "./country-clusters.ts";
 
 export const ALL_COUNTRIES = "all";
 
+/** Ưu tiên field do BE suy từ `place`; giữ helper cũ làm fallback (I2/RULE-03). */
+export function countryOf(item: { place?: string | null; country?: string | null }): string {
+  return item.country?.trim() || countryFromPlace(item.place);
+}
+
 export function countriesFromItems(items: readonly EarthquakeItem[]): string[] {
-  return [...new Set(items.map((item) => countryFromPlace(item.place)))].sort((a, b) => a.localeCompare(b));
+  return [...new Set(items.map(countryOf))].sort((a, b) => a.localeCompare(b));
 }
 
 export function filterItemsByCountry(
@@ -14,5 +19,5 @@ export function filterItemsByCountry(
   country: string,
 ): EarthquakeItem[] {
   if (country === ALL_COUNTRIES) return [...items];
-  return items.filter((item) => countryFromPlace(item.place) === country);
+  return items.filter((item) => countryOf(item) === country);
 }

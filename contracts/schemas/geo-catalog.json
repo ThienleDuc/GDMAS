@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gdmas.local/schemas/geo-catalog.json",
+  "title": "Earthquake geo catalog (country/region)",
+  "type": "object",
+  "description": "Danh mục quốc gia/khu vực do BE suy từ place — nguồn cho bộ lọc FE (docs/api/API.md §3.2).",
+  "properties": {
+    "success": { "type": "boolean", "default": true },
+    "data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "country": { "type": "string", "description": "Chỉ có trong GET /earthquakes/countries" },
+          "region": { "type": "string", "description": "Chỉ có trong GET /earthquakes/regions" },
+          "count": { "type": "integer", "minimum": 0, "description": "Số sự kiện thuộc nhãn" }
+        },
+        "required": ["count"],
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": ["success", "data"]
+}

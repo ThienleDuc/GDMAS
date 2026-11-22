@@ -38,6 +38,8 @@ class EarthquakeEvent(Base):
     magnitude: Mapped[float] = mapped_column(Float, nullable=False, index=True)
     magnitude_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
     place: Mapped[str | None] = mapped_column(Text, nullable=True)
+    country: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    region: Mapped[str | None] = mapped_column(String(128), nullable=True)
     source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     raw_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
@@ -47,4 +49,5 @@ class EarthquakeEvent(Base):
         ),
         Index("idx_earthquake_events_time_mag", "event_time", "magnitude"),
         Index("idx_earthquake_events_coordinates", "latitude", "longitude"),
+        Index("idx_earthquake_events_country_region", "country", "region"),
     )
