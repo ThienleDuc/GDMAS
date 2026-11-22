@@ -71,6 +71,8 @@ def health(db: Session = Depends(get_db)):
             "database": "connected",
             "version": API_VERSION,
             "timestamp": _iso(datetime.now(UTC)),
+            # GAP-12: field optional đã có trong health.json — không đổi status/error envelope.
+            "uptime_seconds": int(time.monotonic() - _STARTED_AT),
         },
     }
 
@@ -98,6 +100,10 @@ def system_status(db: Session = Depends(get_db)):
                 }[_worker_status(run, interval, now)],
                 "last_run": _iso(run.finished_at or run.started_at) if run else None,
                 "cycle": cycle,
+                # GAP-12: field optional đã có trong system-status.json:66-68.
+                # Chưa có run → None, không suy diễn 0 hay chuỗi rỗng.
+                "records_processed": run.records_processed if run else None,
+                "error_message": run.error_message if run else None,
             }
         total = db.query(func.count(EarthquakeEvent.id)).scalar() or 0
         latest = db.query(func.max(EarthquakeEvent.event_time)).scalar()
@@ -127,5 +133,6 @@ def system_status(db: Session = Depends(get_db)):
                 "total_events": total,
                 "latest_event_time": _iso(latest),
             },
+            "generated_at": _iso(now),
         },
     }

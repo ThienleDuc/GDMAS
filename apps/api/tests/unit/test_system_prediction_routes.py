@@ -28,6 +28,8 @@ def test_health_ok(client):
     assert resp.status_code == 200
     assert resp.json()["data"]["status"] == "healthy"
     assert resp.json()["data"]["database"] == "connected"
+    # GAP-12: uptime tồn tại và không âm.
+    assert resp.json()["data"]["uptime_seconds"] >= 0
 
 
 def test_health_db_down_returns_500(broken_client):
@@ -47,6 +49,28 @@ def test_status_with_no_runs_reports_no_data(client):
     assert data["services"]["prediction"]["status"] == "unknown"
     assert data["data_feed"]["total_events"] == 0
     assert data["data_feed"]["latest_event_time"] is None
+    # GAP-12: field mới có mặt, chưa có run → None (không suy diễn 0/chuỗi rỗng).
+    assert data["services"]["ingestion"]["records_processed"] is None
+    assert data["services"]["ingestion"]["error_message"] is None
+    assert data["generated_at"].endswith("Z")
+
+
+def test_status_exposes_service_run_fields(client, db):
+    _add(
+        db,
+        ServiceRun(
+            service_name="ingestion",
+            status="SUCCESS",
+            started_at=NOW - timedelta(minutes=2),
+            finished_at=NOW - timedelta(minutes=2),
+            records_processed=42,
+            error_message=None,
+        ),
+    )
+    ingestion = _status(client)["services"]["ingestion"]
+    assert ingestion["status"] == "active"
+    assert ingestion["records_processed"] == 42
+    assert ingestion["error_message"] is None
 
 
 @pytest.mark.parametrize(

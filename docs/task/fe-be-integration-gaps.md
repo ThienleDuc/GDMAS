@@ -39,7 +39,7 @@ Bảng dưới đây phân biệt rõ: **Field đã có trong schema repo → th
 | **GAP-09** | SSE chưa phát event `"alert"`; chưa gửi header `id:`/`retry:` | `sse.ts:8-15,25-27` | `realtime/sse.py:59-62`, phát `:192-304` | Không chặn — FE đăng ký cả tên lạ; reconnect backoff tự tính | Thấp | `tai` | ✅ **Đã xong** — user chọn bổ sung BE: phát `alert` + `id`/`retry` (xem dưới) |
 | **GAP-10** | `time_series_preview[].time` là `"HH:MM"` thay vì ISO 8601 UTC | `earthquake.ts:56-60`; `API.md:211`; `earthquake.json:21` | `routes/statistics.py:52` `strftime("%H:%M")` | FE đọc chuỗi `string` nên không crash, nhưng lệch `I3` nếu dùng làm mốc thời gian | Trung bình | `thien` (FE) | ✅ **Đã xong** — comment contract `earthquake.ts`: `time` là nhãn `HH:MM`, không parse ISO (xem §5) |
 | **GAP-11** | Empty state `/patterns` mâu thuẫn nội bộ: prose `API.md` đòi `data:null`, schema `patterns.json` lại không định nghĩa `data` | `common.ts:95-104` `isApiEmptyEnvelope` | `routes/patterns.py:39-45` trả `{success:false,total_patterns:0,patterns:[],message}` | FE vẫn render Empty State được, nhưng contract không nhất quán | Trung bình | `thien` + `tai` | ✅ **Đã xong** — prose `docs/api/API.md` §2/§3.3 đúng shape empty `/patterns`, không sửa schema (xem §5) |
-| **GAP-12** | `/system/status` thiếu `records_processed`, `error_message`, `generated_at`; `/health` thiếu `degraded/unhealthy`, `uptime_seconds` | `system-status.ts:7-13,38-40,53`; `health.ts:6-16` | `routes/system.py:67-75,84-131` | Không chặn — FE coi `last_run` thiếu là `unknown` | Thấp | `tai` | Chờ RD-16 kéo API vào UI rồi mới biết field nào thực cần |
+| **GAP-12** | `/system/status` thiếu `records_processed`, `error_message`, `generated_at`; `/health` thiếu `degraded/unhealthy`, `uptime_seconds` | `system-status.ts:7-13,38-40,53`; `health.ts:6-16` | `routes/system.py:67-75,84-131` | Không chặn — FE coi `last_run` thiếu là `unknown` | Thấp | `tai` | ✅ **Đã xong** — user chọn bổ sung BE (xem dưới) |
 
 ---
 
@@ -207,7 +207,7 @@ Mỗi task use additive (không migration, không đổi chữ ký hàm cũ), k�
 | GAP-01, 02, 03, 04, 05, 06, 07, 13, 10, 11 | ✅ code + validation + merge vào `develop` |
 | GAP-08 | ✅ Đã xong — `confidence_level` + `probability_scores` (xem dưới) |
 | GAP-09 | ✅ Đã xong — event `alert` + `id`/`retry` (xem dưới) |
-| GAP-12 | ⏸ Cần bổ sung BE theo quyết định user — đang triển khai |
+| GAP-12 | ✅ Đã xong — `records_processed`/`error_message`/`generated_at`/`uptime_seconds` (xem dưới) |
 
 ### GAP-09 — SSE phát `alert` và `id`/`retry` — ✅ CODE XONG (2026-11-22)
 
@@ -216,6 +216,22 @@ Mỗi task use additive (không migration, không đổi chữ ký hàm cũ), k�
 - **Đã làm:** `_packet()` thêm `id` duy nhất (`gdmas-N`, `itertools.count`) và `retry=5000` cả ở wire dict lẫn inner JSON (FE đọc inner); nhánh `earthquake_alert` phát thêm event alias `"alert"` cùng payload. Giữ nguyên `earthquake_alert`, bọc `{event,data,timestamp}`, event names cũ.
 - **Test:** bổ sung `test_sse_stream.py` (id/retry, alias alert cùng payload, set packet keys); targeted 16/16, full BE **317/317**, ruff sạch; FE 217/217 + build.
 - **Lưu ý:** `alert` cùng data với `earthquake_alert` → FE dedup theo `source_event_id` (field phẳng GAP-06), không nhân marker.
+
+### GAP-12 — Bổ sung field `/system/status` & `/health` — ✅ CODE XONG (2026-11-22)
+
+- **Nhánh:** `feat/2026-11-22-system-status-fields-thien`
+- **Proposal / Plan / Testcase:** `2026-11-22-system-status-fields-thien` (§9 Approved)
+- **Đã làm:** mỗi worker trong `/system/status` trả `records_processed`/`error_message` từ `ServiceRun` (None khi chưa có run — không suy diễn 0); root `generated_at` UTC `Z`; `/health` trả `uptime_seconds >= 0`. Giữ status/error envelope cũ (`degraded/unhealthy` vẫn chỉ qua 500 khi DB lỗi). Field đã có trong `system-status.json:40,66-68` / `health.json` → không sửa schema.
+- **Test:** bổ sung `test_system_prediction_routes.py` (2 case); targeted 36/36, full BE **318/318**, ruff sạch; FE 217/217 + build.
+
+---
+
+## 7. Trạng thái cuối cùng
+
+| Nhóm | Trạng thái |
+|---|---|
+| GAP-01…13 (toàn bộ file `fe-be-integration-gaps.md`) | ✅ đã code + validation + merge vào `develop` |
+| Cần làm tiếp nếu có yêu cầu mới | Chỉ các cải tiến ngoài phạm vi audit (auth BE, UI mới, v.v.) |
 
 ### GAP-08 — Alias `/predictions` & `/classifications` — ✅ CODE XONG (2026-11-22)
 
