@@ -2,7 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-system-status-fields-thien
-- Status: validation
+- Status: completed
+- Merged: 2026-11-22 — PR #81, merge commit `46e8a87bd1bcb42fd8d8da65c82825e1ba84b8f0`
 - Started: 2026-11-22
 - Last Updated: 2026-11-22
 - Owner: agent | thien
