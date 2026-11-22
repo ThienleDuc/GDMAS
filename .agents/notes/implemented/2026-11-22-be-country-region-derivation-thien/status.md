@@ -2,16 +2,16 @@
 
 ## Metadata
 - ID: 2026-11-22-be-country-region-derivation-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-22
-- Last Updated: 2026-11-22
+- Last Updated: 2026-11-23
 - Owner: agent | thien
 
 ---
 
 ## Tiến độ
 Progress: 100%
-Current Phase: validation — chờ CHECKPOINT 1
+Current Phase: completed — PR #89 đã merge vào develop (merge SHA `4fbec53`)
 
 Completed:
 - Proposal §9 Approved (Reviewer: thien) với `Overrides:` cho 2 proposal 2026-11-21
@@ -71,9 +71,9 @@ Blocked:
 ---
 
 ## Next Actions
-- CHECKPOINT 1: báo cáo, chờ người dùng chọn `tiếp tục workflow` / `dừng lại` / `sửa thêm`.
+- none — đã merge PR #89 vào develop, đồng bộ xong. Môi trường khác: `alembic upgrade head` (và tuỳ chọn chạy backfill all_month).
 
 ---
 
 ## Last Update
-2026-11-22 — Validation xanh, dừng CHECKPOINT 1.
+2026-11-23 — PR #89 merged vào develop (`4fbec53`); status → completed.
