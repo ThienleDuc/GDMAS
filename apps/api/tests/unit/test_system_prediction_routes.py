@@ -147,6 +147,28 @@ def test_classifications_returns_label_and_probabilities(client, db):
     data = client.get(f"{API}/classifications").json()["data"]
     assert data["predicted_label"] == "Low"
     assert sum(data["probabilities"].values()) == pytest.approx(1.0)
+    # GAP-08: alias /patterns có mặt, key cũ vẫn giữ nguyên.
+    assert data["probability_scores"] == probs
+
+
+# GAP-08 — confidence_level top-level (field optional trong predictions.json)
+def test_predictions_exposes_confidence_level_when_available(client, db):
+    _add(
+        db,
+        _prediction(
+            date(2026, 11, 12),
+            evaluation_metrics={"mae": 2.0, "confidence_level": 0.95},
+        ),
+    )
+    data = client.get(f"{API}/predictions").json()["data"]
+    assert data["confidence_level"] == 0.95
+    assert data["evaluation_metrics"]["mae"] == 2.0
+
+
+def test_predictions_confidence_level_none_when_missing(client, db):
+    _add(db, _prediction(date(2026, 11, 12)))
+    data = client.get(f"{API}/predictions").json()["data"]
+    assert data["confidence_level"] is None
 
 
 def test_classifications_db_down_returns_500(broken_client):
