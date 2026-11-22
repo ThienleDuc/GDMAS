@@ -157,6 +157,124 @@ test("TC-07: getOptionalApi / fetchApi vẫn throw khi gặp lỗi server 500", 
   }
 });
 
+test("TC-12: getClustersOptional 200 — không gọi /patterns (đường nhanh)", async () => {
+  const originalFetch = globalThis.fetch;
+  const urls: string[] = [];
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    urls.push(String(input));
+    return new Response(JSON.stringify({ success: true, data: { clusters: [] } }), { status: 200 });
+  };
+
+  try {
+    const res = await getClustersOptional();
+    assert.equal(res.unavailable, false);
+    assert.ok(res.data);
+    assert.equal(urls.length, 1, "Chỉ gọi /clusters khi endpoint trả 200");
+    assert.ok(urls[0].includes("/api/v1/clusters"));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("TC-13: /clusters 404 → fallback /patterns.clustering_summary (dữ liệu thật)", async () => {
+  const originalFetch = globalThis.fetch;
+  const urls: string[] = [];
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    const url = String(input);
+    urls.push(url);
+    if (url.includes("/api/v1/clusters")) {
+      return new Response(JSON.stringify({ detail: "Not Found" }), { status: 404 });
+    }
+    return new Response(
+      JSON.stringify({
+        success: true,
+        total_patterns: 6,
+        patterns: [],
+        clustering_summary: {
+          clusters: [
+            { id: 0, name: "San Andreas - California", lat: 35.7, lon: -118.5, events_count: 12, avg_mag: 5.4 },
+          ],
+        },
+      }),
+      { status: 200 },
+    );
+  };
+
+  try {
+    const res = await getClustersOptional();
+    assert.equal(res.unavailable, false);
+    assert.equal(res.status, 200);
+    assert.ok(res.message?.includes("/api/v1/patterns"));
+    assert.equal(res.data?.data.clusters[0].cluster_id, 0);
+    assert.equal(res.data?.data.clusters[0].event_count, 12);
+    assert.equal(res.data?.data.clusters[0].center_latitude, 35.7);
+    assert.equal(urls.length, 2, "Phải gọi cả /clusters lẫn /patterns");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("TC-14: /clusters 404 + /patterns rỗng → giữ unavailable: true, data: null", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    if (String(input).includes("/api/v1/clusters")) {
+      return new Response(JSON.stringify({ detail: "Not Found" }), { status: 404 });
+    }
+    return new Response(
+      JSON.stringify({ success: false, total_patterns: 0, patterns: [], message: "CSDL trống" }),
+      { status: 200 },
+    );
+  };
+
+  try {
+    const res = await getClustersOptional();
+    assert.equal(res.unavailable, true);
+    assert.equal(res.data, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("TC-15: /clusters 404 + /patterns 500 → nuốt lỗi fallback, không throw", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    if (String(input).includes("/api/v1/clusters")) {
+      return new Response(JSON.stringify({ detail: "Not Found" }), { status: 404 });
+    }
+    return new Response(JSON.stringify({ detail: "Server Error" }), { status: 500 });
+  };
+
+  try {
+    const res = await getClustersOptional();
+    assert.equal(res.unavailable, true);
+    assert.equal(res.data, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("TC-16: getPatterns chấp nhận aggregate envelope không có khóa data", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () =>
+    new Response(
+      JSON.stringify({
+        success: true,
+        total_patterns: 6,
+        patterns: [],
+        clustering_summary: { clusters: [] },
+      }),
+      { status: 200 },
+    );
+
+  try {
+    const patterns = await getPatterns();
+    assert.equal(patterns.success, true);
+    assert.equal(patterns.total_patterns, 6);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("TC-08: UTC timestamps and WGS84 bounds are validated before fetch", async () => {
   const originalFetch = globalThis.fetch;
   let requestCount = 0;

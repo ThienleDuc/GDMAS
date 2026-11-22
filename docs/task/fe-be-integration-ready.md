@@ -74,3 +74,27 @@ Các route này **đã có trên BE và khớp contract FE**, nhưng service FE 
 - [ ] Test offline 100%, mock fetch/EventSource (`I7`): `cd apps/web && pnpm test && pnpm build`.
 
 > Các chức năng **chưa sẵn sàng** (BE thiếu field / shape SSE / optional payload) được tách thành task riêng tại [`fe-be-integration-gaps.md`](fe-be-integration-gaps.md). Các task GAP-01…GAP-04, GAP-06, GAP-07 trong đó là các đầu việc **sửa BE** theo yêu cầu "thay đổi phía BE để đồng bộ FE".
+
+---
+
+## 4. Nhật ký triển khai (đọc đầu tiên ở phiên tiếp theo)
+
+> Mỗi proposal hoàn thành ghi 1 mục ở đây để phiên sau **không phải phân tích lại từ đầu**.
+> Thứ tự proposal đã chia: **(1) RD-15** ✅ · (2) RD-13 · (3) RD-17 · (4) RD-16 · (5) RD-14.
+> RD-01…RD-12 chỉ là kiểm chứng hợp đồng, không cần proposal riêng.
+
+### Proposal 1 — RD-15: Fallback cụm thật từ `/patterns` — ✅ ĐÃ GIẢI QUYẾT (2026-11-22)
+
+- **Nhánh:** `feat/2026-11-22-patterns-cluster-fallback-thien`
+- **Proposal:** `.agents/notes/proposed/2026-11-22-patterns-cluster-fallback-thien.md` (§9 Approved)
+- **Plan / Testcase:** `.agents/notes/implemented/2026-11-22-patterns-cluster-fallback-thien/`, `.agents/notes/testcase/2026-11-22-patterns-cluster-fallback-thien.md`
+- **Vấn đề đã đóng:** `getClustersOptional()` trước đây chỉ gọi `/api/v1/clusters`; khi 404 trả `unavailable: true` dù `/patterns` đang có `clustering_summary` thật → `useEarthquakeInsights` và `GlobalCountryFilter` từ chối dữ liệu. Đây là drift đã ghi tại mục RD-15.
+- **Cách làm:**
+  - Thêm `apps/web/src/lib/transforms/cluster-fallback.ts` — hàm thuần `clustersFromPatterns()` map alias legacy (`id/lat/lon/events_count/avg_mag`) → `ClusterSummary` canonical; guard WGS84, bỏ cụm sai, không nội suy, không tạo `dominant_place` giả.
+  - Sửa `getClustersOptional()` trong `apps/web/src/services/earthquake-api.ts`: **chỉ fallback khi `/clusters` 404 HTTP**; 200 (kể cả empty envelope) giữ nguyên; fallback gọi `/patterns`, map rồi trả `{unavailable:false, status:200, message:"Nguồn: GET /api/v1/patterns → clustering_summary"}`; mọi lỗi từ `/patterns` được nuốt, giữ `unavailable:true` của nguồn chính.
+  - **Phát hiện khi implement:** `isApiEnvelope()` (`apps/web/src/contracts/common.ts`) bắt buộc khóa `data`, nhưng `/patterns` theo `contracts/schemas/patterns.json` trả `{success,total_patterns,patterns,clustering_summary}` **không có `data`** → `getPatterns()` ném ApiError dù BE trả 200. Đã sửa guard chấp nhận thêm shape aggregate. Không đổi `contracts/**`.
+  - **Không đổi:** `useEarthquakeInsights.ts`, `GlobalCountryFilter.tsx`, `header-data.ts`, `map-data.ts`, `country-clusters.ts`, `apps/api/**`.
+- **Test:** `apps/web/tests/cluster-fallback.test.ts` (mới) + bổ sung `apps/web/tests/services.test.ts` (TC-12…TC-16); `cd apps/web && pnpm test` → **183/183 pass**, `pnpm build` PASS; `notes_index.py --check` OK; `git-ship.sh scope` OK.
+- **Kết luận cho các consumer:** không cần sửa — tự nhận cụm thật; `unavailable` chỉ còn đúng khi cả 2 nguồn đều rỗng/404.
+- **Còn lại cho phiên sau:** RD-13, RD-14, RD-16, RD-17 chưa làm (xem bảng §2 ở trên). Bắt đầu proposal 2 = **RD-13** (gắn chi tiết sự kiện từ `getEarthquakeDetail()` vào popup/bảng), rẽ nhánh mới từ `develop`. Không cần đọc lại audit FE↔BE — dùng trực tiếp bảng §1/§2 + nhật ký này.
+- **Lưu ý:** `clustering_summary` legacy từ `demo_seeder` có `name` tiếng Việt ("Vành đai Thái Bình Dương - Nhật Bản") → `countryFromPlace()` có thể không map được sang "Japan"; đây là dữ liệu thật, **không được bịa `dominant_place`** (thuộc GAP-01 phía BE).
