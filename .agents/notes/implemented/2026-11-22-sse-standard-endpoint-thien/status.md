@@ -4,16 +4,17 @@
 
 ## Metadata
 - ID: 2026-11-22-sse-standard-endpoint-thien
-- Status: validation   <!-- planned | in_progress | blocked | validation | completed -->
+- Status: completed   <!-- planned | in_progress | blocked | validation | completed -->
 - Started: 2026-11-22
 - Last Updated: 2026-11-22
+- Merged: 2026-11-22 — PR #59, merge commit `50c7a8914d5ea053c53646a079048bc1db88a6b5`
 - Owner: agent | thien
 
 ---
 
 ## Tiến độ
 Progress: 100%
-Current Phase: CHECKPOINT 1 — chờ người dùng commit/push hay giữ nguyên
+Current Phase: completed — PR #59 đã merge vào develop, nhánh local đã sync
 
 Completed:
 - Rẽ nhánh `feat/2026-11-22-sse-standard-endpoint-thien` từ `develop`
@@ -61,9 +62,9 @@ Blocked:
 ---
 
 ## Next Actions
-- CHECKPOINT 1: chờ người dùng commit/push (`tiếp tục workflow`) hoặc giữ nguyên/sửa thêm. Proposal sau: RD-16.
+- Không còn — phiên tiếp theo bắt đầu proposal 4 (**RD-16**) từ `develop`; đọc mục 4 `docs/task/fe-be-integration-ready.md` để có ngữ cảnh.
 
 ---
 
 ## Last Update
-2026-11-22 — Hoàn tất RD-17 (default SSE chuẩn), validation 194/194 xanh, dừng CHECKPOINT 1.
+2026-11-22 — RD-17 hoàn tất: PR #59 merged (`50c7a89`), `sync` xong, status = completed.
