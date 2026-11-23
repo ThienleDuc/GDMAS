@@ -4,9 +4,54 @@ export interface ContractMockResponse {
   body: string;
 }
 
+import type { EarthquakeItem } from "./src/contracts/earthquake.ts";
+import { countryOf } from "./src/features/earthquakes/country-filter.ts";
+import { buildCatalogStatistics } from "./src/features/earthquakes/earthquake-insights.ts";
+import { filterByCountryAndRegion, regionOf } from "./src/features/earthquakes/region-filter.ts";
 import { createEarthquakeList, slicePage } from "./tests/mocks/earthquakes-list.ts";
 
 export type FixtureLoader = (filename: string) => unknown;
+
+/** Đọc tham số số từ query; bỏ giá trị rỗng/không hợp lệ (I3 — không bịa số). */
+function numericQueryParam(query: URLSearchParams, key: string): number | undefined {
+  const raw = query.get(key);
+  if (raw === null || raw.trim() === "") return undefined;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : undefined;
+}
+
+/**
+ * Một nguồn lọc duy nhất cho mọi endpoint động của mock (/earthquakes, /countries, /regions, /statistics).
+ * Cùng ngữ nghĩa với API thật (API.md §3.2) để bộ lọc header + filter bar có tác dụng trong demo.
+ */
+function filterMockEarthquakes(query: URLSearchParams): EarthquakeItem[] {
+  let list = createEarthquakeList();
+  const startTime = query.get("start_time");
+  const endTime = query.get("end_time");
+  if (startTime) list = list.filter((item) => Date.parse(item.event_time) >= Date.parse(startTime));
+  if (endTime) list = list.filter((item) => Date.parse(item.event_time) <= Date.parse(endTime));
+
+  const minMagnitude = numericQueryParam(query, "min_magnitude");
+  const maxMagnitude = numericQueryParam(query, "max_magnitude");
+  const minDepth = numericQueryParam(query, "min_depth");
+  const maxDepth = numericQueryParam(query, "max_depth");
+  if (minMagnitude !== undefined) list = list.filter((item) => item.magnitude >= minMagnitude);
+  if (maxMagnitude !== undefined) list = list.filter((item) => item.magnitude <= maxMagnitude);
+  if (minDepth !== undefined) list = list.filter((item) => item.depth_km >= minDepth);
+  if (maxDepth !== undefined) list = list.filter((item) => item.depth_km <= maxDepth);
+  return filterByCountryAndRegion(list, query.get("country") ?? "all", query.get("region") ?? "all");
+}
+
+function countBy(items: readonly EarthquakeItem[], labelOf: (item: EarthquakeItem) => string) {
+  const counts = new Map<string, number>();
+  for (const item of items) {
+    const label = labelOf(item);
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([label, count]) => ({ label, count }))
+    .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label));
+}
 
 /** 4 endpoint phân tích lấy từ bundle analysis_sample.json (theo contract). */
 const ANALYSIS_ROUTES: Record<string, "temporal" | "trend" | "seasonality" | "correlation"> = {
@@ -63,37 +108,34 @@ export function resolveContractMock(
   const fixtureName = routes[pathname];
   if (fixtureName) return jsonResponse(loadFixture(fixtureName));
 
+  const query = new URLSearchParams(search);
+
+  // Danh mục quốc gia/khu vực — header cần để bật được bộ lọc khu vực (lỗi "chỉ lọc quốc gia").
+  // BE trả toàn bộ danh mục theo cửa sổ/quốc gia — không tự thu hẹp theo lựa chọn hiện tại.
+  const catalogQuery = new URLSearchParams(query);
+  catalogQuery.delete("region");
+  if (pathname === "/api/v1/earthquakes/countries") {
+    const rows = countBy(filterMockEarthquakes(catalogQuery), countryOf);
+    return jsonResponse({ success: true, data: rows.map((row) => ({ country: row.label, count: row.count })) });
+  }
+  if (pathname === "/api/v1/earthquakes/regions") {
+    const country = query.get("country") ?? "all";
+    const rows = countBy(filterMockEarthquakes(catalogQuery), (item) => regionOf(item, countryOf(item)));
+    return jsonResponse({ success: true, data: rows.map((row) => ({ region: row.label, count: row.count })) });
+  }
+
+  // KPI dùng chung công thức với FE — ăn cùng bộ lọc với histogram/bảng.
   if (pathname === "/api/v1/statistics/earthquakes") {
-    const all = createEarthquakeList();
-    const avg = all.reduce((sum, item) => sum + item.magnitude, 0) / all.length;
-    return jsonResponse({
-      success: true,
-      data: {
-        total_events: all.length,
-        strong_events_count: all.filter((item) => item.magnitude >= 6).length,
-        moderate_events_count: all.filter((item) => item.magnitude >= 5 && item.magnitude < 6).length,
-        minor_events_count: all.filter((item) => item.magnitude < 3).length,
-        recent_24h_count: all.slice(0, 24).length,
-        avg_magnitude: Number(avg.toFixed(2)),
-        max_magnitude: Math.max(...all.map((item) => item.magnitude)),
-        latest_event_time: all[0].event_time,
-        time_series_preview: [],
-      },
-    });
+    const filtered = filterMockEarthquakes(query);
+    return jsonResponse(buildCatalogStatistics(filtered, filtered.length, new Date()));
   }
 
   if (pathname === "/api/v1/earthquakes") {
-    const query = new URLSearchParams(search);
     const rawPage = Number(query.get("page") ?? "1");
     const rawLimit = Number(query.get("limit") ?? "10");
     const page = Number.isFinite(rawPage) ? rawPage : 1;
     const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 10;
-    const startTime = query.get("start_time");
-    const endTime = query.get("end_time");
-    let list = createEarthquakeList();
-    if (startTime) list = list.filter((item) => Date.parse(item.event_time) >= Date.parse(startTime));
-    if (endTime) list = list.filter((item) => Date.parse(item.event_time) <= Date.parse(endTime));
-    const paged = slicePage(list, page, limit);
+    const paged = slicePage(filterMockEarthquakes(query), page, limit);
     return jsonResponse({ success: true, data: paged.data, metadata: paged });
   }
 

@@ -82,15 +82,15 @@ test("TC-09 — nhãn trạng thái tiếng Việt, status lạ → unknown", ()
   assert.equal(terminalStatusLabel("unknown"), "Không xác định");
 });
 
-test("TC-07 — header wiring giữ thứ tự Clock trước Theme", () => {
+test("TC-07 — header giữ Clock/SystemStatus; Theme dời xuống footer aside", () => {
   const sourceRoot = resolve(import.meta.dirname, "../src");
   const actions = readFileSync(resolve(sourceRoot, "layouts/header/HeaderActions.tsx"), "utf8");
+  const layout = readFileSync(resolve(sourceRoot, "layouts/DashboardLayout.tsx"), "utf8");
 
   assert.match(actions, /<SystemStatusPanel\s*\/>/u);
-  assert.ok(
-    actions.indexOf("<RealtimeClock") < actions.indexOf("<ThemeToggle"),
-    "ThemeToggle phải đứng sau RealtimeClock",
-  );
+  assert.match(actions, /<RealtimeClock\s*\/>/u);
+  assert.doesNotMatch(actions, /<ThemeToggle/u);
+  assert.match(layout, /layout__sidebar-footer[\s\S]*<CompactRefreshCountdown[\s\S]*<ThemeToggle/u);
 });
 
 test("TC-08 — không khôi phục /settings hay strip 7 Terminals trên Overview", () => {

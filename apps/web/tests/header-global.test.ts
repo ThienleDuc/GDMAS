@@ -12,6 +12,7 @@ import {
   TOAST_SECONDS,
   countdownLabel,
   countriesFromClusters,
+  compactCountdownLabel,
   nextCountdownTick,
   nextToastTick,
 } from "../src/layouts/header/header-data.ts";
@@ -96,6 +97,15 @@ test("TC-08: đồng hồ đếm ngược 5 phút — giảm 1s, về 0 thì res
   assert.equal(nextCountdownTick(0), 300);
   assert.equal(nextCountdownTick(Number.NaN), 300);
   assert.equal(countdownLabel(nextCountdownTick(1)), "05:00");
+});
+
+test("TC-12: compactCountdownLabel rút gọn phút cho aside (giữ hàm cũ)", () => {
+  assert.equal(compactCountdownLabel(300), "5:00");
+  assert.equal(compactCountdownLabel(125), "2:05");
+  assert.equal(compactCountdownLabel(0), "5:00");
+  assert.equal(compactCountdownLabel(Number.NaN), "5:00");
+  // I2 — caller/test cũ vẫn thấy "05:00".
+  assert.equal(countdownLabel(300), "05:00");
 });
 
 test("TC-11: toast báo cập nhật tự đóng sau 5 giây", () => {

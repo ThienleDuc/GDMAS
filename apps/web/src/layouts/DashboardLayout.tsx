@@ -5,6 +5,8 @@ import { useSSE } from "../hooks/useSSE";
 import { SseMarkersProvider } from "../features/monitoring/sse-context.ts";
 import { NAV_META, routeLabel, type NavMeta } from "./navigation.ts";
 import { HeaderActions } from "./header/HeaderActions.tsx";
+import { CompactRefreshCountdown } from "./header/CompactRefreshCountdown.tsx";
+import { ThemeToggle } from "./header/ThemeToggle.tsx";
 import { dataRefreshKey } from "./header/header-data.ts";
 import { APP_ROUTES } from "../app/routes.tsx";
 
@@ -77,7 +79,10 @@ export const DashboardLayout: React.FC = () => {
           })}
         </nav>
 
-        <div className="layout__sidebar-footer" />
+        <div className="layout__sidebar-footer">
+          <CompactRefreshCountdown onRefresh={sse.reconnect} />
+          <ThemeToggle />
+        </div>
       </aside>
 
       {/* Main Container */}

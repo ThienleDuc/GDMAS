@@ -4,6 +4,7 @@
  */
 
 import type { AnalysisInterval } from "../../contracts/common.ts";
+import type { EarthquakeItem, StatisticsResponse } from "../../contracts/earthquake.ts";
 import type { DateRangePreset } from "./earthquake-view.ts";
 
 export interface SeverityBand {
@@ -58,6 +59,38 @@ export const SEVERITY_NOTES: ReadonlyArray<{
 
 export function mapRangeToInterval(range: DateRangePreset): AnalysisInterval {
   return range === "day" ? "day" : range === "week" ? "week" : "month";
+}
+
+/**
+ * Tính 4 KPI từ chính tập sự kiện đã lọc đầy đủ (khoảng thời gian, độ lớn, độ sâu, quốc gia, khu vực).
+ * Dùng chung cho histogram và KPI để chúng luôn ăn cùng một bộ lọc — không phụ thuộc việc BE
+ * `/statistics` có hỗ trợ tham số độ lớn/độ sâu hay không (I3/I5: vẫn là dữ liệu API thật).
+ */
+export function buildCatalogStatistics(
+  items: readonly EarthquakeItem[],
+  total: number,
+  now: Date = new Date(),
+): StatisticsResponse {
+  const cutoff = now.getTime() - 24 * 60 * 60 * 1000;
+  const magnitudes = items.map((item) => item.magnitude).filter((value) => Number.isFinite(value));
+  const sum = magnitudes.reduce((acc, value) => acc + value, 0);
+  const avg = magnitudes.length ? sum / magnitudes.length : 0;
+  const max = magnitudes.length ? Math.max(...magnitudes) : 0;
+
+  return {
+    success: true,
+    data: {
+      total_events: total,
+      strong_events_count: items.filter((item) => item.magnitude >= 6).length,
+      moderate_events_count: items.filter((item) => item.magnitude >= 5 && item.magnitude < 6).length,
+      minor_events_count: items.filter((item) => item.magnitude < 3).length,
+      recent_24h_count: items.filter((item) => Date.parse(item.event_time) >= cutoff).length,
+      avg_magnitude: Number(avg.toFixed(2)),
+      max_magnitude: Number(max.toFixed(2)),
+      latest_event_time: items[0]?.event_time,
+      time_series_preview: [],
+    },
+  };
 }
 
 /** Parse raw input to finite number; null for empty/invalid values. */

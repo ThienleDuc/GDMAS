@@ -71,6 +71,7 @@ export const EarthquakeFilterBar: React.FC<EarthquakeFilterBarProps> = ({ value,
         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z" />
       </svg>
+      <span className="eq-filter-apply-label">Áp dụng</span>
     </button>
   </div>
 );

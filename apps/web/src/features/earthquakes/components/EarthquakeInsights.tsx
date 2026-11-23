@@ -32,12 +32,8 @@ function KpiCard({ label, value, unit }: { label: string; value: number | null |
 export const EarthquakeInsights: React.FC<EarthquakeInsightsProps> = ({
   statistics,
   items,
-  countries,
   selectedCountry,
-  onCountryChange,
-  regions = [],
   selectedRegion = "all",
-  onRegionChange,
   loading,
   error,
   unavailable,
@@ -58,14 +54,12 @@ export const EarthquakeInsights: React.FC<EarthquakeInsightsProps> = ({
 
   return (
     <div className="eq-overview">
+      {/* Bộ lọc quốc gia/khu vực dùng chung nằm ở header — histogram chỉ đọc ngữ cảnh. */}
       <MagnitudeHistogramChart
         items={items}
-        countries={countries}
+        countries={[]}
         selectedCountry={selectedCountry}
-        onCountryChange={onCountryChange}
-        regions={regions}
         selectedRegion={selectedRegion}
-        onRegionChange={onRegionChange}
       />
       <div className="eq-overview__kpis">
         <KpiCard label="Tổng số trận" value={stats?.total_events} />

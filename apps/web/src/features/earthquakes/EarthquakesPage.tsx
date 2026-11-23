@@ -14,7 +14,7 @@ import {
   formatEventRow,
   type EarthquakeFilters,
 } from "./earthquake-view.ts";
-import { mapRangeToInterval } from "./earthquake-insights.ts";
+import { buildCatalogStatistics, mapRangeToInterval } from "./earthquake-insights.ts";
 import { countriesFromItems } from "./country-filter.ts";
 import { geoQuery } from "../../contracts/geo-filter.ts";
 import { ALL_REGIONS, filterByCountryAndRegion, regionsFromItems } from "./region-filter.ts";
@@ -55,6 +55,8 @@ export const EarthquakesPage: React.FC = () => {
   // Nguồn sự thật là URL ?country=&region= — đồng bộ với header/bản đồ.
   const { country: selectedCountry, region: selectedRegion, setSelection } = useCatalogSelection();
   const [chartItems, setChartItems] = useState<EarthquakeItem[]>([]);
+  const [chartTotal, setChartTotal] = useState(0);
+  const [chartLoaded, setChartLoaded] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detail, setDetail] = useState<EarthquakeItem | null>(null);
   const [detailState, setDetailState] = useState<DetailState>("idle");
@@ -131,10 +133,16 @@ export const EarthquakesPage: React.FC = () => {
       controller.signal,
     )
       .then((result) => {
-        if (!controller.signal.aborted) setChartItems(result.data);
+        if (controller.signal.aborted) return;
+        setChartItems(result.data);
+        setChartTotal(result.total);
+        setChartLoaded(true);
       })
       .catch(() => {
-        if (!controller.signal.aborted) setChartItems([]);
+        if (controller.signal.aborted) return;
+        setChartItems([]);
+        setChartTotal(0);
+        setChartLoaded(true);
       });
     return () => controller.abort();
   }, [filters, refreshKey, selectedCountry, selectedRegion]);
@@ -148,6 +156,8 @@ export const EarthquakesPage: React.FC = () => {
     () => filterByCountryAndRegion(chartItems, selectedCountry, selectedRegion),
     [chartItems, selectedCountry, selectedRegion],
   );
+  // KPI và histogram dùng chung tập đã lọc — cả 4 chỉ số đều ăn Ngày/Tuần/Tháng + độ lớn/độ sâu + quốc gia/khu vực.
+  const catalogStats = useMemo(() => buildCatalogStatistics(chartFiltered, chartTotal), [chartFiltered, chartTotal]);
   const visibleItems = useMemo(
     () => filterByCountryAndRegion(items, selectedCountry, selectedRegion),
     [items, selectedCountry, selectedRegion],
@@ -217,7 +227,7 @@ export const EarthquakesPage: React.FC = () => {
       <EarthquakeFilterBar value={form} onChange={handleFilterChange} onApply={handleApplyFilters} />
 
       <EarthquakeInsights
-        statistics={insights.statistics}
+        statistics={chartLoaded ? catalogStats : insights.statistics}
         items={chartFiltered}
         countries={countries}
         selectedCountry={selectedCountry}
