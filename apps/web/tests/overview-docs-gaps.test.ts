@@ -78,3 +78,12 @@ test("TC-06: biểu đồ chu kỳ có chú giải màu", () => {
   const css = read("features/overview/OverviewPage.css");
   assert.match(css, /\.ov-season-legend\s*\{/u);
 });
+
+test("TC-20: Dự báo ngày tiếp theo hiện ngay cả khi chọn Tất cả quốc gia", () => {
+  const page = read("features/overview/OverviewPage.tsx");
+  assert.match(page, /Dự báo ngày tiếp theo/u);
+  assert.match(page, /formatDecimal3\(prediction\.predictedValue\)/u);
+  assert.match(page, /riskBadgeClass\(prediction\.riskLabel\)/u);
+  assert.doesNotMatch(page, /const forecast = useMemo/u);
+  assert.doesNotMatch(page, /forecast\./u);
+});

@@ -89,22 +89,6 @@ export const OverviewPage: React.FC = () => {
 
   const isCountryMode = country === ALL_COUNTRIES;
   // Chưa chọn quốc gia cụ thể → card vẫn hiện nhưng mọi giá trị là "—" (không dùng số toàn cục — I5).
-  const forecast = useMemo(
-    () =>
-      isCountryMode
-        ? {
-            ...prediction,
-            predictedValue: null,
-            lower: null,
-            upper: null,
-            confidenceLevel: null,
-            modelName: null,
-            riskLabel: null,
-            targetDate: null,
-          }
-        : prediction,
-    [isCountryMode, prediction],
-  );
   const rankingNote = data.clusters?.data?.clusters?.length
     ? data.clusters.data.clusters.every((cluster) => !cluster.dominant_place?.trim())
       ? "BE chưa trả địa danh cho cụm — các cụm chưa rõ được gộp chung vào nhóm «Khác»."
@@ -226,35 +210,35 @@ export const OverviewPage: React.FC = () => {
             ) : (
             <div className="ov-forecast">
               <p className="ov-forecast__value">
-                {formatDecimal3(forecast.predictedValue)}
+                {formatDecimal3(prediction.predictedValue)}
               </p>
               <p className="ov-forecast__meta">
                 Khoảng tin cậy{" "}
-                {forecast.confidenceLevel !== null
-                  ? `${Math.round(forecast.confidenceLevel * 100)}%`
+                {prediction.confidenceLevel !== null
+                  ? `${Math.round(prediction.confidenceLevel * 100)}%`
                   : "(chưa xác định mức)"}
                 :{" "}
-                {forecast.lower !== null && forecast.upper !== null ? (
+                {prediction.lower !== null && prediction.upper !== null ? (
                   <span className="ov-forecast__highlight">
-                    {formatDecimal3(forecast.lower)} – {formatDecimal3(forecast.upper)}
+                    {formatDecimal3(prediction.lower)} – {formatDecimal3(prediction.upper)}
                   </span>
                 ) : (
                   "Chưa có khoảng tin cậy"
                 )}
               </p>
-              {forecast.modelName && (
-                <p className="ov-forecast__basis">Dựa trên mô hình {forecast.modelName}</p>
+              {prediction.modelName && (
+                <p className="ov-forecast__basis">Dựa trên mô hình {prediction.modelName}</p>
               )}
               <p className="ov-forecast__meta">
                 Mức rủi ro:{" "}
-                <strong className={`ds-badge ${riskBadgeClass(forecast.riskLabel)}`}>
-                  {forecast.riskLabel ?? "—"}
+                <strong className={`ds-badge ${riskBadgeClass(prediction.riskLabel)}`}>
+                  {prediction.riskLabel ?? "—"}
                 </strong>
               </p>
-              {forecast.targetDate && (
+              {prediction.targetDate && (
                 <p className="ov-forecast__meta">
                   Ngày mục tiêu (UTC):{" "}
-                  <span className="ov-forecast__highlight">{forecast.targetDate}</span>
+                  <span className="ov-forecast__highlight">{prediction.targetDate}</span>
                 </p>
               )}
               <p className="ov-chart__note">
