@@ -29,11 +29,15 @@ import {
   applyMonthWindow,
   applyWeekdayWindow,
   buildTrendComparison,
+  depthLabel,
+  formatDecimal3,
   formatPrediction,
   padWeekdaysTo7,
+  SEVERITY_FOOTNOTE,
   rankFromCountryCatalog,
   rankFromRegionCatalog,
   rankRegionsForCountry,
+  riskBadgeClass,
   severityLabel,
   type RankRow,
 } from "./overview-view.ts";
@@ -91,6 +95,23 @@ export const OverviewPage: React.FC = () => {
   );
 
   const isCountryMode = country === ALL_COUNTRIES;
+  // Chưa chọn quốc gia cụ thể → card vẫn hiện nhưng mọi giá trị là "—" (không dùng số toàn cục — I5).
+  const forecast = useMemo(
+    () =>
+      isCountryMode
+        ? {
+            ...prediction,
+            predictedValue: null,
+            lower: null,
+            upper: null,
+            confidenceLevel: null,
+            modelName: null,
+            riskLabel: null,
+            targetDate: null,
+          }
+        : prediction,
+    [isCountryMode, prediction],
+  );
   const rankingNote = data.clusters?.data?.clusters?.length
     ? data.clusters.data.clusters.every((cluster) => !cluster.dominant_place?.trim())
       ? "BE chưa trả địa danh cho cụm — các cụm chưa rõ được gộp chung vào nhóm «Khác»."
@@ -176,7 +197,7 @@ export const OverviewPage: React.FC = () => {
               <article className="ov-kpi" key={card.key}>
                 <p className="ov-kpi__label">{card.label}</p>
                 <p className={`ov-kpi__value ov-kpi__value--${card.tone}`}>
-                  {card.value === null ? "—" : card.value.toLocaleString("vi-VN")}
+                  {formatDecimal3(card.value)}
                 </p>
                 <p className="ov-kpi__hint">
                   {card.key === "clusters" && isCountryMode ? `${card.hint} · toàn cục` : card.hint}
@@ -200,6 +221,7 @@ export const OverviewPage: React.FC = () => {
           </article>
 
           <article className="ov-card ov-card--wide">
+            <h2 className="ov-card__label">Động đất tập trung ở đâu?</h2>
             {data.secondaryLoading ? (
               <p className="ov-chart-empty">Đang tải dữ liệu xếp hạng…</p>
             ) : (
@@ -231,6 +253,7 @@ export const OverviewPage: React.FC = () => {
           </article>
 
           <article className="ov-card ov-card--8">
+            <h2 className="ov-card__label">Danh mục động đất gần đây</h2>
             {latest.length === 0 ? (
               <p className="ov-chart-empty">Chưa có sự kiện nào trong dữ liệu.</p>
             ) : (
@@ -242,6 +265,7 @@ export const OverviewPage: React.FC = () => {
                       <th>Địa điểm</th>
                       <th className="numeric">Độ lớn</th>
                       <th>Mức độ</th>
+                      <th>Độ sâu</th>
                       <th>Tọa độ WGS84</th>
                     </tr>
                   </thead>
@@ -250,17 +274,18 @@ export const OverviewPage: React.FC = () => {
                       <tr key={event.id}>
                         <td><span className="ov-cell-time">{formatEventTime(event.time, timezone)}</span></td>
                         <td><span className="ov-cell-place">{event.place}</span></td>
-                        <td className="numeric"><span className="ov-cell-mag">{event.magnitude.toFixed(1)}</span></td>
+                        <td className="numeric"><span className="ov-cell-mag">{formatDecimal3(event.magnitude)}</span></td>
                         <td>
                           {(() => {
                             const severity = severityLabel(event.magnitude);
                             return (
-                              <span className={`ov-severity ov-severity--${severity.tone}`}>
+                              <span className={`ds-badge ${severity.badgeClass}`}>
                                 {severity.label}
                               </span>
                             );
                           })()}
                         </td>
+                        <td><span className={`ds-badge ${depthLabel(event.depth_km).badgeClass}`}>{depthLabel(event.depth_km).label}</span></td>
                         <td><span className="ov-cell-coord">{formatWgs84Point(event.latitude, event.longitude)}</span></td>
                       </tr>
                     ))}
@@ -268,44 +293,48 @@ export const OverviewPage: React.FC = () => {
                 </table>
               </div>
             )}
+            <p className="ov-severity-footnote">{SEVERITY_FOOTNOTE}</p>
             <Link className="ov-inline-link" to={withSelection(APP_ROUTES.EARTHQUAKES)}>
               Xem toàn bộ danh mục <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </article>
 
           <article className="ov-card ov-card--4">
+            <h2 className="ov-card__label">Dự báo ngày tiếp theo</h2>
             {data.secondaryLoading ? (
               <p className="ov-chart-empty">Đang tải dự báo…</p>
             ) : (
             <div className="ov-forecast">
               <p className="ov-forecast__value">
-                {prediction.predictedValue === null ? "—" : prediction.predictedValue.toLocaleString("vi-VN")}
+                {formatDecimal3(forecast.predictedValue)}
               </p>
               <p className="ov-forecast__meta">
                 Khoảng tin cậy{" "}
-                {prediction.confidenceLevel !== null
-                  ? `${Math.round(prediction.confidenceLevel * 100)}%`
+                {forecast.confidenceLevel !== null
+                  ? `${Math.round(forecast.confidenceLevel * 100)}%`
                   : "(chưa xác định mức)"}
                 :{" "}
-                {prediction.lower !== null && prediction.upper !== null ? (
+                {forecast.lower !== null && forecast.upper !== null ? (
                   <span className="ov-forecast__highlight">
-                    {prediction.lower} – {prediction.upper}
+                    {formatDecimal3(forecast.lower)} – {formatDecimal3(forecast.upper)}
                   </span>
                 ) : (
                   "Chưa có khoảng tin cậy"
                 )}
               </p>
-              {prediction.modelName && (
-                <p className="ov-forecast__basis">Dựa trên mô hình {prediction.modelName}</p>
+              {forecast.modelName && (
+                <p className="ov-forecast__basis">Dựa trên mô hình {forecast.modelName}</p>
               )}
               <p className="ov-forecast__meta">
                 Mức rủi ro:{" "}
-                <strong className="ov-forecast__highlight">{prediction.riskLabel ?? "—"}</strong>
+                <strong className={`ds-badge ${riskBadgeClass(forecast.riskLabel)}`}>
+                  {forecast.riskLabel ?? "—"}
+                </strong>
               </p>
-              {prediction.targetDate && (
+              {forecast.targetDate && (
                 <p className="ov-forecast__meta">
                   Ngày mục tiêu (UTC):{" "}
-                  <span className="ov-forecast__highlight">{prediction.targetDate}</span>
+                  <span className="ov-forecast__highlight">{forecast.targetDate}</span>
                 </p>
               )}
               <p className="ov-chart__note">

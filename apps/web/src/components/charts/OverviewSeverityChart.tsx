@@ -2,8 +2,9 @@ import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recha
 import type { SeverityMix } from "../../features/overview/overview-view.ts";
 import { CHART_TOOLTIP } from "./chart-theme.ts";
 
+// Ánh xạ từ badge class của earthquakes: success (xanh) / warning (vàng) / error (đỏ).
 const SLICE_COLORS: Record<string, string> = {
-  minor: "var(--primary)",
+  minor: "var(--chart-3)",
   moderate: "var(--chart-4)",
   strong: "var(--destructive)",
 };
