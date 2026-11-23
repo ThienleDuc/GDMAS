@@ -34,12 +34,21 @@ export interface TimeWindow {
   end_time?: string;
 }
 
+/** Mặc định giữ nguyên hành vi cũ (I2) — page có thể tắt nguồn không dùng. */
+export interface EarthquakeInsightsOptions {
+  includeTemporal?: boolean;
+  includeClusters?: boolean;
+}
+
 export function useEarthquakeInsights(
   interval: AnalysisInterval,
   refreshKey = 0,
   filter?: GeoFilter | null,
   window?: TimeWindow | null,
+  options?: EarthquakeInsightsOptions,
 ): EarthquakeInsightsState {
+  const includeTemporal = options?.includeTemporal !== false;
+  const includeClusters = options?.includeClusters !== false;
   const [state, setState] = useState<EarthquakeInsightsState>(INITIAL_STATE);
 
   useEffect(() => {
@@ -48,8 +57,12 @@ export function useEarthquakeInsights(
 
     Promise.allSettled([
       getEarthquakeStatistics(controller.signal, filter, window),
-      getTemporalAnalysis({ interval, ...geoQuery(filter), ...window }, controller.signal),
-      getClustersOptional(controller.signal, filter),
+      includeTemporal
+        ? getTemporalAnalysis({ interval, ...geoQuery(filter), ...window }, controller.signal)
+        : Promise.resolve(null),
+      includeClusters
+        ? getClustersOptional(controller.signal, filter)
+        : Promise.resolve(null),
     ])
       .then(([statisticsResult, temporalResult, clustersResult]) => {
         if (controller.signal.aborted) return;
@@ -60,11 +73,11 @@ export function useEarthquakeInsights(
           if (isNotFound(statisticsResult.reason)) unavailable.push("GET /api/v1/statistics/earthquakes");
           else error = statisticsResult.reason instanceof ApiError ? statisticsResult.reason : new ApiError("Không tải được thống kê động đất.", 0);
         }
-        if (temporalResult.status === "rejected") {
+        if (includeTemporal && temporalResult.status === "rejected") {
           if (isNotFound(temporalResult.reason)) unavailable.push("GET /api/v1/analysis/temporal");
           else error = temporalResult.reason instanceof ApiError ? temporalResult.reason : new ApiError("Không tải được dữ liệu thời gian.", 0);
         }
-        if (clustersResult.status === "rejected") {
+        if (includeClusters && clustersResult.status === "rejected") {
           if (isNotFound(clustersResult.reason)) unavailable.push("GET /api/v1/clusters");
           else if (!error) error = clustersResult.reason instanceof ApiError ? clustersResult.reason : new ApiError("Không tải được dữ liệu cụm.", 0);
         }
@@ -75,22 +88,39 @@ export function useEarthquakeInsights(
               ? statisticsResult.value
               : null,
           temporal:
-            temporalResult.status === "fulfilled" && !isApiEmptyEnvelope(temporalResult.value)
+            includeTemporal &&
+            temporalResult.status === "fulfilled" &&
+            !isApiEmptyEnvelope(temporalResult.value)
               ? temporalResult.value
               : null,
-          clusters: clustersResult.status === "fulfilled" && clustersResult.value.data
-            ? clustersResult.value.data
-            : null,
+          clusters:
+            includeClusters &&
+            clustersResult.status === "fulfilled" &&
+            clustersResult.value?.data
+              ? clustersResult.value.data
+              : null,
           loading: false,
           error,
-          unavailable: clustersResult.status === "fulfilled" && clustersResult.value.unavailable
-            ? [...unavailable, "GET /api/v1/clusters"]
-            : unavailable,
+          unavailable:
+            includeClusters &&
+            clustersResult.status === "fulfilled" &&
+            clustersResult.value?.unavailable
+              ? [...unavailable, "GET /api/v1/clusters"]
+              : unavailable,
         });
       });
 
     return () => controller.abort();
-  }, [interval, refreshKey, filter?.country, filter?.region, window?.start_time, window?.end_time]);
+  }, [
+    interval,
+    refreshKey,
+    filter?.country,
+    filter?.region,
+    window?.start_time,
+    window?.end_time,
+    includeTemporal,
+    includeClusters,
+  ]);
 
   return state;
 }

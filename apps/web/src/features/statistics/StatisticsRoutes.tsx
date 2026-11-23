@@ -2,13 +2,25 @@ import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { StatisticsLayout } from "./StatisticsLayout.tsx";
 import { PATTERN_NAV, patternPath } from "./pattern-nav.ts";
-import {
-  CorrelationPatternPage,
-  ForecastClassificationPatternPage,
-  SeasonalityPatternPage,
-  TemporalPatternPage,
-  TrendPatternPage,
-} from "./patterns/index.ts";
+
+// Mỗi pattern page là một chunk riêng — vào /statistics không tải cả 5 sub-layout.
+const TemporalPatternPage = React.lazy(() =>
+  import("./patterns/TemporalPatternPage").then((module) => ({ default: module.TemporalPatternPage })),
+);
+const TrendPatternPage = React.lazy(() =>
+  import("./patterns/TrendPatternPage").then((module) => ({ default: module.TrendPatternPage })),
+);
+const SeasonalityPatternPage = React.lazy(() =>
+  import("./patterns/SeasonalityPatternPage").then((module) => ({ default: module.SeasonalityPatternPage })),
+);
+const CorrelationPatternPage = React.lazy(() =>
+  import("./patterns/CorrelationPatternPage").then((module) => ({ default: module.CorrelationPatternPage })),
+);
+const ForecastClassificationPatternPage = React.lazy(() =>
+  import("./patterns/ForecastClassificationPatternPage").then((module) => ({
+    default: module.ForecastClassificationPatternPage,
+  })),
+);
 
 /**
  * Cây route con của /statistics — mỗi pattern là một route, dùng chung sublayout.

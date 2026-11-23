@@ -181,6 +181,12 @@ export const OverviewPage: React.FC = () => {
             ))}
           </div>
 
+          {data.secondaryLoading && (
+            <p className="ov-secondary-status" role="status">
+              Đang tải thêm dữ liệu xếp hạng, chu kỳ và dự báo…
+            </p>
+          )}
+
           <article className="ov-card ov-card--8">
             <OverviewTrendChart data={trend} />
           </article>
@@ -190,26 +196,34 @@ export const OverviewPage: React.FC = () => {
           </article>
 
           <article className="ov-card ov-card--wide">
-            <OverviewHotspotsChart
-              rows={ranking}
-              mode={isCountryMode ? "country" : "region"}
-              note={rankingNote}
-              onSelect={handleRankSelect}
-            />
+            {data.secondaryLoading ? (
+              <p className="ov-chart-empty">Đang tải dữ liệu xếp hạng…</p>
+            ) : (
+              <OverviewHotspotsChart
+                rows={ranking}
+                mode={isCountryMode ? "country" : "region"}
+                note={rankingNote}
+                onSelect={handleRankSelect}
+              />
+            )}
           </article>
 
           <article className="ov-card ov-card--cycles">
             <p className="ov-card__label">Chu kỳ hoạt động · 7 ngày / 12 tháng</p>
-            <div className="ov-cycles">
-              <div className="ov-cycles__item">
-                <p className="ov-cycle__label">Cao điểm theo ngày trong tuần</p>
-                <OverviewSeasonalityChart data={seasonality} />
+            {data.secondaryLoading ? (
+              <p className="ov-chart-empty">Đang tải dữ liệu chu kỳ…</p>
+            ) : (
+              <div className="ov-cycles">
+                <div className="ov-cycles__item">
+                  <p className="ov-cycle__label">Cao điểm theo ngày trong tuần</p>
+                  <OverviewSeasonalityChart data={seasonality} />
+                </div>
+                <div className="ov-cycles__item">
+                  <p className="ov-cycle__label">Cao điểm theo tháng</p>
+                  <OverviewSeasonalityChart data={monthlyBars} />
+                </div>
               </div>
-              <div className="ov-cycles__item">
-                <p className="ov-cycle__label">Cao điểm theo tháng</p>
-                <OverviewSeasonalityChart data={monthlyBars} />
-              </div>
-            </div>
+            )}
           </article>
 
           <article className="ov-card ov-card--8">
@@ -256,6 +270,9 @@ export const OverviewPage: React.FC = () => {
           </article>
 
           <article className="ov-card ov-card--4">
+            {data.secondaryLoading ? (
+              <p className="ov-chart-empty">Đang tải dự báo…</p>
+            ) : (
             <div className="ov-forecast">
               <p className="ov-forecast__value">
                 {prediction.predictedValue === null ? "—" : prediction.predictedValue.toLocaleString("vi-VN")}
@@ -291,6 +308,7 @@ export const OverviewPage: React.FC = () => {
                 Dự báo cho ngày kế tiếp — không so sánh trực tiếp với số liệu 24h thực tế (khác cửa sổ thời gian).
               </p>
             </div>
+            )}
           </article>
         </div>
       )}
