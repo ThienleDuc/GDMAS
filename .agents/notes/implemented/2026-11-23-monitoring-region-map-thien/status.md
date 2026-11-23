@@ -2,7 +2,7 @@
 
 ## Metadata
 - ID: 2026-11-23-monitoring-region-map-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-23
 - Last Updated: 2026-11-23
 - Owner: agent | thien
@@ -71,9 +71,10 @@ Blocked:
 ---
 
 ## Next Actions
-- CHECKPOINT 1: người dùng chọn `tiếp tục workflow` (commit + push + PR) / `dừng lại` / `sửa thêm`.
+- none — PR #103 đã merge vào `develop` (SHA `2fd06f3a8f7e4ac6ddd62a12698fd2cc1e7e841d`).
+- Proposal riêng `2026-11-23-global-timezone-context-thien` chờ §9 Approved trên nhánh `refactor/2026-11-23-global-timezone-context-thien`.
 
 ---
 
 ## Last Update
-2026-11-23 — Hoàn tất Revision 4 fix UX, validation xanh, đặt `Status: validation`, dừng CHECKPOINT 1.
+2026-11-23 — CHECKPOINT 2 xác nhận; PR #103 merge vào `develop` (SHA `2fd06f3a8f7e4ac6ddd62a12698fd2cc1e7e841d`), `git-ship.sh sync` xong, chuyển `Status: completed`.
