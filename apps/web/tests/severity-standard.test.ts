@@ -75,6 +75,8 @@ test("TC-06: cả 2 bảng Overview dùng ds-badge + cột độ sâu", () => {
   assert.match(page, /depthLabel\(event\.depth_km\)/u);
   assert.doesNotMatch(page, /ov-severity--\$\{/u);
   assert.doesNotMatch(hotspots, /ov-severity--\$\{/u);
+  const css = read("features/overview/OverviewPage.css");
+  assert.match(css, /td > span\.ds-badge[\s\S]{0,120}width:\s*fit-content/u);
 });
 
 test("TC-07: chu kỳ và rủi ro cùng dùng palette earthquakes", () => {
