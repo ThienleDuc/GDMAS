@@ -41,6 +41,21 @@ test("TC-03: mỗi nguồn có cờ riêng, P5+P6 dùng chung cờ forecast", ()
 test("TC-04: không đổi API/contract, filter vẫn được truyền", () => {
   const code = read("features/statistics/statistics-data.tsx");
   assert.match(code, /getTemporalAnalysis\(/u);
+  assert.match(code, /interval: "day", start_time: window\.start_time, end_time: window\.end_time/u);
+  assert.match(code, /timezone, \.\.\.geo/u);
+  assert.match(code, /\[interval, window, timezone, country, region\]/u);
   assert.match(code, /\.\.\.geo/u);
   assert.match(code, /getPredictions\(signal, filter\)/u);
+});
+
+test("TC-06: Statistics dùng chung filter header, không chọn quốc gia ở trang con", () => {
+  const layout = read("features/statistics/StatisticsLayout.tsx");
+  const css = read("features/statistics/StatisticsPage.css");
+  assert.doesNotMatch(layout, /CountryPicker/u);
+  assert.doesNotMatch(layout, /aria-label="Lọc biểu đồ theo quốc gia"/u);
+  assert.match(layout, /useCatalogSelection\(\)/u);
+  assert.match(layout, /<RegionPicker \/>/u);
+  assert.match(layout, /getRegionCatalog/u);
+  assert.match(layout, /stat-filter-chip/u);
+  assert.match(css, /\.stat-filter-chip\s*\{[^}]*background:\s*var\(--accent\)/u);
 });

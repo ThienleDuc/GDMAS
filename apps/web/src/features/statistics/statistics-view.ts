@@ -4,6 +4,7 @@
  */
 
 import type { AnalysisInterval } from "../../contracts/common.ts";
+import type { TimezoneMode } from "../../lib/formatters.ts";
 import { toUtcIso } from "../../lib/formatters.ts";
 import {
   buildForecastBand,
@@ -72,11 +73,36 @@ export interface IntervalParams {
   end_time: string;
 }
 
+/**
+ * Định dạng nhãn ngày do BE trả (`YYYY-MM-DD` / `YYYY-MM`) theo chế độ UTC/UTC+7 từ header.
+ * Chỉ giữ NGÀY (bỏ giờ); parse như UTC rồi format theo timezone — KHÔNG cộng ngày thủ công (I3).
+ * Chuỗi lạ giữ nguyên, thiếu → "—".
+ */
+export function formatStatDate(label: string | null | undefined, mode: TimezoneMode = "UTC+7"): string {
+  const raw = label?.trim();
+  if (!raw) return "—";
+  const parts = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(raw);
+  if (!parts) return raw;
+  const date = new Date(`${parts[1]}-${parts[2]}-${parts[3] ?? "01"}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return raw;
+  const timeZone = mode === "UTC" ? "UTC" : "Asia/Ho_Chi_Minh";
+  const onlyDate = date.toLocaleDateString("vi-VN", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return mode === "UTC" ? `${onlyDate} UTC` : `${onlyDate} (UTC+7)`;
+}
+
 /** Cửa sổ UTC cho `/analysis/temporal` — month lùi đúng 1 tháng UTC. */
 export function intervalToParams(interval: AnalysisInterval, now: Date = new Date()): IntervalParams {
   const start = new Date(now.getTime());
-  if (interval === "day") start.setUTCHours(start.getUTCHours() - 24);
-  else if (interval === "week") start.setUTCDate(start.getUTCDate() - 7);
+  // Ngày: từ 00:00 hôm qua tới hiện tại → luôn có 2 phiên ngày (hôm qua + hôm nay).
+  if (interval === "day") {
+    start.setUTCDate(start.getUTCDate() - 1);
+    start.setUTCHours(0, 0, 0, 0);
+  } else if (interval === "week") start.setUTCDate(start.getUTCDate() - 7);
   else start.setUTCMonth(start.getUTCMonth() - 1);
   return { interval, start_time: toUtcIso(start), end_time: toUtcIso(now) };
 }

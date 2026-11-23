@@ -9,7 +9,7 @@ import { PATTERN_NAV, patternPath } from "./pattern-nav.ts";
 import { StatisticsDataProvider } from "./statistics-data.tsx";
 import { ExpertInsightsPanel } from "./ExpertInsightsPanel.tsx";
 
-/** Chọn khu vực trong quốc gia đang xem — nguồn là catalog BE (I5). */
+/** Chọn khu vực trong quốc gia đang xem (quốc gia lấy từ combobox header qua URL) — nguồn catalog BE (I5). */
 const RegionPicker: React.FC = () => {
   const { country, region, setSelection } = useCatalogSelection();
   const [regions, setRegions] = useState<string[]>([]);
@@ -48,7 +48,7 @@ const RegionPicker: React.FC = () => {
 
 /** Sublayout cho 6 nhóm phân tích: điều hướng con dọc + vùng nội dung riêng từng pattern. */
 export const StatisticsLayout: React.FC = () => {
-  const { withSelection } = useCatalogSelection();
+  const { country, region, withSelection } = useCatalogSelection();
   return (
     <StatisticsDataProvider>
       <section className="stat-page">
@@ -57,6 +57,12 @@ export const StatisticsLayout: React.FC = () => {
             <h1 className="stat-page__title">6 nhóm phân tích chuỗi thời gian</h1>
             <p className="stat-page__subtitle">Dữ liệu phân tích từ luồng xử lý · hiển thị qua dịch vụ dữ liệu</p>
             <p className="stat-page__subtitle">{NEXT_DAY_EXPLANATION}</p>
+            {(country !== ALL_COUNTRIES || region !== ALL_REGIONS) && (
+              <span className="stat-filter-chip" title="Bộ lọc dùng chung toàn cục">
+                Đang xem: {country !== ALL_COUNTRIES ? country : "Tất cả quốc gia"}
+                {region !== ALL_REGIONS ? ` / ${region}` : ""}
+              </span>
+            )}
           </div>
 
           <div className="stat-page__filters">

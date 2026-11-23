@@ -54,6 +54,41 @@ def test_window_uses_on_the_fly_data_for_all_three_charts(client, db):
         assert data["line_chart"], f"{interval}: line chart phải có điểm"
 
 
+def test_timezone_shifts_daily_bucket(client, db):
+    """Sự kiện 23/11 20:00Z: UTC → bucket 23, UTC+7 → bucket 24."""
+    from gdmas.models.earthquake import EarthquakeEvent
+
+    db.add(
+        EarthquakeEvent(
+            source="USGS",
+            source_event_id="tz_1",
+            event_time=datetime(2026, 11, 23, 20, tzinfo=UTC),
+            latitude=10.0,
+            longitude=100.0,
+            depth_km=10.0,
+            magnitude=5.0,
+            magnitude_type="mb",
+            place="Test",
+            source_url="https://example.org/tz_1",
+        )
+    )
+    db.commit()
+
+    params = {
+        "interval": "day",
+        "start_time": "2026-11-23T00:00:00Z",
+        "end_time": "2026-11-25T00:00:00Z",
+    }
+    utc = client.get(API, params={**params, "timezone": "UTC"}).json()["data"]
+    local = client.get(API, params={**params, "timezone": "UTC+7"}).json()["data"]
+
+    assert [row["date"] for row in utc["line_chart"]] == ["2026-11-23"]
+    assert [row["date"] for row in local["line_chart"]] == ["2026-11-24"]
+    assert local["scatter_plot"][0]["timestamp"].endswith("Z"), (
+        "scatter vẫn giữ UTC ISO"
+    )
+
+
 def test_no_window_and_no_filter_keeps_snapshot_path(client, db):
     """Không có cửa sổ & không filter → vẫn đi đường snapshot cũ, không crash."""
     _seed(db)

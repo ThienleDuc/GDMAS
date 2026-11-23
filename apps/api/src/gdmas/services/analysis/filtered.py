@@ -18,6 +18,7 @@ from sqlalchemy.orm import Query, Session
 from gdmas.core.config import settings
 from gdmas.models.earthquake import EarthquakeEvent
 from gdmas.services.analysis.patterns import (
+    TZ_BY_MODE,
     compute_correlation,
     compute_seasonality,
     compute_temporal,
@@ -104,11 +105,16 @@ def compute_filtered_metrics(
     metric: str | None = None,
     start: datetime | None = None,
     end: datetime | None = None,
+    timezone: str | None = None,
 ) -> dict[str, Any]:
     """Trả metrics theo đúng shape mà `build()` của từng route analysis.py mong đợi."""
     df = load_filtered_events_df(db, country, region, as_of=as_of, start=start, end=end)
     if kind == "temporal":
-        return compute_temporal(df, interval or "day")
+        return compute_temporal(
+            df,
+            interval or "day",
+            tz=TZ_BY_MODE.get(timezone or "UTC", "UTC"),
+        )
     if kind == "trend":
         mapped = FREQ_TO_INTERVAL.get(interval or "M", "month")
         bundle = compute_trend_bundle(df, mapped, as_of=as_of)

@@ -54,6 +54,9 @@ _RESAMPLE_RULES: dict[str, dict[str, Any]] = {
 }
 _INTERVAL_TO_FREQ_CODE = {"day": "D", "week": "W", "month": "M"}
 
+# Chế độ header → IANA timezone; mặc định UTC để caller cũ không đổi (I2/I3).
+TZ_BY_MODE: dict[str, str] = {"UTC": "UTC", "UTC+7": "Asia/Ho_Chi_Minh"}
+
 _WEEKDAY_LABELS = ("Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật")
 # (interval, chu kỳ, số kỳ tối thiểu, nhãn chu kỳ, mô tả cho FE)
 _SEASONAL_CANDIDATES: tuple[tuple[str, int, int, str, str], ...] = (
@@ -211,7 +214,10 @@ def magnitude_histogram(df: pd.DataFrame) -> list[dict[str, Any]]:
 
 
 def compute_temporal(
-    df: pd.DataFrame, interval: str = "day", scatter_limit: int = SCATTER_LIMIT
+    df: pd.DataFrame,
+    interval: str = "day",
+    scatter_limit: int = SCATTER_LIMIT,
+    tz: str = "UTC",
 ) -> dict[str, Any]:
     if interval not in TEMPORAL_INTERVALS:
         raise ValueError(f"interval phải thuộc {TEMPORAL_INTERVALS}, nhận {interval!r}")
@@ -219,7 +225,9 @@ def compute_temporal(
     line_chart: list[dict[str, Any]] = []
     scatter_plot: list[dict[str, Any]] = []
     if not df.empty:
-        grouped = _resample(df, interval)["magnitude"].agg(["count", "max", "mean"])
+        local = df.copy()
+        local["event_time"] = local["event_time"].dt.tz_convert(tz)
+        grouped = _resample(local, interval)["magnitude"].agg(["count", "max", "mean"])
         line_chart = [
             {
                 "date": _period_label(ts, interval),

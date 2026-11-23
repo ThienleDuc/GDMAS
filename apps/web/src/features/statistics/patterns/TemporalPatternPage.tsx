@@ -5,7 +5,7 @@ import { useStatisticsData } from "../statistics-data.tsx";
 
 /** Layout 1 — 3 biểu đồ xếp dọc toàn chiều rộng, thanh chu kỳ ở đầu. */
 export const TemporalPatternPage: React.FC = () => {
-  const { interval, setInterval, temporal, temporalData, views } = useStatisticsData();
+  const { timezone, interval, setInterval, temporal, temporalData, views } = useStatisticsData();
 
   return (
     <PatternPanel
@@ -14,7 +14,7 @@ export const TemporalPatternPage: React.FC = () => {
       reason={panelReason(temporal.data?.message, "Chưa có dữ liệu phân tích thời gian.")}
     >
       <div className="stat-layout stat-layout--stack">
-        <TemporalPatternCharts data={temporalData} interval={interval} onIntervalChange={setInterval} />
+        <TemporalPatternCharts data={temporalData} interval={interval} onIntervalChange={setInterval} timezone={timezone} />
       </div>
     </PatternPanel>
   );

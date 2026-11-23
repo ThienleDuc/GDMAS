@@ -18,6 +18,8 @@ import {
   normalizeRiskLabel,
   type ObservedPoint,
 } from "../../lib/transforms/chart-data.ts";
+import type { TimezoneMode } from "../../lib/formatters.ts";
+import { formatStatDate } from "./statistics-view.ts";
 import { correlationVariableLabel, riskLevelLabel } from "./statistics-view.ts";
 
 /** Shape tối thiểu cần cho nhận xét — chịu cả 2 dạng payload (/predictions và /patterns). */
@@ -241,6 +243,7 @@ function correlationInsight(data: ExpertInput["correlation"]): ExpertInsight {
 function forecastInsight(
   data: ExpertInput["prediction"],
   observed: readonly ObservedPoint[],
+  mode: TimezoneMode = "UTC+7",
 ): ExpertInsight {
   if (!isFiniteNumber(data?.predicted_value)) {
     return {
@@ -269,7 +272,7 @@ function forecastInsight(
 
   const last = observed.length > 0 ? observed[observed.length - 1]?.value : null;
   const rising = isFiniteNumber(last) && (predicted ?? 0) > (last ?? 0);
-  const target = data.target_date?.trim() || "ngày kế tiếp";
+  const target = data.target_date?.trim() ? formatStatDate(data.target_date, mode) : "ngày kế tiếp";
   // Nêu rõ mức tin cậy và cơ sở (mô hình) thay vì chỉ ghi một đoạn số.
   const confidenceLabel = isFiniteNumber(data.confidence_level)
     ? `${Math.round((data.confidence_level as number) * 100)}%`
@@ -297,7 +300,10 @@ function forecastInsight(
 }
 
 /** Pattern 6 — nhóm rủi ro dự báo. */
-function classificationInsight(data: ExpertInput["classification"]): ExpertInsight {
+function classificationInsight(
+  data: ExpertInput["classification"],
+  mode: TimezoneMode = "UTC+7",
+): ExpertInsight {
   const level = normalizeRiskLabel(data?.predicted_label);
   if (!level) {
     return {
@@ -321,7 +327,7 @@ function classificationInsight(data: ExpertInput["classification"]): ExpertInsig
     }`,
     level: high ? "alert" : "info",
     evidence: [
-      `Ngày dự báo ${data?.target_date?.trim() || "ngày kế tiếp"}`,
+      `Ngày dự báo ${data?.target_date?.trim() ? formatStatDate(data.target_date, mode) : "ngày kế tiếp"}`,
       `Nhóm ${label}`,
       `Nhãn gốc ${data?.predicted_label ?? "—"}`,
     ],
@@ -329,14 +335,14 @@ function classificationInsight(data: ExpertInput["classification"]): ExpertInsig
 }
 
 /** Tổng hợp 6 nhận xét thành báo cáo đầy đủ 5 phần theo tài liệu cấu trúc. */
-export function buildExpertReport(input: ExpertInput): ExpertReport {
+export function buildExpertReport(input: ExpertInput, mode: TimezoneMode = "UTC+7"): ExpertReport {
   const insights = [
     temporalInsight(input.temporal),
     trendInsight(input.trend),
     seasonalityInsight(input.seasonality),
     correlationInsight(input.correlation),
-    forecastInsight(input.prediction, input.observed),
-    classificationInsight(input.classification),
+    forecastInsight(input.prediction, input.observed, mode),
+    classificationInsight(input.classification, mode),
   ];
 
   const hasAlert = insights.some((item) => item.level === "alert");
