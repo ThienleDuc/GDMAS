@@ -6,12 +6,10 @@ export type TimezoneMode = "UTC" | "UTC+7";
 
 const STORAGE_KEY = "gdmas_timezone_mode";
 
-/**
- * Lấy chế độ múi giờ đã lưu trong LocalStorage (mặc định là UTC+7)
- */
-export function getStoredTimezone(): TimezoneMode {
+/** Hàm thuần đọc mode từ storage — dễ test offline (I7). */
+export function timezoneFromStorage(read: (key: string) => string | null): TimezoneMode {
   try {
-    const val = localStorage.getItem(STORAGE_KEY);
+    const val = read(STORAGE_KEY);
     if (val === "UTC" || val === "UTC+7") return val;
   } catch {
     // fallback
@@ -19,15 +17,30 @@ export function getStoredTimezone(): TimezoneMode {
   return "UTC+7";
 }
 
+/** Hàm thuần ghi mode vào storage — dễ test offline (I7). */
+export function timezoneToStorage(
+  write: (key: string, value: string) => void,
+  mode: TimezoneMode,
+): void {
+  try {
+    write(STORAGE_KEY, mode);
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Lấy chế độ múi giờ đã lưu trong LocalStorage (mặc định là UTC+7)
+ */
+export function getStoredTimezone(): TimezoneMode {
+  return timezoneFromStorage((key) => localStorage.getItem(key));
+}
+
 /**
  * Lưu chế độ múi giờ vào LocalStorage
  */
 export function setStoredTimezone(mode: TimezoneMode): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, mode);
-  } catch {
-    // ignore
-  }
+  timezoneToStorage((key, value) => localStorage.setItem(key, value), mode);
 }
 
 /**
