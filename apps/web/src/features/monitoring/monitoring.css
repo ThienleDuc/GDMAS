@@ -2,6 +2,8 @@
   .gm-page {
     display: flex;
     min-width: 0;
+    height: 100%;
+    min-height: 0;
     flex-direction: column;
     gap: var(--space-5);
     background: var(--background);
@@ -33,6 +35,7 @@
   .gm-workspace {
     position: relative;
     display: flex;
+    flex: 1;
     align-items: stretch;
     gap: var(--space-4);
     min-height: 0;
@@ -41,10 +44,11 @@
   .gm-sidebar {
     display: flex;
     width: 360px;
+    height: 100%;
     flex: 0 0 360px;
     flex-direction: column;
     gap: var(--space-3);
-    max-height: min(72vh, 760px);
+    max-height: 100%;
     overflow-y: auto;
   }
 
@@ -57,19 +61,21 @@
     position: relative;
     flex: 1;
     min-width: 0;
-    height: min(72vh, 760px);
-    min-height: 520px;
+    /* Lấp đúng phần chiều cao còn lại sau header — không cần scroll trang. */
+    height: 100%;
+    min-height: 0;
     overflow: hidden;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    background: #0b1120;
+    /* Bản đồ nền sáng theo yêu cầu người dùng (tile OSM giữ màu gốc, dễ đọc). */
+    background: #f8fafc;
     box-shadow: var(--shadow-sm);
   }
 
   .gm-map__canvas {
     width: 100%;
     height: 100%;
-    background: #0b1120;
+    background: #f8fafc;
   }
 
   .gm-map__controls {
@@ -451,6 +457,119 @@
     font-size: var(--text-xs);
   }
 
+  /* Danh sách sự kiện kiểu USGS: độ lớn – địa điểm – độ sâu. */
+  .gm-event-panel {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--card);
+    color: var(--card-foreground);
+    box-shadow: var(--shadow-md);
+  }
+
+  .gm-event-panel__title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0;
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+  }
+
+  .gm-event-panel__count {
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--font-normal);
+  }
+
+  .gm-event-panel__list {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+
+  .gm-event-item {
+    display: flex;
+    width: 100%;
+    min-height: 58px;
+    align-items: center;
+    /* Khoảng cách cố định giữa 3 phần: độ lớn | địa điểm+thời gian | độ sâu. */
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--foreground);
+    font-size: var(--text-sm);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .gm-event-item:hover,
+  .gm-event-item.is-active {
+    border-color: var(--primary);
+  }
+
+  /* Phần 1 & 3 co theo nội dung; phần 2 (địa điểm + thời gian) lấy phần còn lại. */
+  .gm-event-item__magnitude {
+    flex: 0 0 auto;
+    padding: 2px var(--space-2);
+    border-left: 2px solid transparent;
+    border-radius: var(--radius-sm);
+    background: var(--background);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--font-bold);
+  }
+
+  .gm-event-item__main {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .gm-event-item__place,
+  .gm-event-item__time {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gm-event-item__time {
+    color: var(--muted-foreground);
+    font-size: var(--text-xs);
+  }
+
+  .gm-event-item__depth {
+    flex: 0 0 auto;
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-align: right;
+  }
+
+  .gm-event-panel__empty {
+    margin: 0;
+    color: var(--muted-foreground);
+    font-size: var(--text-xs);
+  }
+
   /* Ép mọi chữ dài về 1 hàng, quá dài thì cắt bằng "..." */
   .gm-page__title,
   .gm-page__subtitle,
@@ -478,7 +597,8 @@
 
   .gm-popup {
     min-width: 240px;
-    color: #e2e8f0;
+    /* Popup dùng nền trắng mặc định của Leaflet → chữ phải tối để đọc được. */
+    color: #0f172a;
     font-size: 12px;
   }
 
@@ -496,7 +616,7 @@
   }
 
   .gm-popup__grid dt {
-    color: #94a3b8;
+    color: #475569;
   }
 
   .gm-popup__grid dd {
@@ -505,7 +625,7 @@
   }
 
   .gm-popup__grid a {
-    color: #22d3ee;
+    color: #0e7490;
   }
 }
 
@@ -574,6 +694,6 @@
   }
 
   .gm-map {
-    height: min(70vh, 680px);
+    height: 100%;
   }
 }

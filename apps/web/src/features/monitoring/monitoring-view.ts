@@ -5,6 +5,8 @@
  */
 
 import type { EarthquakeItem, QueryEarthquakeParams } from "../../contracts/earthquake.ts";
+import { ALL_COUNTRIES } from "../earthquakes/country-filter.ts";
+import { ALL_REGIONS } from "../earthquakes/region-filter.ts";
 import type { SSEEventPayload } from "../../contracts/sse.ts";
 import { formatEventTime, toUtcIso, type TimezoneMode } from "../../lib/formatters.ts";
 import {
@@ -26,6 +28,24 @@ export type MapViewPhase = "loading" | "error" | "empty" | "ready";
 /** Giới hạn số sự kiện nạp một lần — BE `limit: le=100` (earthquakes.py:58). */
 export const MAP_PAGE_SIZE = 100;
 
+/** Ngưỡng mặc định khi không có cấu hình (khớp BACKFILL_MIN_MAGNITUDE trong config.py). */
+export const DEFAULT_MIN_MAGNITUDE = 2.5;
+
+interface MinMagnitudeEnv {
+  VITE_MAP_MIN_MAGNITUDE?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Đọc ngưỡng độ lớn từ env (docker-compose map từ BACKFILL_MIN_MAGNITUDE).
+ * Giá trị hỏng/ngoài [0,10] → mặc định 2.5 — không bịa số, không filter UI.
+ */
+export function resolveMapMinMagnitude(env: MinMagnitudeEnv = {}): number {
+  const raw = env.VITE_MAP_MIN_MAGNITUDE;
+  const value = typeof raw === "string" && raw.trim() ? Number(raw) : Number.NaN;
+  return Number.isFinite(value) && value >= 0 && value <= 10 ? value : DEFAULT_MIN_MAGNITUDE;
+}
+
 export interface ViewInput {
   loading: boolean;
   error: unknown;
@@ -42,26 +62,44 @@ export function deriveMapState(input: ViewInput): MapViewPhase {
 
 /**
  * Ánh xạ filter UI + bbox khung nhìn → `QueryEarthquakeParams` chuẩn API.md §3.2.
- * `start_time`/`end_time` luôn được chuẩn hoá UTC `Z`; bbox đã kẹp WGS84.
+ * - `country`/`region` được đẩy xuống BE (endpoint đã hỗ trợ) để lọc đúng toàn bộ dữ liệu,
+ *   không chỉ 100 sự kiện đầu trang — đây là nguyên nhân lọc FE trước đây "không chạy".
+ * - `realtime: true`: bản đồ giám sát không gửi `start_time`/`end_time` (luôn lấy feed mới nhất).
+ * - Giữ hành vi cũ khi không truyền option (I2 — các caller/test cũ không vỡ).
  */
 export function buildEarthquakeQuery(
   filters: MapFilters,
   bbox: MapBoundingBox | null,
-  options: { now?: Date; limit?: number } = {},
+  options: {
+    now?: Date;
+    limit?: number;
+    country?: string | null;
+    region?: string | null;
+    realtime?: boolean;
+  } = {},
 ): QueryEarthquakeParams {
-  const range = timeRangeBounds(filters.timeRange, options.now ?? new Date());
   const params: QueryEarthquakeParams = {
     page: 1,
     limit: options.limit ?? MAP_PAGE_SIZE,
     min_magnitude: filters.minMagnitude,
-    sort_by: "magnitude",
+    ...(filters.maxMagnitude !== undefined ? { max_magnitude: filters.maxMagnitude } : {}),
+    // Bản đồ realtime: danh sách theo thời gian mới nhất (BE hỗ trợ event_time).
+    sort_by: "event_time",
     order: "desc",
   };
 
-  const start = filters.startTime ?? range.start;
-  const end = filters.endTime ?? range.end;
-  if (start) params.start_time = toUtcIso(start);
-  if (end) params.end_time = toUtcIso(end);
+  if (options.country && options.country !== ALL_COUNTRIES) params.country = options.country;
+  if (options.region && options.region !== ALL_REGIONS && params.country) {
+    params.region = options.region;
+  }
+
+  if (!options.realtime) {
+    const range = timeRangeBounds(filters.timeRange, options.now ?? new Date());
+    const start = filters.startTime ?? range.start;
+    const end = filters.endTime ?? range.end;
+    if (start) params.start_time = toUtcIso(start);
+    if (end) params.end_time = toUtcIso(end);
+  }
 
   if (bbox) {
     params.min_lat = bbox.minLat;
@@ -138,6 +176,18 @@ export function applySseEvent(
   if (index >= 0) next[index] = incoming;
   else next.push(incoming);
   return next;
+}
+
+/**
+ * Sắp xếp sự kiện theo thời gian mới nhất trước (UTC ISO 8601 `Z`).
+ * Timestamp hỏng → cuối danh sách; thứ tự bằng nhau giữ nguyên (stable sort).
+ */
+export function sortEventsByTimeDesc(events: readonly MapEarthquake[]): MapEarthquake[] {
+  const timeOf = (value: string): number => {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? Number.NEGATIVE_INFINITY : parsed;
+  };
+  return [...events].sort((left, right) => timeOf(right.eventTime) - timeOf(left.eventTime));
 }
 
 export interface PopupFields {

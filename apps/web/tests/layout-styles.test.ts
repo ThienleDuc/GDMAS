@@ -84,7 +84,10 @@ test("TC-06: breadcrumb dùng nhãn tiếng Việt, không để lộ slug route
 
 test("TC-07: aside rail cố định — không toggle, không tự thu", () => {
   const layout = readLayout(layoutFile);
-  assert.doesNotMatch(layout, /sidebarOpen|setSidebarOpen|APP_ROUTES|<Menu|<X\b/u);
+  // APP_ROUTES giờ chỉ dùng để thêm class `layout__content--map` (fit chiều cao),
+  // không còn dùng để tự thu aside — giữ nguyên ý nghĩa TC-07.
+  assert.doesNotMatch(layout, /sidebarOpen|setSidebarOpen|<Menu|<X\b/u);
+  assert.match(layout, /APP_ROUTES\.MONITORING \? "layout__content--map"/u);
   assert.match(layout, /<aside className="layout__sidebar app-sidebar">/u);
   assert.match(layout, /aria-label=\{item\.label\}/u);
 

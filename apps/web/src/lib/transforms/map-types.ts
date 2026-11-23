@@ -15,6 +15,9 @@ export interface MapEarthquake {
   magnitude: number;
   magnitudeType?: string;
   sourceUrl?: string;
+  /** Quốc gia/khu vực do BE suy từ `place` USGS (optional để tương thích payload cũ — I2). */
+  country?: string | null;
+  region?: string | null;
 }
 
 /** Cụm DBSCAN đã chuẩn hoá về trường canonical của `contracts/schemas/clusters.json`. */
@@ -34,6 +37,8 @@ export type TimeRangePreset = "24h" | "7d" | "30d" | "all";
 
 export interface MapFilters {
   minMagnitude: number;
+  /** Giới hạn trên của khoảng độ lớn (optional để tương thích caller cũ — I2). */
+  maxMagnitude?: number;
   timeRange: TimeRangePreset;
   showClusters: boolean;
   /** Tuỳ chọn — chỉ dùng khi `timeRange = "all"` mà vẫn muốn giới hạn. */
@@ -73,6 +78,7 @@ export interface MarkerStyle {
 
 export const DEFAULT_MAP_FILTERS: MapFilters = {
   minMagnitude: 2.5,
+  maxMagnitude: 10,
   timeRange: "7d",
   showClusters: true,
 };

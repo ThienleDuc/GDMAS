@@ -6,6 +6,7 @@ import { SseMarkersProvider } from "../features/monitoring/sse-context.ts";
 import { NAV_META, routeLabel, type NavMeta } from "./navigation.ts";
 import { HeaderActions } from "./header/HeaderActions.tsx";
 import { dataRefreshKey } from "./header/header-data.ts";
+import { APP_ROUTES } from "../app/routes.tsx";
 
 interface NavItem extends NavMeta {
   icon: React.ComponentType<{ className?: string }>;
@@ -91,7 +92,11 @@ export const DashboardLayout: React.FC = () => {
           <HeaderActions onRefresh={sse.reconnect} dataRefreshKey={sseRefreshKey} />
         </header>
 
-        <main className="layout__content app-content">
+        <main
+          className={`layout__content app-content ${
+            location.pathname === APP_ROUTES.MONITORING ? "layout__content--map" : ""
+          }`}
+        >
           <SseMarkersProvider value={sse}>
             <Outlet />
           </SseMarkersProvider>

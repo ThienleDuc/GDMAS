@@ -51,6 +51,8 @@ export function toMapEarthquake(item: EarthquakeItem): MapEarthquake {
     magnitude: item.magnitude,
     magnitudeType: item.magnitude_type,
     sourceUrl: item.source_url,
+    country: item.country,
+    region: item.region,
   };
 }
 
@@ -239,13 +241,14 @@ export function timeRangeBounds(
   }
 }
 
-/** Marker có thoả bộ lọc magnitude + khoảng thời gian? */
+/** Marker có thoả khoảng độ lớn + khoảng thời gian? */
 export function shouldShowMarker(
   event: Pick<MapEarthquake, "magnitude" | "eventTime">,
-  filters: Pick<MapFilters, "minMagnitude" | "startTime" | "endTime">,
+  filters: Pick<MapFilters, "minMagnitude" | "maxMagnitude" | "startTime" | "endTime">,
 ): boolean {
   if (!Number.isFinite(event.magnitude)) return false;
   if (event.magnitude < filters.minMagnitude) return false;
+  if (filters.maxMagnitude !== undefined && event.magnitude > filters.maxMagnitude) return false;
 
   const eventMs = Date.parse(event.eventTime);
   if (Number.isNaN(eventMs)) return false;
@@ -264,7 +267,7 @@ export function shouldShowMarker(
 /** Lọc danh sách sự kiện theo bộ lọc hiện tại (giữ nguyên thứ tự đầu vào). */
 export function filterEarthquakes(
   events: MapEarthquake[],
-  filters: Pick<MapFilters, "minMagnitude" | "startTime" | "endTime">,
+  filters: Pick<MapFilters, "minMagnitude" | "maxMagnitude" | "startTime" | "endTime">,
 ): MapEarthquake[] {
   return events.filter((event) => shouldShowMarker(event, filters));
 }

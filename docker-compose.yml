@@ -74,6 +74,8 @@ services:
       # Tránh CORS/Status null khi trình duyệt không tới trực tiếp localhost:8000.
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/}
       VITE_API_PROXY_TARGET: ${VITE_API_PROXY_TARGET:-http://api:8000}
+      # Bản đồ realtime lọc theo cùng ngưỡng backfill của Backend (nguồn: .env).
+      VITE_MAP_MIN_MAGNITUDE: ${BACKFILL_MIN_MAGNITUDE:-2.5}
       CHOKIDAR_USEPOLLING: "true"
     ports:
       - "3000:3000"
