@@ -48,7 +48,7 @@ test("TC-10: App dùng OverviewPage, đủ 4 chart + bảng xếp hạng + live 
   // MỌI label card dùng một kiểu duy nhất: ov-card__label.
   for (const label of [
     '<h2 className="ov-card__label">Động đất tập trung ở đâu?</h2>',
-    '<p className="ov-card__label">Chu kỳ hoạt động · 7 ngày / 12 tháng</p>',
+    '<h2 className="ov-card__label">Chu kỳ hoạt động · 7 ngày</h2>',
     '<h2 className="ov-card__label">Danh mục động đất gần đây</h2>',
     '<h2 className="ov-card__label">Dự báo ngày tiếp theo</h2>',
   ]) {

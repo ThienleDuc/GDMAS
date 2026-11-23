@@ -38,10 +38,10 @@ class Settings(BaseSettings):
     CLUSTERING_INTERVAL_SECONDS: int = 86400
 
     # --- Cấu hình dữ liệu & mô hình (docs/yeucaubatbuoc.md §6.4) — đưa vào .env để dễ chỉnh ---
-    # Cửa sổ lịch sử cho backfill/phân tích/cụm (ngày) — 365 = 1 năm.
-    DATA_WINDOW_DAYS: int = 365
-    ANALYSIS_WINDOW_DAYS: int = 365
-    CLUSTERING_WINDOW_DAYS: int = 365
+    # Cửa sổ lịch sử cho backfill/phân tích/cụm (ngày) — 30 = 1 tháng.
+    DATA_WINDOW_DAYS: int = 30
+    ANALYSIS_WINDOW_DAYS: int = 30
+    CLUSTERING_WINDOW_DAYS: int = 30
     CLUSTERING_EPS_KM: float = 150.0
     CLUSTERING_MIN_SAMPLES: int = 5
     # Ngưỡng tối thiểu khi backfill 1 năm qua FDSN (giới hạn 20000 kết quả/query).

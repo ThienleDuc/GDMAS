@@ -262,7 +262,7 @@ export async function getTrendAnalysis(
 
 /**
  * Pattern 3 — `GET /api/v1/analysis/seasonality`.
- * API.md §3.3: BE không nhận query param nào; giữ params cũ để tương thích (RULE-03).
+ * API.md §3.3: BE nhận cửa sổ start_time/end_time cho đường có filter (2026-11-24).
  */
 export async function getSeasonalityAnalysis(
   params: {
@@ -279,7 +279,12 @@ export async function getSeasonalityAnalysis(
   } = {},
   signal?: AbortSignal,
 ): Promise<SeasonalityResponse> {
-  const qs = buildQuery({ ...geoQuery(params), interval: params.interval });
+  const qs = buildQuery({
+    ...geoQuery(params),
+    start_time: params.start_time,
+    end_time: params.end_time,
+    interval: params.interval,
+  });
   return fetchApi<SeasonalityResponse>(`/api/v1/analysis/seasonality${qs}`, { signal });
 }
 

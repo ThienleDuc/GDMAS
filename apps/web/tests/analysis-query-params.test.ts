@@ -73,14 +73,16 @@ test("TC-02 — trend forward cửa sổ thời gian khi được truyền", asy
   }
 });
 
-test("TC-03 — seasonality không tạo query string", async () => {
+test("TC-03 — seasonality truyền cửa sổ start_time (2026-11-24)", async () => {
   const { urls, restore } = captureUrls();
   try {
     await getSeasonalityAnalysis({
-      resample_freq: "D",
       start_time: "2026-11-08T12:00:00.000Z",
+      end_time: "2026-11-22T12:00:00.000Z",
     });
-    assert.equal(new URL(urls[0]).search, "");
+    const url = new URL(urls[0]);
+    assert.equal(url.searchParams.get("start_time"), "2026-11-08T12:00:00.000Z");
+    assert.equal(url.searchParams.get("end_time"), "2026-11-22T12:00:00.000Z");
   } finally {
     restore();
   }
@@ -107,5 +109,6 @@ test("TC-05 — Overview không còn cửa sổ 14 ngày giả", () => {
   assert.match(source, /getTrendAnalysis\(/u);
   assert.match(source, /resample_freq: "D"/u);
   assert.match(source, /\.\.\.window/u);
-  assert.match(source, /getSeasonalityAnalysis\(geoQuery\(filter\)/u);
+  assert.match(source, /getSeasonalityAnalysis\(\{ \.\.\.geoQuery\(filter\), \.\.\.window \}/u);
+  assert.doesNotMatch(source, /getMonthlyPeaks/u);
 });

@@ -66,27 +66,24 @@ test("TC-05: KPI cụm lọc theo quốc gia", async () => {
   assert.equal(url.searchParams.get("region"), "Honshu");
 });
 
-test("TC-04: Hotspots trải ngang, không để trống 6 cột", () => {
+test("TC-04: Hotspots xếp 2 hàng dọc trong cột span 6", () => {
   const page = read("features/overview/OverviewPage.tsx");
-  assert.match(page, /ov-card ov-card--wide/u);
+  assert.match(page, /ov-card ov-card--6/u);
+  assert.doesNotMatch(page, /ov-card--wide/u);
   const css = read("features/overview/OverviewPage.css");
-  assert.match(css, /\.ov-card--cycles,\s*\.ov-card--wide\s*\{\s*grid-column:\s*1 \/ -1/u);
-  assert.match(css, /\.ov-card--wide \.ov-chart/u);
+  assert.match(css, /\.ov-chart-row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/su);
+  assert.match(css, /\.ov-chart-row \.ov-chart\s*\{[^}]*min-height:/su);
+  assert.match(css, /\.ov-chart-row \.ov-chart \.recharts-responsive-container\s*\{[^}]*flex:/su);
   const chart = read("components/charts/OverviewHotspotsChart.tsx");
   assert.match(chart, /<div className="ov-chart-row">/u);
-  assert.match(css, /\.ov-chart-row\s*\{[^}]*grid-template-columns:\s*minmax\(0, 7fr\) minmax\(0, 5fr\)/su);
-  // Chart cao bằng bảng: flex fill + ResponsiveContainer height 100%.
-  assert.match(css, /\.ov-card--wide \.ov-chart \.recharts-responsive-container\s*\{[^}]*flex:/su);
-  assert.match(chart, /height="100%"/u);
 });
 
-test("TC-03: 2 biểu đồ chu kỳ giữ nguyên, nằm chung 1 card", () => {
+test("TC-03: 1 biểu đồ chu kỳ tuần, đổi range thì refetch", () => {
   const page = read("features/overview/OverviewPage.tsx");
-  assert.match(page, /ov-card--cycles/u);
-  assert.match(page, /Cao điểm theo ngày trong tuần/u);
-  assert.match(page, /Cao điểm theo tháng/u);
-  // Không truyền window cho seasonality/monthly-peaks — chu kỳ không đổi theo cửa sổ.
-  assert.doesNotMatch(page, /getSeasonalityAnalysis\([^)]*window/u);
+  assert.equal((page.match(/<OverviewSeasonalityChart/gu) ?? []).length, 1);
+  assert.match(page, /Chu kỳ hoạt động · 7 ngày/u);
+  assert.doesNotMatch(page, /Cao điểm theo tháng/u);
   const hook = read("features/overview/useOverviewData.ts");
-  assert.doesNotMatch(hook, /getMonthlyPeaks\([^)]*window/u);
+  assert.match(hook, /getSeasonalityAnalysis\(\{ \.\.\.geoQuery\(filter\), \.\.\.window \}/u);
+  assert.doesNotMatch(hook, /getMonthlyPeaks/u);
 });

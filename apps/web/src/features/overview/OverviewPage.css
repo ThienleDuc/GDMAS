@@ -281,7 +281,9 @@
 }
 
 .ov-card--4 { grid-column: span 4; }
+.ov-card--5 { grid-column: span 5; }
 .ov-card--6 { grid-column: span 6; }
+.ov-card--7 { grid-column: span 7; }
 .ov-card--8 { grid-column: span 8; }
 
 .ov-chart {
@@ -473,12 +475,27 @@
   white-space: nowrap;
 }
 
+.ov-page .ds-table {
+  table-layout: fixed;
+}
+
 .ov-page .ds-table td {
   height: var(--table-row-height);
   padding: 0 var(--space-4);
   border-bottom: 1px solid var(--border);
   color: var(--card-foreground);
   font-size: var(--text-sm);
+}
+
+/* Ép mọi nội dung ô về 1 hàng, cắt bằng "..." — có title trên span/button để hover xem đủ. */
+.ov-page .ds-table td > span,
+.ov-page .ds-table td > strong,
+.ov-page .ds-table td > button {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ov-page .ds-table tbody tr:last-child td {
@@ -553,23 +570,23 @@
   grid-column: 1 / -1;
 }
 
-/* Xếp hạng: biểu đồ và bảng trên CÙNG một hàng trong card trải ngang. */
+/* Xếp hạng: biểu đồ và bảng thành 2 HÀNG dọc trong cùng 1 cột. */
 .ov-chart-row {
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
   gap: var(--space-4);
 }
 
-/* Chart xếp hạng trải ngang toàn bộ chiều rộng card, không để khoảng trống 6 cột. */
-.ov-card--wide .ov-chart {
+/* Chart xếp hạng chiếm trọn chiều rộng cột, có chiều cao tối thiểu để không bị collapse. */
+.ov-chart-row .ov-chart {
   display: flex;
   flex-direction: column;
   width: 100%;
   min-height: 240px;
 }
 
-.ov-card--wide .ov-chart .recharts-responsive-container {
+.ov-chart-row .ov-chart .recharts-responsive-container {
   width: 100%;
   flex: 1 1 auto;
 }
@@ -577,14 +594,14 @@
 @media (max-width: 1023px) {
   .ov-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .ov-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ov-card--4, .ov-card--6, .ov-card--8 { grid-column: span 6; }
+  .ov-card--4, .ov-card--5, .ov-card--6, .ov-card--7, .ov-card--8 { grid-column: span 6; }
 }
 
 @media (max-width: 767px) {
   .ov-grid { grid-template-columns: minmax(0, 1fr); }
   .ov-kpis { grid-template-columns: minmax(0, 1fr); }
   .ov-skeleton { grid-template-columns: minmax(0, 1fr); }
-  .ov-card--4, .ov-card--6, .ov-card--8 { grid-column: span 1; }
+  .ov-card--4, .ov-card--5, .ov-card--6, .ov-card--7, .ov-card--8 { grid-column: span 1; }
   .ov-hero { align-items: flex-start; }
   .ov-cycles,
   .ov-chart-row { grid-template-columns: minmax(0, 1fr); }

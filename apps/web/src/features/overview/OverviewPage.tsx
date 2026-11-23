@@ -23,10 +23,8 @@ import {
   applySseLatestEvent,
   buildKpis,
   buildLatestEvents,
-  buildMonthlyBars,
   buildSeasonalityBars,
   buildSeverityMix,
-  applyMonthWindow,
   applyWeekdayWindow,
   buildTrendComparison,
   depthLabel,
@@ -70,12 +68,6 @@ export const OverviewPage: React.FC = () => {
   const seasonality = useMemo(
     () => applyWeekdayWindow(padWeekdaysTo7(buildSeasonalityBars(data.seasonality)), range),
     [data.seasonality, range],
-  );
-  // Ưu tiên đếm sự kiện/tháng (có số ngay); fallback phân rã mùa vụ khi đủ ≥24 tháng.
-  // 12 cột từ BE monthly-peaks; tháng thiếu số liệu đã được buildMonthlyBars hạ về 0.
-  const monthlyBars = useMemo(
-    () => applyMonthWindow(buildMonthlyBars(data.monthlyPeaks)),
-    [data.monthlyPeaks],
   );
   // Ưu tiên danh mục sự kiện thật (có count); fallback cụm cũ khi catalog rỗng (I2/I5).
   const ranking = useMemo(() => {
@@ -212,94 +204,21 @@ export const OverviewPage: React.FC = () => {
             </p>
           )}
 
-          <article className="ov-card ov-card--8">
+          <article className="ov-card ov-card--6">
             <OverviewTrendChart data={trend} />
           </article>
-
-          <article className="ov-card ov-card--4">
-            <OverviewSeverityChart data={severity} />
-          </article>
-
-          <article className="ov-card ov-card--wide">
-            <h2 className="ov-card__label">Động đất tập trung ở đâu?</h2>
-            {data.secondaryLoading ? (
-              <p className="ov-chart-empty">Đang tải dữ liệu xếp hạng…</p>
-            ) : (
-              <OverviewHotspotsChart
-                rows={ranking}
-                mode={isCountryMode ? "country" : "region"}
-                note={rankingNote}
-                onSelect={handleRankSelect}
-              />
-            )}
-          </article>
-
-          <article className="ov-card ov-card--cycles">
-            <p className="ov-card__label">Chu kỳ hoạt động · 7 ngày / 12 tháng</p>
+          <article className="ov-card ov-card--6">
+            <h2 className="ov-card__label">Chu kỳ hoạt động · 7 ngày</h2>
             {data.secondaryLoading ? (
               <p className="ov-chart-empty">Đang tải dữ liệu chu kỳ…</p>
             ) : (
-              <div className="ov-cycles">
-                <div className="ov-cycles__item">
-                  <p className="ov-cycle__label">Cao điểm theo ngày trong tuần</p>
-                  <OverviewSeasonalityChart data={seasonality} />
-                </div>
-                <div className="ov-cycles__item">
-                  <p className="ov-cycle__label">Cao điểm theo tháng</p>
-                  <OverviewSeasonalityChart data={monthlyBars} />
-                </div>
-              </div>
+              <OverviewSeasonalityChart data={seasonality} />
             )}
           </article>
-
-          <article className="ov-card ov-card--8">
-            <h2 className="ov-card__label">Danh mục động đất gần đây</h2>
-            {latest.length === 0 ? (
-              <p className="ov-chart-empty">Chưa có sự kiện nào trong dữ liệu.</p>
-            ) : (
-              <div className="ds-table-wrapper">
-                <table className="ds-table">
-                  <thead>
-                    <tr>
-                      <th>Thời gian ({timezone})</th>
-                      <th>Địa điểm</th>
-                      <th className="numeric">Độ lớn</th>
-                      <th>Mức độ</th>
-                      <th>Độ sâu</th>
-                      <th>Tọa độ WGS84</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {latest.map((event) => (
-                      <tr key={event.id}>
-                        <td><span className="ov-cell-time">{formatEventTime(event.time, timezone)}</span></td>
-                        <td><span className="ov-cell-place">{event.place}</span></td>
-                        <td className="numeric"><span className="ov-cell-mag">{formatDecimal3(event.magnitude)}</span></td>
-                        <td>
-                          {(() => {
-                            const severity = severityLabel(event.magnitude);
-                            return (
-                              <span className={`ds-badge ${severity.badgeClass}`}>
-                                {severity.label}
-                              </span>
-                            );
-                          })()}
-                        </td>
-                        <td><span className={`ds-badge ${depthLabel(event.depth_km).badgeClass}`}>{depthLabel(event.depth_km).label}</span></td>
-                        <td><span className="ov-cell-coord">{formatWgs84Point(event.latitude, event.longitude)}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            <p className="ov-severity-footnote">{SEVERITY_FOOTNOTE}</p>
-            <Link className="ov-inline-link" to={withSelection(APP_ROUTES.EARTHQUAKES)}>
-              Xem toàn bộ danh mục <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
+          <article className="ov-card ov-card--6">
+            <OverviewSeverityChart data={severity} />
           </article>
-
-          <article className="ov-card ov-card--4">
+          <article className="ov-card ov-card--6">
             <h2 className="ov-card__label">Dự báo ngày tiếp theo</h2>
             {data.secondaryLoading ? (
               <p className="ov-chart-empty">Đang tải dự báo…</p>
@@ -342,6 +261,65 @@ export const OverviewPage: React.FC = () => {
               </p>
             </div>
             )}
+          </article>
+          <article className="ov-card ov-card--5">
+            <h2 className="ov-card__label">Động đất tập trung ở đâu?</h2>
+            {data.secondaryLoading ? (
+              <p className="ov-chart-empty">Đang tải dữ liệu xếp hạng…</p>
+            ) : (
+              <OverviewHotspotsChart
+                rows={ranking}
+                mode={isCountryMode ? "country" : "region"}
+                note={rankingNote}
+                onSelect={handleRankSelect}
+              />
+            )}
+          </article>
+          <article className="ov-card ov-card--7">
+            <h2 className="ov-card__label">Danh mục động đất gần đây</h2>
+            {latest.length === 0 ? (
+              <p className="ov-chart-empty">Chưa có sự kiện nào trong dữ liệu.</p>
+            ) : (
+              <div className="ds-table-wrapper">
+                <table className="ds-table">
+                  <thead>
+                    <tr>
+                      <th>Thời gian ({timezone})</th>
+                      <th>Địa điểm</th>
+                      <th className="numeric">Độ lớn</th>
+                      <th>Mức độ</th>
+                      <th>Độ sâu</th>
+                      <th>Tọa độ WGS84</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {latest.map((event) => (
+                      <tr key={event.id}>
+                        <td><span className="ov-cell-time" title={formatEventTime(event.time, timezone)}>{formatEventTime(event.time, timezone)}</span></td>
+                        <td><span className="ov-cell-place" title={event.place}>{event.place}</span></td>
+                        <td className="numeric"><span className="ov-cell-mag" title={formatDecimal3(event.magnitude)}>{formatDecimal3(event.magnitude)}</span></td>
+                        <td>
+                          {(() => {
+                            const severity = severityLabel(event.magnitude);
+                            return (
+                              <span className={`ds-badge ${severity.badgeClass}`} title={severity.label}>
+                                {severity.label}
+                              </span>
+                            );
+                          })()}
+                        </td>
+                        <td><span className={`ds-badge ${depthLabel(event.depth_km).badgeClass}`} title={depthLabel(event.depth_km).label}>{depthLabel(event.depth_km).label}</span></td>
+                        <td><span className="ov-cell-coord" title={formatWgs84Point(event.latitude, event.longitude)}>{formatWgs84Point(event.latitude, event.longitude)}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className="ov-severity-footnote">{SEVERITY_FOOTNOTE}</p>
+            <Link className="ov-inline-link" to={withSelection(APP_ROUTES.EARTHQUAKES)}>
+              Xem toàn bộ danh mục <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
           </article>
         </div>
       )}

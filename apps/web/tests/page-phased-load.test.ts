@@ -17,11 +17,11 @@ test("TC-01: useEarthquakeInsights có flag optional, default true", () => {
   assert.match(code, /includeTemporal[\s\S]*Promise\.resolve\(null\)/u);
 });
 
-test("TC-02: phase 1 Overview = trend + 5 sự kiện", () => {
+test("TC-02: phase 1 Overview = trend + 8 sự kiện", () => {
   const code = read("features/overview/useOverviewData.ts");
   assert.equal((code.match(/Promise\.allSettled\(\[/gu) ?? []).length, 2);
   assert.match(code, /getTrendAnalysis\(/u);
-  assert.match(code, /limit: 5,/u);
+  assert.match(code, /limit: 8,/u);
   assert.match(code, /includeTemporal: false/u);
 });
 
@@ -30,7 +30,7 @@ test("TC-03: bỏ request seasonality month vô dụng, giữ field tương thí
   assert.doesNotMatch(code, /interval: "month"/u);
   assert.match(code, /seasonalityMonthly: SeasonalityResponse \| null/u);
   assert.match(code, /seasonalityMonthly: null/u);
-  assert.match(code, /getSeasonalityAnalysis\(geoQuery\(filter\), controller\.signal\)/u);
+  assert.match(code, /getSeasonalityAnalysis\(\{ \.\.\.geoQuery\(filter\), \.\.\.window \}, controller\.signal\)/u);
 });
 
 test("TC-04: phase 2 defer + phân biệt Loading/Empty", () => {

@@ -1282,6 +1282,42 @@
                 "title": "Interval"
               },
               "description": "Ép chu kỳ tuần (7 ngày) hoặc tháng (12 tháng)"
+            },
+            {
+              "name": "start_time",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Từ thời điểm ISO 8601 UTC",
+                "title": "Start Time"
+              },
+              "description": "Từ thời điểm ISO 8601 UTC"
+            },
+            {
+              "name": "end_time",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Đến thời điểm ISO 8601 UTC",
+                "title": "End Time"
+              },
+              "description": "Đến thời điểm ISO 8601 UTC"
             }
           ],
           "responses": {
@@ -2815,6 +2851,6 @@
       "StatisticsResponse"
     ]
   },
-  "config_defaults_sha256": "68200fe56c8b5bb0315527679145f69f905031d141bdb785f65960782ee29082",
+  "config_defaults_sha256": "2abf0e9c89e7b11e0928e9d529467c6ee36240c9021af9969f90de80b7d1aed1",
   "migration_sha256": "0be5da1e803e1ce26fb919f1d88932c5143ab79af03fc9949896c6bf0e1e973d"
 }
