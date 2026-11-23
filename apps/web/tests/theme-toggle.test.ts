@@ -61,11 +61,13 @@ test("TC-04: toggle dùng useTheme, icon SVG và a11y", () => {
   assert.match(toggle, /<button/u);
 });
 
-test("TC-05: toggle nằm sau RealtimeClock trong HeaderActions", () => {
-  const clockIndex = actions.indexOf("<RealtimeClock");
-  const toggleIndex = actions.indexOf("<ThemeToggle");
-  assert.ok(clockIndex >= 0, "thiếu RealtimeClock");
-  assert.ok(toggleIndex > clockIndex, "ThemeToggle phải đứng sau RealtimeClock");
+test("TC-05: toggle đã dời từ HeaderActions sang footer aside", () => {
+  const layout = readFileSync(resolve(root, "layouts/DashboardLayout.tsx"), "utf8");
+  assert.doesNotMatch(actions, /<ThemeToggle/u, "HeaderActions không còn render ThemeToggle");
+  const countdownIndex = layout.indexOf("<CompactRefreshCountdown");
+  const toggleIndex = layout.indexOf("<ThemeToggle");
+  assert.ok(countdownIndex >= 0, "thiếu CompactRefreshCountdown");
+  assert.ok(toggleIndex > countdownIndex, "ThemeToggle phải đứng dưới countdown ở aside");
 });
 
 test("TC-06: CSS toggle dùng design token và reduced-motion", () => {

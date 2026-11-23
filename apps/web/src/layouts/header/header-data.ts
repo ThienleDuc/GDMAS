@@ -5,6 +5,7 @@
 
 import type { ClustersResponse } from "../../contracts/clusters.ts";
 import type { SSEEventPayload } from "../../contracts/sse.ts";
+import type { RegionCatalogResponse } from "../../contracts/geo-catalog.ts";
 import type {
   ServiceHealth,
   ServiceKey,
@@ -24,6 +25,28 @@ export interface CountryOption {
   country: string;
   eventCount: number;
   clusterIds: number[];
+}
+
+export interface RegionOption {
+  region: string;
+  count: number;
+}
+
+/** Danh mục khu vực từ GET /api/v1/earthquakes/regions — payload lạ/rỗng → [] (I3/I5). */
+export function regionOptionsFromCatalog(
+  payload: RegionCatalogResponse | null | undefined,
+): RegionOption[] {
+  const regions = payload?.data;
+  if (!Array.isArray(regions)) return [];
+  const unique = new Map<string, number>();
+  for (const item of regions) {
+    if (!item || typeof item.region !== "string" || !item.region.trim()) continue;
+    const region = item.region.trim();
+    if (!unique.has(region)) unique.set(region, item.count);
+  }
+  return [...unique.entries()]
+    .map(([region, count]) => ({ region, count }))
+    .sort((left, right) => left.region.localeCompare(right.region));
 }
 
 /**
@@ -78,6 +101,11 @@ export function countdownLabel(remainingSeconds: number): string {
   const minutes = Math.floor(total / 60);
   const seconds = total % 60;
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+/** Dạng rút gọn cho aside: bỏ số 0 đầu phút (`05:00` → `5:00`). Giữ hàm cũ cho caller khác (I2). */
+export function compactCountdownLabel(remainingSeconds: number): string {
+  return countdownLabel(remainingSeconds).replace(/^0/u, "");
 }
 
 /** Một dòng trong panel trạng thái 7 Terminals (RD-16). */

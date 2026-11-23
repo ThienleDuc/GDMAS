@@ -1,58 +1,43 @@
 import React from "react";
 import type { EarthquakeItem } from "../../../contracts/earthquake.ts";
+import { ALL_COUNTRIES } from "../country-filter.ts";
+import { ALL_REGIONS } from "../region-filter.ts";
 import { buildMagnitudeHistogram } from "../magnitude-histogram.ts";
 
 interface MagnitudeHistogramChartProps {
   items: EarthquakeItem[];
-  countries: string[];
+  countries?: string[];
   selectedCountry: string;
-  onCountryChange: (country: string) => void;
-  /** Optional — giữ tương thích caller cũ (I2). */
+  onCountryChange?: (country: string) => void;
+  /** Optional — giữ tương thích caller cũ (I2). Bộ lọc quốc gia/khu vực nay nằm ở header dùng chung. */
   regions?: string[];
   selectedRegion?: string;
   onRegionChange?: (region: string) => void;
 }
 
+/**
+ * Phân bố theo độ lớn — dữ liệu đã được lọc theo `?country=&region=` từ header
+ * (xem EarthquakesPage `chartFiltered`). Không render select cục bộ để tránh nhân bản bộ lọc.
+ */
 export const MagnitudeHistogramChart: React.FC<MagnitudeHistogramChartProps> = ({
   items,
-  countries,
   selectedCountry,
-  onCountryChange,
-  regions = [],
-  selectedRegion = "all",
-  onRegionChange,
+  selectedRegion = ALL_REGIONS,
 }) => {
   const bins = buildMagnitudeHistogram(items);
   const max = Math.max(1, ...bins.map((item) => item.count));
+  const hasCountry = selectedCountry !== ALL_COUNTRIES;
+  const hasRegion = selectedRegion !== ALL_REGIONS;
 
   return (
     <section className="dashboard-card eq-country-chart" aria-label="Phân bố số trận theo độ lớn">
       <header className="eq-country-chart__heading">
         <h2 className="card-title">Phân bố theo độ lớn</h2>
-        <select
-          className="ds-select"
-          aria-label="Lọc theo quốc gia"
-          value={selectedCountry}
-          onChange={(event) => onCountryChange(event.target.value)}
-        >
-          <option value="all">Tất cả quốc gia</option>
-          {countries.map((country) => (
-            <option key={country} value={country}>{country}</option>
-          ))}
-        </select>
-        {onRegionChange && (
-          <select
-            className="ds-select"
-            aria-label="Lọc theo khu vực"
-            value={selectedRegion}
-            onChange={(event) => onRegionChange(event.target.value)}
-            disabled={selectedCountry === "all" || regions.length === 0}
-          >
-            <option value="all">Tất cả khu vực</option>
-            {regions.map((region) => (
-              <option key={region} value={region}>{region}</option>
-            ))}
-          </select>
+        {(hasCountry || hasRegion) && (
+          <span className="eq-country-chart__context" title="Bộ lọc dùng chung từ header">
+            {hasCountry ? selectedCountry : "Tất cả quốc gia"}
+            {hasRegion ? ` · ${selectedRegion}` : ""}
+          </span>
         )}
       </header>
       <p className="text-caption">{items.length} trận</p>

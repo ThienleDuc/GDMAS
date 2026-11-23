@@ -1,6 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { isContractMockEnabled, resolveContractMock } from "../dev-mock.ts";
+import { countryOf } from "../src/features/earthquakes/country-filter.ts";
+
+interface MockListBody {
+  success: boolean;
+  data: Array<{ magnitude: number; depth_km: number; place: string }>;
+  metadata: { total: number; page: number; limit: number; total_pages: number };
+}
+
+function listFor(search: string): MockListBody {
+  const response = resolveContractMock("GET", "/api/v1/earthquakes", fixture, search);
+  assert.ok(response, "mock phải phục vụ /api/v1/earthquakes");
+  assert.equal(response.status, 200);
+  return JSON.parse(response.body) as MockListBody;
+}
 
 function fixture(filename: string): unknown {
   const fixtures: Record<string, unknown> = {
@@ -122,6 +136,68 @@ test("TC-10: earthquake list/detail and SSE are served from contract fixtures", 
   assert.ok(sseStandard);
   assert.match(sseStandard.headers["Content-Type"], /text\/event-stream/u);
   assert.match(sseStandard.body, /event: earthquake_detected\ndata:/u);
+});
+
+test("TC-12: dev-mock lọc theo độ lớn (khoảng đóng) — sửa lỗi 'bộ lọc không dùng được'", () => {
+  const body = listFor("?min_magnitude=5&max_magnitude=6&limit=100");
+  assert.equal(body.success, true);
+  assert.ok(body.data.length > 0, "phải còn ít nhất một trận trong khoảng 5–6");
+  for (const item of body.data) {
+    assert.ok(item.magnitude >= 5 && item.magnitude <= 6, `magnitude ${item.magnitude} nằm ngoài [5,6]`);
+  }
+  assert.equal(body.metadata.total, body.data.length);
+});
+
+test("TC-13: dev-mock lọc theo độ sâu và quốc gia/khu vực", () => {
+  const depths = listFor("?min_depth=10&max_depth=100&limit=100");
+  assert.ok(depths.data.length > 0);
+  for (const item of depths.data) {
+    assert.ok(item.depth_km >= 10 && item.depth_km <= 100, `depth ${item.depth_km} nằm ngoài [10,100]`);
+  }
+
+  const japan = listFor("?country=Japan&limit=100");
+  assert.ok(japan.data.length > 0);
+  for (const item of japan.data) assert.equal(countryOf(item), "Japan");
+
+  const none = listFor("?country=Japan&region=Tokyo&limit=100");
+  assert.equal(none.data.length, 0);
+  assert.equal(none.metadata.total, 0);
+});
+
+test("TC-14: dev-mock phục vụ danh mục quốc gia/khu vực để header bật được filter", () => {
+  const countries = resolveContractMock("GET", "/api/v1/earthquakes/countries", fixture);
+  assert.ok(countries);
+  const countriesBody = JSON.parse(countries.body) as { success: boolean; data: Array<{ country: string; count: number }> };
+  assert.equal(countriesBody.success, true);
+  assert.ok(countriesBody.data.some((row) => row.country === "Japan"));
+  assert.ok(countriesBody.data.every((row) => row.count > 0));
+
+  const regions = resolveContractMock("GET", "/api/v1/earthquakes/regions", fixture, "?country=Japan");
+  assert.ok(regions);
+  const regionsBody = JSON.parse(regions.body) as { success: boolean; data: Array<{ region: string; count: number }> };
+  assert.equal(regionsBody.success, true);
+  assert.ok(regionsBody.data.length > 0);
+  assert.ok(regionsBody.data.every((row) => row.region.trim() && row.count > 0));
+  assert.equal(regionsBody.data.some((row) => row.region === "all"), false);
+});
+
+test("TC-15: dev-mock KPI ăn cùng bộ lọc với bảng/histogram", () => {
+  const filtered = listFor("?min_magnitude=5&max_magnitude=6&limit=100");
+  const response = resolveContractMock("GET", "/api/v1/statistics/earthquakes", fixture, "?min_magnitude=5&max_magnitude=6");
+  assert.ok(response);
+  const stats = JSON.parse(response.body) as {
+    success: boolean;
+    data: { total_events: number; avg_magnitude: number; max_magnitude: number; recent_24h_count: number };
+  };
+  assert.equal(stats.success, true);
+  assert.equal(stats.data.total_events, filtered.metadata.total);
+  assert.ok(stats.data.avg_magnitude >= 5 && stats.data.avg_magnitude <= 6);
+  assert.ok(stats.data.max_magnitude >= 5 && stats.data.max_magnitude <= 6);
+
+  const countryResponse = resolveContractMock("GET", "/api/v1/statistics/earthquakes", fixture, "?country=Japan");
+  assert.ok(countryResponse);
+  const countryStats = JSON.parse(countryResponse.body) as { data: { total_events: number } };
+  assert.equal(countryStats.data.total_events, listFor("?country=Japan&limit=100").metadata.total);
 });
 
 test("TC-11: unsupported API path gets contract-shaped 404; non-API and non-GET pass through", () => {
