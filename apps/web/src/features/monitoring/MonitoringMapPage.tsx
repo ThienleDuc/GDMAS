@@ -8,7 +8,7 @@ import {
   SeismicMap,
 } from "../../components/map/index.ts";
 import { ALL_COUNTRIES } from "../earthquakes/country-filter.ts";
-import { ALL_REGIONS, filterByCountryAndRegion } from "../earthquakes/region-filter.ts";
+import { ALL_REGIONS } from "../earthquakes/region-filter.ts";
 import { useCatalogSelection } from "../earthquakes/useCatalogSelection.ts";
 import { toMapEarthquake } from "../../lib/transforms/map-data.ts";
 import {
@@ -19,20 +19,21 @@ import {
 } from "../../lib/transforms/map-types.ts";
 import { getEarthquakes } from "../../services/earthquake-api.ts";
 import {
-  applySseEvent,
   buildEarthquakeQuery,
   deriveMapState,
   filterMapEvents,
+  latestEventInRegion,
   resolveMapMinMagnitude,
-  sortEventsByTimeDesc,
+  sseRefreshKey,
 } from "./monitoring-view.ts";
 import { useSseMarkers } from "./sse-context.ts";
-import { dataRefreshKey } from "../../layouts/header/header-data.ts";
 
 /** Mặc định hiển thị toàn thế giới; HUD luôn lấy toạ độ thật từ map qua `onViewportChange`. */
 const INITIAL_VIEW: MapViewState = { latitude: 15, longitude: 0, zoom: 2 };
 /** Ngưỡng độ lớn lấy từ BACKFILL_MIN_MAGNITUDE (docker-compose → VITE_MAP_MIN_MAGNITUDE). */
 const MAP_MIN_MAGNITUDE = resolveMapMinMagnitude(import.meta.env);
+/** Lưới an toàn: nếu SSE nhỡ event vẫn làm mới dữ liệu đúng chu kỳ 5 phút. */
+const REALTIME_REFRESH_MS = 5 * 60 * 1000;
 
 export const MonitoringMapPage: React.FC = () => {
   const [filters] = useState<MapFilters>({
@@ -44,6 +45,7 @@ export const MonitoringMapPage: React.FC = () => {
   const [focus, setFocus] = useState<[number, number] | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [events, setEvents] = useState<MapEarthquake[]>([]);
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const [tileError, setTileError] = useState(false);
@@ -60,49 +62,48 @@ export const MonitoringMapPage: React.FC = () => {
     [filters, country, region],
   );
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    setLoading(true);
-    setError(null);
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const response = await getEarthquakes(params, controller.signal);
+      // Luôn thay thế marker bằng kết quả API đã lọc theo country/region hiện tại.
       setEvents(response.data.map(toMapEarthquake));
       setSelectedEventId(null);
-      setFocus(
-        hasSelection && response.data.length > 0
-          ? [response.data[0].latitude, response.data[0].longitude]
-          : null,
-      );
     } catch (err) {
       if (!controller.signal.aborted) setError(err);
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
-  }, [params, hasSelection]);
+  }, [params]);
 
+  // Một nguồn làm mới duy nhất: mọi dữ liệu mới đều fetch lại theo `params` (đã có country/region).
   useEffect(() => {
-    void load();
+    void load(true);
     return () => abortRef.current?.abort();
-  }, [load]);
+  }, [load, refreshVersion]);
 
   // SSE dùng lại kết nối duy nhất của shell — không EventSource mới.
   const sse = useSseMarkers();
   const lastPayload = sse?.data ?? null;
-  useEffect(() => {
-    if (!lastPayload) return;
-    setEvents((prev) => applySseEvent(prev, lastPayload));
-  }, [lastPayload]);
-
-  // Worker T2 hoàn thành chu kỳ 5 phút → tải lại toàn bộ dữ liệu (không chỉ marker đẩy).
-  const refreshKey = dataRefreshKey(lastPayload);
+  const refreshKey = sseRefreshKey(lastPayload);
   const lastRefreshKey = useRef<string | null>(null);
   useEffect(() => {
     if (!refreshKey || refreshKey === lastRefreshKey.current) return;
     lastRefreshKey.current = refreshKey;
-    void load();
-  }, [refreshKey, load]);
+    setRefreshVersion((value) => value + 1);
+  }, [refreshKey]);
+
+  // Lưới an toàn: định kỳ 5 phút làm mới ngay cả khi SSE nhỡ/mất event.
+  useEffect(() => {
+    const timer = window.setInterval(() => setRefreshVersion((value) => value + 1), REALTIME_REFRESH_MS);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const handleViewportChange = useCallback((next: MapViewState) => {
     setView((prev) =>
@@ -118,12 +119,17 @@ export const MonitoringMapPage: React.FC = () => {
   }, []);
 
   const visibleEvents = useMemo(
-    () =>
-      sortEventsByTimeDesc(
-        filterByCountryAndRegion(filterMapEvents(events, filters), country, region),
-      ),
+    () => latestEventInRegion(filterMapEvents(events, filters), country, region),
     [events, filters, country, region],
   );
+  // Khi có lựa chọn, focus vào đúng trận mới nhất đã lọc (không phải response thô).
+  useEffect(() => {
+    if (!hasSelection || visibleEvents.length === 0) {
+      setFocus(null);
+      return;
+    }
+    setFocus([visibleEvents[0].latitude, visibleEvents[0].longitude]);
+  }, [hasSelection, visibleEvents]);
   const phase = deriveMapState({ loading, error, events: visibleEvents });
   const handleTileError = useCallback(() => setTileError(true), []);
   const handleRetry = useCallback(() => void load(), [load]);

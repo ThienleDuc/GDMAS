@@ -15,7 +15,12 @@ import {
 } from "../src/features/monitoring/region-catalog-view.ts";
 import { DEFAULT_TILE_URL, resolveTileUrl } from "../src/components/map/tile-url.ts";
 import { toMapEarthquake } from "../src/lib/transforms/map-data.ts";
-import { sortEventsByTimeDesc } from "../src/features/monitoring/monitoring-view.ts";
+import {
+  latestEventInRegion,
+  sseRefreshKey,
+  sortEventsByTimeDesc,
+} from "../src/features/monitoring/monitoring-view.ts";
+import type { SSEEventPayload } from "../src/contracts/sse.ts";
 import type { MapEarthquake } from "../src/lib/transforms/map-types.ts";
 import type { RegionClusterRow } from "../src/features/monitoring/region-clusters.ts";
 
@@ -48,6 +53,34 @@ test("TC-dedupe: regionKey gộp biến thể, mỗi khu vực chỉ 1 dòng", (
   assert.equal(rows[0].region, "Honshu");
   assert.equal(rows[0].eventCount, 3);
   assert.equal(rows[0].maxMagnitude, 6);
+});
+
+test("TC-latest: lọc region chỉ giữ đúng 1 trận mới nhất", () => {
+  const events = [
+    event({ sourceEventId: "a", country: "Japan", region: "Honshu", eventTime: "2026-11-23T01:00:00Z" }),
+    event({ sourceEventId: "b", country: "Japan", region: "Honshu", eventTime: "2026-11-23T03:00:00Z" }),
+    event({ sourceEventId: "c", country: "Japan", region: "Honshu", eventTime: "bad" }),
+    event({ sourceEventId: "d", country: "Japan", region: "Osaka", eventTime: "2026-11-23T05:00:00Z" }),
+  ];
+  const latest = latestEventInRegion(events, "Japan", "Honshu");
+  assert.equal(latest.length, 1);
+  assert.equal(latest[0].sourceEventId, "b");
+
+  const all = latestEventInRegion(events, "Japan", "all");
+  assert.equal(all.length, 4);
+  assert.equal(all[0].sourceEventId, "d");
+});
+
+test("TC-latest: tie theo source_event_id, timestamp hỏng xếp cuối", () => {
+  const events = [
+    event({ sourceEventId: "z", country: "Japan", region: "Honshu", eventTime: "2026-11-23T03:00:00Z" }),
+    event({ sourceEventId: "a", country: "Japan", region: "Honshu", eventTime: "2026-11-23T03:00:00Z" }),
+    event({ sourceEventId: "bad", country: "Japan", region: "Honshu", eventTime: "not-a-date" }),
+  ];
+  assert.deepEqual(
+    latestEventInRegion(events, "Japan", "Honshu").map((item) => item.sourceEventId),
+    ["a"],
+  );
 });
 
 test("TC-panel: MapRegionPanel dedupe danh sách khu vực", () => {
@@ -169,5 +202,25 @@ test("TC-08: sortEventsByTimeDesc xếp mới nhất lên đầu, timestamp hỏ
   assert.deepEqual(
     sorted.map((item) => item.sourceEventId),
     ["new", "old", "bad"],
+  );
+});
+
+test("TC-09: sseRefreshKey nhận mọi event dữ liệu, bỏ heartbeat", () => {
+  const packet = {
+    event: "ingestion_cycle_completed",
+    data: {},
+    timestamp: "2026-11-23T00:00:00Z",
+    id: "gdmas-1",
+  } as SSEEventPayload;
+
+  assert.ok(sseRefreshKey(packet));
+  assert.ok(sseRefreshKey({ ...packet, event: "earthquake_detected" }));
+  assert.ok(sseRefreshKey({ ...packet, event: "earthquake_alert" }));
+  assert.equal(sseRefreshKey({ ...packet, event: "heartbeat" }), null);
+  assert.equal(sseRefreshKey(null), null);
+  assert.notEqual(
+    sseRefreshKey(packet),
+    sseRefreshKey({ ...packet, id: "gdmas-2" }),
+    "mỗi chu kỳ có id mới phải tạo key mới để refetch",
   );
 });

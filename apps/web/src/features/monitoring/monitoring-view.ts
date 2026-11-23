@@ -6,7 +6,7 @@
 
 import type { EarthquakeItem, QueryEarthquakeParams } from "../../contracts/earthquake.ts";
 import { ALL_COUNTRIES } from "../earthquakes/country-filter.ts";
-import { ALL_REGIONS } from "../earthquakes/region-filter.ts";
+import { ALL_REGIONS, filterByCountryAndRegion } from "../earthquakes/region-filter.ts";
 import type { SSEEventPayload } from "../../contracts/sse.ts";
 import { formatEventTime, toUtcIso, type TimezoneMode } from "../../lib/formatters.ts";
 import {
@@ -176,6 +176,45 @@ export function applySseEvent(
   if (index >= 0) next[index] = incoming;
   else next.push(incoming);
   return next;
+}
+
+/**
+ * Kích hoạt tải lại dữ liệu cho mọi SSE mang dữ liệu mới (không chỉ ingestion_cycle_completed).
+ * Trả `null` cho heartbeat/database_cleared và sự kiện không liên quan.
+ */
+export function sseRefreshKey(payload: SSEEventPayload | null | undefined): string | null {
+  if (!payload) return null;
+  const dataEvent =
+    payload.event === "ingestion_cycle_completed" ||
+    payload.event === "earthquake_detected" ||
+    payload.event === "earthquake_alert";
+  if (!dataEvent) return null;
+  return `${payload.event}:${payload.timestamp ?? ""}:${payload.id ?? ""}`;
+}
+
+/**
+ * Khi lọc theo khu vực: chỉ giữ đúng 1 sự kiện mới nhất của khu vực đó.
+ * `ALL_REGIONS` → giữ nguyên toàn bộ (đã sắp xếp), không phá vỡ caller cũ (I2).
+ * Timestamp hỏng xếp cuối; tie theo `source_event_id` để kết quả ổn định (I3).
+ */
+export function latestEventInRegion(
+  events: readonly MapEarthquake[],
+  country: string,
+  region: string,
+): MapEarthquake[] {
+  if (region === ALL_REGIONS) return sortEventsByTimeDesc(events);
+  const candidates = filterByCountryAndRegion(events, country, region);
+  const sorted = [...candidates].sort((left, right) => {
+    const leftTime = Date.parse(left.eventTime);
+    const rightTime = Date.parse(right.eventTime);
+    const leftValid = Number.isFinite(leftTime);
+    const rightValid = Number.isFinite(rightTime);
+    if (!leftValid && !rightValid) return left.sourceEventId.localeCompare(right.sourceEventId);
+    if (!leftValid) return 1;
+    if (!rightValid) return -1;
+    return rightTime - leftTime || left.sourceEventId.localeCompare(right.sourceEventId);
+  });
+  return sorted.slice(0, 1);
 }
 
 /**

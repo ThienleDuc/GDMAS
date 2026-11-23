@@ -128,7 +128,8 @@ test("TC-15: tối ưu tốc độ tải — tile theo idle, fallback on-demand,
 test("TC-20: item 3 phần có gap cố định, 1&3 theo nội dung, 2 lấy phần còn lại", () => {
   const panel = read("src/components/map/EventListPanel.tsx");
   assert.match(panel, /gm-event-item__main/u);
-  assert.match(panel, /formatEventTime\(event\.eventTime, "UTC"\)/u);
+  assert.match(panel, /formatEventTime\(event\.eventTime, timezone\)/u);
+  assert.match(panel, /useTimezone\(\)/u);
   assert.match(panel, /M\{event\.magnitude\.toFixed\(1\)\}/u);
   assert.match(panel, /\{event\.depthKm\.toFixed\(1\)\} km/u);
 
@@ -168,13 +169,20 @@ test("TC-25: danh sách & query sắp theo thời gian mới nhất", () => {
   assert.match(view, /Number\.NEGATIVE_INFINITY/u);
 
   const page = read("src/features/monitoring/MonitoringMapPage.tsx");
-  assert.match(page, /sortEventsByTimeDesc\([\s\S]{0,160}filterByCountryAndRegion/u);
+  assert.match(page, /latestEventInRegion\(filterMapEvents\(events, filters\), country, region\)/u);
 });
 
-test("TC-22: SSE chu kỳ 5 phút kích hoạt tải lại toàn bộ dữ liệu", () => {
+test("TC-22: SSE mọi event dữ liệu + lưới 5 phút làm mới dữ liệu", () => {
   const page = read("src/features/monitoring/MonitoringMapPage.tsx");
-  assert.match(page, /dataRefreshKey\(lastPayload\)/u);
+  assert.match(page, /sseRefreshKey\(lastPayload\)/u);
+  assert.doesNotMatch(page, /dataRefreshKey/u);
   assert.match(page, /refreshKey === lastRefreshKey\.current/u);
-  assert.match(page, /lastRefreshKey\.current = refreshKey/u);
-  assert.match(page, /void load\(\)/u);
+  assert.match(page, /void load\(true\)/u);
+  assert.match(page, /REALTIME_REFRESH_MS = 5 \* 60 \* 1000/u);
+  assert.match(page, /setInterval\(\(\) => setRefreshVersion\(\(value\) => value \+ 1\), REALTIME_REFRESH_MS\)/u);
+  assert.match(page, /\[load, refreshVersion\]/u);
+  assert.doesNotMatch(page, /applySseEvent\(prev, lastPayload\)/u);
+
+  const client = read("src/lib/api-client.ts");
+  assert.match(client, /cache: init\.cache \?\? "no-store"/u);
 });
