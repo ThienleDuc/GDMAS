@@ -1,6 +1,7 @@
 import { ApiError, fetchApi } from "../lib/api-client.ts";
 import { clustersFromPatterns } from "../lib/transforms/cluster-fallback.ts";
 import { isUtcTimestamp, isWgs84Bounds } from "../contracts/common.ts";
+import type { TimezoneMode } from "../lib/formatters.ts";
 import { geoQuery, type GeoFilter } from "../contracts/geo-filter.ts";
 import type { MonthlyPeaksResponse } from "../contracts/monthly-peaks.ts";
 import type {
@@ -221,6 +222,7 @@ export async function getTemporalAnalysis(
     end_time?: string;
     country?: string;
     region?: string;
+    timezone?: TimezoneMode;
   } = {},
   signal?: AbortSignal,
 ): Promise<TemporalResponse> {
@@ -228,6 +230,7 @@ export async function getTemporalAnalysis(
     interval: params.interval,
     start_time: params.start_time,
     end_time: params.end_time,
+    timezone: params.timezone,
     ...geoQuery(params),
   });
   return fetchApi<TemporalResponse>(`/api/v1/analysis/temporal${qs}`, { signal });

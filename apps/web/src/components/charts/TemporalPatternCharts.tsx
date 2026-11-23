@@ -15,6 +15,8 @@ import {
 } from "recharts";
 import type { AnalysisInterval } from "../../contracts/common.ts";
 import type { TemporalResponse } from "../../contracts/analysis.ts";
+import type { TimezoneMode } from "../../lib/formatters.ts";
+import { formatStatDate } from "../../features/statistics/statistics-view.ts";
 import { buildHistogramBins, buildLineSeriesFromScatter } from "../../lib/transforms/chart-data.ts";
 import { ChartReadingGuide } from "./ChartReadingGuide.tsx";
 import {
@@ -31,6 +33,8 @@ interface TemporalPatternChartsProps {
   data: TemporalResponse["data"] | null;
   interval: AnalysisInterval;
   onIntervalChange: (interval: AnalysisInterval) => void;
+  /** Chế độ UTC/UTC+7 từ header — optional để caller cũ không vỡ (I2). */
+  timezone?: TimezoneMode;
 }
 
 const INTERVALS: ReadonlyArray<{ value: AnalysisInterval; label: string }> = [
@@ -44,10 +48,14 @@ export function TemporalPatternCharts({
   data,
   interval,
   onIntervalChange,
+  timezone = "UTC+7",
 }: TemporalPatternChartsProps) {
-  const fromScatter = buildLineSeriesFromScatter(data?.scatter_plot, interval);
+  const fromScatter = buildLineSeriesFromScatter(data?.scatter_plot, interval).map((point) => ({
+    ...point,
+    date: formatStatDate(point.date, timezone),
+  }));
   const fromLine = (data?.line_chart ?? []).map((point) => ({
-    date: point.date,
+    date: formatStatDate(point.date, timezone),
     event_count: point.event_count,
     avg_magnitude: point.avg_magnitude ?? null,
     max_magnitude: point.max_magnitude ?? null,

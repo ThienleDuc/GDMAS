@@ -7,6 +7,8 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { useLocation } from "react-router-dom";
 import type { CorrelationResponse, SeasonalityResponse, TemporalResponse, TrendResponse } from "../../contracts/analysis.ts";
 import type { AnalysisInterval } from "../../contracts/common.ts";
+import type { TimezoneMode } from "../../lib/formatters.ts";
+import { useTimezone } from "../../contexts/timezone-context.tsx";
 import type { ClassificationsResponse } from "../../contracts/classifications.ts";
 import type { PredictionsResponse } from "../../contracts/predictions.ts";
 import { useCatalogSelection } from "../earthquakes/useCatalogSelection.ts";
@@ -34,6 +36,8 @@ export interface PanelData<T> {
 }
 
 export interface StatisticsData {
+  /** Chế độ UTC/UTC+7 lấy từ header — dùng để hiển thị nhãn thời gian (I3). */
+  timezone: TimezoneMode;
   interval: AnalysisInterval;
   setInterval: (value: AnalysisInterval) => void;
   temporal: PanelData<TemporalResponse>;
@@ -88,6 +92,7 @@ export function usePanel<T>(
 }
 
 export const StatisticsDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { timezone } = useTimezone();
   const [interval, setInterval] = useState<AnalysisInterval>("week");
   const window = useMemo(() => intervalToParams(interval), [interval]);
   // ?country=&region= là nguồn sự thật chung — đổi phạm vi thì nạp lại nguồn đang xem.
@@ -108,10 +113,11 @@ export const StatisticsDataProvider: React.FC<{ children: React.ReactNode }> = (
   const temporal = usePanel<TemporalResponse>(
     (signal) =>
       getTemporalAnalysis(
-        { interval, start_time: window.start_time, end_time: window.end_time, ...geo },
+        // Chip chỉ đổi cửa sổ; BE luôn resample theo ngày → nhiều phiên ngày như biểu xu hướng.
+        { interval: "day", start_time: window.start_time, end_time: window.end_time, timezone, ...geo },
         signal,
       ),
-    [interval, window, country, region],
+    [interval, window, timezone, country, region],
     enabled.temporal,
   );
   const trend = usePanel<TrendResponse>(
@@ -159,6 +165,7 @@ export const StatisticsDataProvider: React.FC<{ children: React.ReactNode }> = (
 
   const value = useMemo<StatisticsData>(
     () => ({
+      timezone,
       interval,
       setInterval,
       temporal,
@@ -192,6 +199,7 @@ export const StatisticsDataProvider: React.FC<{ children: React.ReactNode }> = (
       },
     }),
     [
+      timezone,
       interval,
       temporal,
       trend,

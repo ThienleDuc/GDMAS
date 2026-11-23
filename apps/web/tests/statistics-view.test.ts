@@ -14,6 +14,7 @@ import {
   evaluationText,
   forecastMetricLabel,
   forecastRows,
+  formatStatDate,
   intervalToParams,
   metricsFor,
   NEXT_DAY_EXPLANATION,
@@ -37,6 +38,37 @@ test("TC-01: intervalToParams trả cửa sổ UTC Z đúng cho day/week/month",
 
   assert.equal(intervalToParams("week", NOW).start_time, "2026-11-14T00:00:00.000Z");
   assert.equal(intervalToParams("month", NOW).start_time, "2026-10-21T00:00:00.000Z");
+});
+
+test("TC-01b: cửa sổ ngày luôn gồm hôm qua (00:00 UTC) + hôm nay", () => {
+  const now = new Date("2026-11-21T15:30:00Z");
+  const day = intervalToParams("day", now);
+  assert.equal(day.start_time, "2026-11-20T00:00:00.000Z");
+  assert.equal(day.end_time, "2026-11-21T15:30:00.000Z");
+  assert.match(day.start_time, /Z$/);
+});
+
+test("TC-13: formatStatDate theo chế độ UTC/UTC+7 từ header", () => {
+  const utc = formatStatDate("2026-11-21", "UTC");
+  const local = formatStatDate("2026-11-21", "UTC+7");
+  assert.match(utc, /UTC$/u);
+  assert.match(local, /\(UTC\+7\)$/u);
+  assert.doesNotMatch(utc, /\d{2}:\d{2}/u);
+  assert.doesNotMatch(local, /\d{2}:\d{2}/u);
+  assert.notEqual(utc, local);
+  assert.equal(formatStatDate(null, "UTC"), "—");
+  assert.equal(formatStatDate("abc", "UTC"), "abc");
+});
+
+test("TC-14: Statistics lấy timezone từ context & truyền xuống chart", () => {
+  const root = path.resolve(import.meta.dirname, "../src");
+  const data = readFileSync(path.resolve(root, "features/statistics/statistics-data.tsx"), "utf8");
+  const page = readFileSync(path.resolve(root, "features/statistics/patterns/TemporalPatternPage.tsx"), "utf8");
+  const chart = readFileSync(path.resolve(root, "components/charts/TemporalPatternCharts.tsx"), "utf8");
+  assert.match(data, /useTimezone\(\)/u);
+  assert.match(data, /timezone: TimezoneMode/u);
+  assert.match(page, /timezone=\{timezone\}/u);
+  assert.match(chart, /formatStatDate\(point\.date, timezone\)/u);
 });
 
 test("TC-02: metricsFor xử lý empty envelope không throw", () => {

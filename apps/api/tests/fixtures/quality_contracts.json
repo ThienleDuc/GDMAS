@@ -1069,6 +1069,25 @@
                 "title": "Region"
               },
               "description": "Lọc theo khu vực"
+            },
+            {
+              "name": "timezone",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(UTC|UTC\\+7)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Múi giờ hiển thị bucket ngày",
+                "title": "Timezone"
+              },
+              "description": "Múi giờ hiển thị bucket ngày"
             }
           ],
           "responses": {

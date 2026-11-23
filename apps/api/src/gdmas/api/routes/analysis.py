@@ -113,6 +113,9 @@ def get_temporal(
     end_time: str | None = Query(None, description="ISO 8601 UTC"),
     country: str | None = Query(None, description="Lọc theo quốc gia"),
     region: str | None = Query(None, description="Lọc theo khu vực"),
+    timezone: str | None = Query(
+        None, pattern="^(UTC|UTC\\+7)$", description="Múi giờ hiển thị bucket ngày"
+    ),
     db: Session = Depends(get_db),
 ):
     """Pattern 1: line chart, scatter plot và histogram."""
@@ -165,9 +168,22 @@ def get_temporal(
 
     # Có cửa sổ (FE luôn gửi) hoặc filter → tính on-the-fly: 3 biểu đồ cùng lấy dữ liệu
     # trong khoảng Ngày/Tuần/Tháng. Snapshot chỉ dùng khi không có cả hai (I2).
-    if country or region or start is not None or end is not None:
+    if (
+        country
+        or region
+        or start is not None
+        or end is not None
+        or timezone is not None
+    ):
         metrics = compute_filtered_metrics(
-            db, "temporal", country, region, interval=interval, start=start, end=end
+            db,
+            "temporal",
+            country,
+            region,
+            interval=interval,
+            start=start,
+            end=end,
+            timezone=timezone,
         )
         return {"success": True, "data": build(metrics)}
     return _respond(db, "temporal", build, interval=interval)

@@ -20,6 +20,7 @@ export const ExpertInsightsPanel: React.FC = () => {
     prediction,
     classification,
     observed,
+    timezone,
   } = useStatisticsData();
 
   const report = useMemo(
@@ -32,8 +33,8 @@ export const ExpertInsightsPanel: React.FC = () => {
         prediction,
         classification,
         observed,
-      }),
-    [temporalData, trendData, seasonalityData, correlationData, prediction, classification, observed],
+      }, timezone),
+    [temporalData, trendData, seasonalityData, correlationData, prediction, classification, observed, timezone],
   );
 
   return (

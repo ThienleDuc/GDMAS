@@ -1,6 +1,6 @@
 import React from "react";
 import { ForecastPatternChart, PatternPanel } from "../../../components/charts/index.ts";
-import { PATTERN_TITLES, panelReason } from "../statistics-view.ts";
+import { formatStatDate, PATTERN_TITLES, panelReason } from "../statistics-view.ts";
 import { useStatisticsData } from "../statistics-data.tsx";
 
 /**
@@ -8,7 +8,7 @@ import { useStatisticsData } from "../statistics-data.tsx";
  * Pattern 5 hiện được gộp chung với Pattern 6 trong ForecastClassificationPatternPage.
  */
 export const ForecastPatternPage: React.FC = () => {
-  const { predictions, prediction, observed, views } = useStatisticsData();
+  const { timezone, predictions, prediction, observed, views } = useStatisticsData();
 
   return (
     <PatternPanel
@@ -19,7 +19,7 @@ export const ForecastPatternPage: React.FC = () => {
       <div className="stat-layout stat-layout--stack">
         <div className="stat-layout__summary">
           <span className="stat-layout__summary-item">
-            Ngày dự báo: <strong>{prediction?.target_date ?? "—"}</strong>
+            Ngày dự báo: <strong>{formatStatDate(prediction?.target_date, timezone)}</strong>
           </span>
           <span className="stat-layout__summary-item">
             Giá trị dự báo: <strong>{prediction?.predicted_value ?? "—"}</strong>
