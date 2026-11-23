@@ -38,15 +38,17 @@ export function regionOptionsFromCatalog(
 ): RegionOption[] {
   const regions = payload?.data;
   if (!Array.isArray(regions)) return [];
-  const unique = new Map<string, number>();
+  // Khoá normalize theo trim + casefold — gộp biến thể cùng khu vực từ catalog (I2/I5).
+  const unique = new Map<string, RegionOption>();
   for (const item of regions) {
     if (!item || typeof item.region !== "string" || !item.region.trim()) continue;
     const region = item.region.trim();
-    if (!unique.has(region)) unique.set(region, item.count);
+    const key = region.toLocaleLowerCase();
+    const existing = unique.get(key);
+    if (existing) existing.count += item.count;
+    else unique.set(key, { region, count: item.count });
   }
-  return [...unique.entries()]
-    .map(([region, count]) => ({ region, count }))
-    .sort((left, right) => left.region.localeCompare(right.region));
+  return [...unique.values()].sort((left, right) => left.region.localeCompare(right.region));
 }
 
 /**

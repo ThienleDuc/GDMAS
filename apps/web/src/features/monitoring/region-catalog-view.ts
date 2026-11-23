@@ -17,8 +17,13 @@ function nonEmpty(value: string | null | undefined): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+/** Khoá khu vực dùng chung — trim + casefold để gộp biến thể cùng danh xưng. */
+export function regionKey(name: string): string {
+  return name.trim().toLocaleLowerCase();
+}
+
 function rowKey(row: Pick<RegionClusterRow, "country" | "region">): string {
-  return `${row.country}\u0000${row.region}`;
+  return `${row.country}\u0000${regionKey(row.region)}`;
 }
 
 function sortRows(left: RegionClusterRow, right: RegionClusterRow): number {
@@ -49,7 +54,7 @@ export function buildMonitoringRegionRows(items: readonly EventLike[]): RegionCl
     const place = item.place ?? null;
     const country = nonEmpty(item.country) ?? countryFromPlace(place);
     const region = nonEmpty(item.region) ?? regionFromPlace(place, country);
-    const key = `${country}\u0000${region}`;
+    const key = `${country}\u0000${regionKey(region)}`;
     const group = groups.get(key) ?? {
       country,
       region,

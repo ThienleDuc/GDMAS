@@ -27,8 +27,20 @@ test("TC-04a: regionOptionsFromCatalog trim/bỏ rỗng/sort/gộp theo nhãn", 
   const options = regionOptionsFromCatalog(PAYLOAD);
   assert.deepEqual(options, [
     { region: "Osaka", count: 2 },
-    { region: "Tokyo", count: 3 },
+    { region: "Tokyo", count: 4 },
   ]);
+});
+
+test("TC-04c: dedupe theo casefold — mỗi khu vực chỉ 1 option", () => {
+  const options = regionOptionsFromCatalog({
+    success: true,
+    data: [
+      { region: "Honshu", count: 1 },
+      { region: " honshu ", count: 2 },
+      { region: "HONSHU", count: 3 },
+    ],
+  });
+  assert.deepEqual(options, [{ region: "Honshu", count: 6 }]);
 });
 
 test("TC-04b: payload rỗng/sai shape trả [] — không fallback dữ liệu giả (I5)", () => {

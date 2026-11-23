@@ -332,6 +332,20 @@ def test_country_catalog_groups_by_country_and_count(client, db):
     ]
 
 
+def test_region_catalog_dedupes_case_and_whitespace_variants(client, db):
+    """Mỗi khu vực chỉ trả 1 dòng dù ingestion tạo nhiều biến thể hoa/thường/dấu cách."""
+    add_event(db, 1, country="Japan", region="Honshu", magnitude=4.0)
+    add_event(db, 2, country="Japan", region=" honshu ", magnitude=6.0)
+    add_event(db, 3, country="Japan", region="HONSHU", magnitude=5.0)
+
+    rows = client.get(f"{URL}/regions", params={"country": "Japan"}).json()["data"]
+    assert len(rows) == 1
+    assert rows[0]["region"] == "Honshu"
+    assert rows[0]["count"] == 3
+    assert rows[0]["avg_magnitude"] == 5.0
+    assert rows[0]["max_magnitude"] == 6.0
+
+
 def test_region_catalog_optionally_filters_by_country(client, db):
     add_event(db, 1, country="USA", region="Igiugig")
     add_event(db, 2, country="USA", region="Anchorage")
