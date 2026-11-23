@@ -107,5 +107,6 @@ test("TC-04: Overview render biểu đồ tháng bên dưới biểu đồ tuầ
   assert.match(page, /Cao điểm theo tháng/u);
   const hook = read("features/overview/useOverviewData.ts");
   assert.match(hook, /getMonthlyPeaks\(filter, controller\.signal\)/u);
-  assert.match(hook, /interval: "month"/u);
+  // Bỏ request seasonality?interval=month vô dụng (phase-load 2026-11-23).
+  assert.doesNotMatch(hook, /interval: "month"/u);
 });

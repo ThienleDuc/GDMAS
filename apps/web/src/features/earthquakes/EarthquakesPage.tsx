@@ -154,7 +154,11 @@ export const EarthquakesPage: React.FC = () => {
   );
   const rows = useMemo(() => visibleItems.map((item) => formatEventRow(item, timezone)), [visibleItems, timezone]);
   const viewState = deriveViewState({ loading, error, data: rows });
-  const insights = useEarthquakeInsights(mapRangeToInterval(appliedForm.range), refreshKey, geo);
+  // Chỉ dùng statistics cho KPI — temporal & clusters không có consumer trên page này.
+  const insights = useEarthquakeInsights(mapRangeToInterval(appliedForm.range), refreshKey, geo, undefined, {
+    includeTemporal: false,
+    includeClusters: false,
+  });
 
   // RD-13: nạp chi tiết sự kiện theo dòng đã chọn — abort khi đổi dòng/unmount (tránh race).
   useEffect(() => {

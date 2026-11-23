@@ -73,6 +73,12 @@
   font-weight: var(--font-medium);
 }
 
+.ov-secondary-status {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+}
+
 .ov-card__label {
   margin: 0 0 var(--space-2);
   color: var(--foreground);

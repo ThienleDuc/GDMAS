@@ -32,8 +32,11 @@ interface OverviewState {
   countryCatalog: CountryCatalogResponse | null;
   regionCatalog: RegionCatalogResponse | null;
   monthlyPeaks: MonthlyPeaksResponse | null;
+  /** Giữ field để tương thích type; request on-the-fly vô dụng đã bị bỏ. */
   seasonalityMonthly: SeasonalityResponse | null;
   loading: boolean;
+  /** Card dưới fold đang tải phase 2 — khác với dữ liệu rỗng thật (I5). */
+  secondaryLoading: boolean;
   error: string | null;
   unavailable: string[];
 }
@@ -49,6 +52,7 @@ const INITIAL_STATE: OverviewState = {
   monthlyPeaks: null,
   seasonalityMonthly: null,
   loading: true,
+  secondaryLoading: true,
   error: null,
   unavailable: [],
 };
@@ -67,32 +71,64 @@ function errorMessage(reason: unknown): string {
   return reason instanceof Error ? reason.message : "Không tải được dữ liệu tổng quan.";
 }
 
-/** Gom dữ liệu trang tổng quan: tất cả endpoint có sẵn, chịu được 404/DB rỗng. */
+/** Chạy việc phụ sau khi phase 1 xong, không chặn paint. */
+function scheduleIdle(callback: () => void): () => void {
+  const scope = globalThis as typeof globalThis & {
+    requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number;
+    cancelIdleCallback?: (id: number) => void;
+  };
+  if (typeof scope.requestIdleCallback === "function") {
+    const id = scope.requestIdleCallback(callback, { timeout: 500 });
+    return () => scope.cancelIdleCallback?.(id);
+  }
+  const timer = globalThis.setTimeout(callback, 0);
+  return () => globalThis.clearTimeout(timer);
+}
+
+/** Gom dữ liệu trang tổng quan theo 2 phase — giảm tải & phân biệt Loading/Empty. */
 export function useOverviewData(
   filter?: GeoFilter | null,
   refreshVersion = 0,
   window?: TimeWindow | null,
 ): OverviewData {
-  const insights = useEarthquakeInsights("day", 0, filter, window);
+  // Phase 1 cần statistics + clusters cho KPI; temporal không ai đọc → tắt.
+  const insights = useEarthquakeInsights("day", 0, filter, window, {
+    includeTemporal: false,
+  });
   const [state, setState] = useState<OverviewState>(INITIAL_STATE);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [secondaryEnabled, setSecondaryEnabled] = useState(false);
 
   const refresh = useCallback(() => setRefreshKey((key) => key + 1), []);
 
+  // Đổi filter/range hoặc SSE reset → nạp lại từ phase 1.
+  useEffect(() => {
+    setSecondaryEnabled(false);
+  }, [
+    refreshKey,
+    refreshVersion,
+    filter?.country,
+    filter?.region,
+    window?.start_time,
+    window?.end_time,
+  ]);
+
+  // Phase 1 — critical: trend (above-fold) + 5 sự kiện mới nhất.
   useEffect(() => {
     const controller = new AbortController();
-    // API.md §3.3: BE /analysis/trend chỉ nhận resample_freq/metric; seasonality không nhận param.
-    // Không gửi cửa sổ 14 ngày giả — BE vốn bỏ qua các param thời gian này.
-    setState((previous) => ({ ...previous, loading: true, error: null, unavailable: [] }));
+    setState((previous) => ({
+      ...previous,
+      loading: true,
+      secondaryLoading: true,
+      error: null,
+      unavailable: [],
+    }));
 
     Promise.allSettled([
       getTrendAnalysis(
         { resample_freq: "D", ...geoQuery(filter), ...window },
         controller.signal,
       ),
-      getSeasonalityAnalysis(geoQuery(filter), controller.signal),
-      getPredictions(controller.signal, filter),
-      getClassifications(controller.signal, filter),
       getEarthquakes(
         {
           limit: 5,
@@ -103,15 +139,9 @@ export function useOverviewData(
         },
         controller.signal,
       ),
-      getCountryCatalog(controller.signal, window),
-      getRegionCatalog(filter?.country ?? undefined, controller.signal, window),
-      getMonthlyPeaks(filter, controller.signal),
-      getSeasonalityAnalysis({ ...geoQuery(filter), interval: "month" }, controller.signal),
     ])
-      .then(
-        ([trend, seasonality, predictions, classifications, events, countries, regions, monthly, monthlySeason]) => {
+      .then(([trend, events]) => {
         if (controller.signal.aborted) return;
-
         const unavailable: string[] = [];
         let error: string | null = null;
 
@@ -138,33 +168,25 @@ export function useOverviewData(
                 return [];
               })();
 
-        setState({
+        setState((previous) => ({
+          ...previous,
           trend: pick(trend, "GET /api/v1/analysis/trend"),
-          seasonality: pick(seasonality, "GET /api/v1/analysis/seasonality"),
-          predictions: pick(predictions, "GET /api/v1/predictions"),
-          classifications: pick(classifications, "GET /api/v1/classifications"),
           latestEvents: latest,
-          countryCatalog:
-            countries.status === "fulfilled" && Array.isArray(countries.value?.data)
-              ? countries.value
-              : null,
-          regionCatalog:
-            regions.status === "fulfilled" && Array.isArray(regions.value?.data)
-              ? regions.value
-              : null,
-          monthlyPeaks:
-            monthly.status === "fulfilled" && Array.isArray(monthly.value?.data)
-              ? monthly.value
-              : null,
-          seasonalityMonthly: pick(monthlySeason, "GET /api/v1/analysis/seasonality?interval=month"),
           loading: false,
           error,
           unavailable,
+        }));
+        return scheduleIdle(() => {
+          if (!controller.signal.aborted) setSecondaryEnabled(true);
         });
       })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) {
-          setState((previous) => ({ ...previous, loading: false, error: errorMessage(reason) }));
+          setState((previous) => ({
+            ...previous,
+            loading: false,
+            error: errorMessage(reason),
+          }));
         }
       });
 
@@ -178,11 +200,87 @@ export function useOverviewData(
     window?.end_time,
   ]);
 
+  // Phase 2 — secondary: catalog, chu kỳ, monthly-peaks, forecast (dưới fold).
+  useEffect(() => {
+    if (!secondaryEnabled) return;
+    const controller = new AbortController();
+    setState((previous) => ({ ...previous, secondaryLoading: true }));
+
+    Promise.allSettled([
+      getSeasonalityAnalysis(geoQuery(filter), controller.signal),
+      getPredictions(controller.signal, filter),
+      getClassifications(controller.signal, filter),
+      getCountryCatalog(controller.signal, window),
+      getRegionCatalog(filter?.country ?? undefined, controller.signal, window),
+      getMonthlyPeaks(filter, controller.signal),
+    ])
+      .then(
+        ([seasonality, predictions, classifications, countries, regions, monthly]) => {
+          if (controller.signal.aborted) return;
+
+          const unavailable: string[] = [];
+          let error: string | null = null;
+          const pick = <T extends { success?: boolean }>(
+            result: PromiseSettledResult<T>,
+            endpoint: string,
+          ): T | null => {
+            if (result.status === "rejected") {
+              if (isNotFound(result.reason)) unavailable.push(endpoint);
+              else if (!error) error = errorMessage(result.reason);
+              return null;
+            }
+            return isApiEmptyEnvelope(result.value) ? null : result.value;
+          };
+
+          setState((previous) => ({
+            ...previous,
+            seasonality: pick(seasonality, "GET /api/v1/analysis/seasonality"),
+            predictions: pick(predictions, "GET /api/v1/predictions"),
+            classifications: pick(classifications, "GET /api/v1/classifications"),
+            countryCatalog:
+              countries.status === "fulfilled" && Array.isArray(countries.value?.data)
+                ? countries.value
+                : null,
+            regionCatalog:
+              regions.status === "fulfilled" && Array.isArray(regions.value?.data)
+                ? regions.value
+                : null,
+            monthlyPeaks:
+              monthly.status === "fulfilled" && Array.isArray(monthly.value?.data)
+                ? monthly.value
+                : null,
+            secondaryLoading: false,
+            error: previous.error ?? error,
+            unavailable: [...previous.unavailable, ...unavailable],
+          }));
+        },
+      )
+      .catch((reason: unknown) => {
+        if (!controller.signal.aborted) {
+          setState((previous) => ({
+            ...previous,
+            secondaryLoading: false,
+            error: previous.error ?? errorMessage(reason),
+          }));
+        }
+      });
+
+    return () => controller.abort();
+  }, [
+    secondaryEnabled,
+    refreshKey,
+    refreshVersion,
+    filter?.country,
+    filter?.region,
+    window?.start_time,
+    window?.end_time,
+  ]);
+
   return {
     ...state,
     statistics: insights.statistics,
     clusters: insights.clusters,
-    loading: state.loading || insights.loading,
+    loading: state.loading || insights.loading || state.secondaryLoading,
     error: state.error ?? insights.error?.message ?? null,
     unavailable: [...insights.unavailable, ...state.unavailable],
     refresh,

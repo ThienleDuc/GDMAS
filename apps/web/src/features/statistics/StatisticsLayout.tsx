@@ -84,7 +84,11 @@ export const StatisticsLayout: React.FC = () => {
           </nav>
 
           <div className="stat-shell__content">
-            <Outlet />
+            <React.Suspense
+              fallback={<p className="stat-pattern-loading" role="status">Đang tải biểu đồ…</p>}
+            >
+              <Outlet />
+            </React.Suspense>
           </div>
         </div>
       </section>
