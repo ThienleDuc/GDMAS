@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-20-earthquakes-catalog-filter-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-20-earthquakes-catalog-filter-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/features/earthquakes/`, `apps/web/src/app/App.tsx`
 - Test File: apps/web/tests/earthquakes-page.test.ts
 - Author: agent | thien

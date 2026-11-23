@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-docker-setup-env-doc-drift-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-docker-setup-env-doc-drift-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `docs/setup.md`
 - Test File: `scripts/tests/test_setup_docs.py`
 - Author: agent | thien

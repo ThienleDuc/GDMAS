@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-23-dbscan-clustering-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-23-dbscan-clustering-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/services/clustering/{service,runner}.py
 - Test File: apps/api/tests/unit/test_clustering_service.py
 - Author: agent | thien

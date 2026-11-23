@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-23-statistics-subroute-load-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-23-statistics-subroute-load-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/features/statistics/
 - Test File: apps/web/tests/statistics-subroute.test.ts
 - Author: agent | thien

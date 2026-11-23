@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-21-layout-aside-hover-thien
-- Mode: proposal-paired   <!-- proposal-paired | single-file-test -->
-- Proposal: .agents/notes/proposed/2026-11-21-layout-aside-hover-thien.md
+- Mode: single-file-test   <!-- proposal-paired | single-file-test -->
+- Proposal: none
 - Target: `apps/web/src/layouts/navigation.ts`, `apps/web/src/layouts/DashboardLayout.tsx`, `apps/web/src/layouts/layout.css`
 - Test File: `apps/web/tests/layout-navigation.test.ts` (mới) + bổ sung `apps/web/tests/layout-styles.test.ts`
 - Author: agent | thien

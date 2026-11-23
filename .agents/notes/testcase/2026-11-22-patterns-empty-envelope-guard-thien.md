@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-patterns-empty-envelope-guard-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-patterns-empty-envelope-guard-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/contracts/common.ts` (`isApiEmptyEnvelope`), `apps/web/src/lib/api-client.ts` (`fetchApi`), `apps/web/src/services/earthquake-api.ts` (`getPatterns`)
 - Test File: `apps/web/tests/api-empty-envelope.test.ts`
 - Author: agent | thien

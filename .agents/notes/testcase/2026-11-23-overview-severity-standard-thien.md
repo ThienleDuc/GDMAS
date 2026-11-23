@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-23-overview-severity-standard-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-23-overview-severity-standard-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/features/overview/`, `apps/web/src/components/charts/OverviewSeverityChart.tsx`
 - Test File: `apps/web/tests/severity-standard.test.ts` (mới), cập nhật `overview-view.test.ts`, `overview-page.test.ts`
 - Author: agent | thien

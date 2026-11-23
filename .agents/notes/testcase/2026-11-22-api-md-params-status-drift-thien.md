@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-api-md-params-status-drift-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-api-md-params-status-drift-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `docs/api/API.md` §3.1, §3.2
 - Test File: `scripts/tests/test_api_docs_contracts.py`
 - Author: agent | thien

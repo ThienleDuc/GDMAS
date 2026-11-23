@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-12-offline-test-suite-tai
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-12-offline-test-suite-tai.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/services/prediction/ (inference.py, service.py), apps/api/src/gdmas/api/routes/ (earthquakes.py, statistics.py, system.py, predictions.py, analysis.py, clusters.py), apps/api/src/gdmas/realtime/sse.py
 - Test File: apps/api/tests/unit/conftest.py, test_prediction_inference.py, test_prediction_service.py, test_earthquakes_routes.py, test_statistics_route.py, test_system_prediction_routes.py, test_sse_stream.py, test_worker_error_boundaries.py
 - Author: agent | tai

@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-20-fe-task-thien-7-terminals-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-20-fe-task-thien-7-terminals-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: docs/task/thien.md
 - Test File: N/A (docs-only)
 - Author: agent | thien

@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-24-header-catalog-realtime-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-24-header-catalog-realtime-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/api/src/gdmas/services/catalog.py`, `apps/api/src/gdmas/realtime/sse.py`, `apps/web/src/layouts/header/`
 - Test File: `apps/api/tests/unit/test_catalog_sse.py`, `apps/web/tests/header-region-filter.test.ts`
 - Author: agent | thien

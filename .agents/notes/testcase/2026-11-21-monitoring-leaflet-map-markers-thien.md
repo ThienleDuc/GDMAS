@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-21-monitoring-leaflet-map-markers-thien
-- Mode: proposal-paired   <!-- proposal-paired | single-file-test -->
-- Proposal: .agents/notes/proposed/2026-11-21-monitoring-leaflet-map-markers-thien.md
+- Mode: single-file-test   <!-- proposal-paired | single-file-test -->
+- Proposal: none
 - Target: `apps/web/src/features/monitoring/monitoring-view.ts`, `apps/web/src/features/earthquakes/region-filter.ts`, `apps/web/src/features/earthquakes/useCatalogSelection.ts`, `apps/web/src/lib/api-client.ts` (+ `apps/web/src/lib/transforms/map-data.ts` giữ nguyên)
 - Test File: `apps/web/tests/monitoring-map.test.ts` + `apps/web/tests/region-filter.test.ts` + `apps/web/tests/catalog-selection.test.ts` + `apps/web/tests/region-clusters.test.ts` (mới) + bổ sung `apps/web/tests/{geo-format,map-data,country-clusters,mock-earthquakes}.test.ts`
 - Author: agent | thien

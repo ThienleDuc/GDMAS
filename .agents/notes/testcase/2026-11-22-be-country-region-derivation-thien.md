@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-be-country-region-derivation-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-be-country-region-derivation-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/services/ingestion/geo.py, parser.py, models/earthquake.py, api/routes/earthquakes.py (list/detail/countries/regions), services/geo-catalog-api.ts
 - Test File: apps/api/tests/unit/test_ingestion_geo.py, test_ingestion_backfill.py (+ bổ sung test_ingestion_parser.py, test_earthquakes_routes.py), apps/web/tests/geo-catalog-api.test.ts
 - Author: agent | thien

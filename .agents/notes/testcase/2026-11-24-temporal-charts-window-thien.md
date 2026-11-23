@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-24-temporal-charts-window-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-24-temporal-charts-window-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/api/src/gdmas/api/routes/analysis.py`
 - Test File: `apps/api/tests/unit/test_analysis_query_params.py`
 - Author: agent | thien

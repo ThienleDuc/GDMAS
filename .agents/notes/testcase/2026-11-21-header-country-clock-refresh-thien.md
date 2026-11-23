@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-21-header-country-clock-refresh-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-21-header-country-clock-refresh-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/layouts/{navigation.ts,DashboardLayout.tsx,header/}`, `apps/web/src/utils/timezone.ts`
 - Test File: `apps/web/tests/header-global.test.ts`, `apps/web/tests/layout-navigation.test.ts`, `apps/web/tests/layout-styles.test.ts`
 - Author: agent | thien

@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-12-analysis-four-patterns-son
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-12-analysis-four-patterns-son.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/services/analysis/
 - Test File: apps/api/tests/unit/test_analysis_patterns.py, apps/api/tests/unit/test_analysis_service.py, apps/api/tests/unit/test_analysis_runner.py, apps/api/tests/integration/test_analysis_transactions.py, apps/api/tests/integration/test_ingestion_pipeline.py
 - Author: agent | son

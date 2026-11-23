@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-16-fe-contract-gis-reports-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-16-fe-contract-gis-reports-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/services/earthquake-api.ts`, `apps/web/src/hooks/useSSE.ts`, `apps/web/src/components/map/map-data.ts`, `apps/web/src/features/settings/settings-data.ts`, `apps/web/src/utils/timezone.ts`, `apps/web/src/features/{monitoring,reports,settings}/`
 - Test File: `apps/web/tests/{services,map-data,sse-machine,settings-data,geo-format}.test.ts`, `apps/web/tests/ui/{empty-state,reports,settings,map-panel}.test.tsx`
 - Author: agent | thien

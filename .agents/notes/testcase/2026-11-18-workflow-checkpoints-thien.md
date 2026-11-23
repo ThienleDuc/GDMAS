@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-18-workflow-checkpoints-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-18-workflow-checkpoints-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: 8 tệp định nghĩa workflow (3 SKILL.md, AGENTS.md, CLAUDE.md, .claude/notes/README.md, docs/agent-workflow.md, docs/git-workflow.md)
 - Test File: `scripts/tests/test_workflow_checkpoints.py`
 - Author: agent | thien

@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-17-ui-component-styles-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-17-ui-component-styles-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/styles/{index,globals}.css` + `apps/web/src/layouts/{DashboardLayout,FullscreenMapLayout,ReportLayout}.tsx` + `apps/web/src/layouts/layout.css`
 - Test File: `apps/web/tests/layout-styles.test.ts`
 - Author: agent | thien

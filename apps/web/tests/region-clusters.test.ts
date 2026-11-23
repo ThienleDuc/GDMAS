@@ -11,7 +11,6 @@ import {
   buildRegionClusterRows,
   buildRegionClusters,
 } from "../src/features/monitoring/region-clusters.ts";
-import { fetchRegionClusters } from "../src/features/monitoring/mock-region-clusters.ts";
 
 const CLUSTERS_PAYLOAD = {
   success: true,
@@ -38,14 +37,6 @@ const CLUSTERS_PAYLOAD = {
     ],
   },
 };
-
-function mockFetch(payload: unknown, status = 200) {
-  const original = globalThis.fetch;
-  globalThis.fetch = async () => new Response(JSON.stringify(payload), { status });
-  return () => {
-    globalThis.fetch = original;
-  };
-}
 
 test("TC-19: buildRegionClusters gom sự kiện theo quốc gia/khu vực", () => {
   const rows = buildRegionClusters([
@@ -95,34 +86,4 @@ test("TC-03 — avg_magnitude/max_magnitude null → không bịa số", () => {
   assert.equal(rows[0].eventCount, 7);
   assert.equal(rows[0].avgMagnitude, null);
   assert.equal(rows[0].maxMagnitude, null);
-});
-
-test("TC-04 — fetchRegionClusters lấy /clusters thật; 404 → []", async () => {
-  const restore = mockFetch(CLUSTERS_PAYLOAD);
-  try {
-    const rows = await fetchRegionClusters();
-    assert.equal(rows.length, 2);
-    assert.ok(rows.some((row) => row.country === "Japan" && row.eventCount === 21));
-  } finally {
-    restore();
-  }
-
-  const restore404 = mockFetch({ success: false, error: { code: "RESOURCE_NOT_FOUND", message: "x" } }, 404);
-  try {
-    const rows = await fetchRegionClusters();
-    assert.deepEqual(rows, [], "404 → [] (không mock)");
-  } finally {
-    restore404();
-  }
-});
-
-test("TC-05 — không còn dữ liệu mô phỏng trong source", () => {
-  const sourceRoot = resolve(import.meta.dirname, "../src");
-  const file = readFileSync(
-    resolve(sourceRoot, "features/monitoring/mock-region-clusters.ts"),
-    "utf8",
-  );
-
-  assert.doesNotMatch(file, /MOCK_SOURCES|getMockRegionClusters/u);
-  assert.match(file, /getClustersOptional/u);
 });

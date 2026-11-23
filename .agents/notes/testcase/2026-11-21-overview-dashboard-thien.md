@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-21-overview-dashboard-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-21-overview-dashboard-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/features/overview/`, `apps/web/src/components/charts/Overview*.tsx`, `apps/web/src/app/App.tsx`
 - Test File: `apps/web/tests/overview-view.test.ts`, `apps/web/tests/overview-page.test.ts`
 - Author: agent | thien

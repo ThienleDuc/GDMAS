@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-system-status-fields-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-system-status-fields-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/api/routes/system.py
 - Test File: apps/api/tests/unit/test_system_prediction_routes.py
 - Author: agent | thien

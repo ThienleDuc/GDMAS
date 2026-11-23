@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-22-earthquake-detail-panel-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-earthquake-detail-panel-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/features/earthquakes/earthquake-detail.ts, components/EarthquakeDetailPanel.tsx, EarthquakesPage.tsx
 - Test File: apps/web/tests/earthquake-detail.test.ts, apps/web/tests/earthquakes-page.test.ts
 - Author: agent | thien

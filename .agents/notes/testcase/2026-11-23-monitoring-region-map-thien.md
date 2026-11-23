@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-23-monitoring-region-map-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-23-monitoring-region-map-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/features/monitoring/region-catalog-view.ts, apps/web/src/components/map/tile-url.ts
 - Test File: apps/web/tests/monitoring-region-map.test.ts
 - Author: agent | thien

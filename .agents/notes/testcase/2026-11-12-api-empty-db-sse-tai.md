@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-12-api-empty-db-sse-tai
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-12-api-empty-db-sse-tai.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/api/routes/ (earthquakes.py, statistics.py, stream.py, events.py), apps/api/src/gdmas/realtime/sse.py
 - Test File: apps/api/tests/unit/conftest.py, test_earthquakes_routes.py, test_statistics_route.py, test_sse_stream.py
 - Author: agent | tai

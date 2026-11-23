@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-16-six-patterns-chart-components-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-16-six-patterns-chart-components-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/components/charts/chart-data.ts, apps/web/src/components/charts/types.ts
 - Test File: apps/web/tests/chart-data.test.ts
 - Author: agent | thien

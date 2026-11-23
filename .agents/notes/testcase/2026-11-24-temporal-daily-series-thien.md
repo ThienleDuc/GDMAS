@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-24-temporal-daily-series-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-24-temporal-daily-series-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/features/statistics/statistics-data.tsx`
 - Test File: test statistics FE bổ sung
 - Author: agent | thien

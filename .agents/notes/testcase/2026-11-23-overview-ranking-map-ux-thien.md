@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-23-overview-ranking-map-ux-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-23-overview-ranking-map-ux-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/features/overview/, apps/web/src/components/map/, apps/web/vite.config.ts
 - Test File: apps/web/tests/overview-ranking-catalog.test.ts, apps/web/tests/map-tile-proxy.test.ts
 - Author: agent | thien

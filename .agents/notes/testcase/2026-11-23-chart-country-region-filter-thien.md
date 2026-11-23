@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-23-chart-country-region-filter-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-23-chart-country-region-filter-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/api/routes/{analysis,statistics,predictions,classifications}.py, apps/web/src/services/earthquake-api.ts
 - Test File: apps/api/tests/unit/test_analysis_filtered.py (+ bổ sung statistics/prediction routes), apps/web/tests/chart-region-filter.test.ts
 - Author: agent | thien

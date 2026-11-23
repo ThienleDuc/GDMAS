@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-empty-test-script-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-empty-test-script-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `scripts/test.sh`
 - Test File: `scripts/tests/test_test_script.py`
 - Author: agent | thien

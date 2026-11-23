@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-12-seismic-prediction-worker-tai
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-12-seismic-prediction-worker-tai.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/services/prediction/ (inference.py, service.py, runner.py)
 - Test File: apps/api/tests/unit/test_prediction_inference.py, apps/api/tests/unit/test_prediction_service.py
 - Author: agent | tai

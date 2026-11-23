@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-24-monitoring-region-latest-refresh-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-24-monitoring-region-latest-refresh-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/features/monitoring/{monitoring-view,MonitoringMapPage}.ts(x)`
 - Test File: `apps/web/tests/monitoring-region-map.test.ts`, `apps/web/tests/monitoring-map-ux.test.ts`
 - Author: agent | thien

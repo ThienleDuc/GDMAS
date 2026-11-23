@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-21-api-docs-contract-sync-thien
-- Mode: proposal-paired   <!-- docs-only nhưng vẫn có test stdlib -->
-- Proposal: .agents/notes/proposed/2026-11-21-api-docs-contract-sync-thien.md
+- Mode: single-file-test   <!-- docs-only nhưng vẫn có test stdlib -->
+- Proposal: none
 - Target: `docs/api/API.md`
 - Test File: `scripts/tests/test_api_docs_contracts.py`
 - Author: agent | thien

@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-23-global-timezone-context-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-23-global-timezone-context-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/contexts/timezone-context.tsx, apps/web/src/layouts/header/RealtimeClock.tsx
 - Test File: apps/web/tests/timezone-context.test.ts
 - Author: agent | thien

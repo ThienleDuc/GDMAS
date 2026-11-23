@@ -1,15 +1,15 @@
 <!-- Template cho .agents/notes/testcase/2026-11-13-backend-lint-validation-son.md — copy ra file mới, không sửa file này.
      Luật xung quanh: docs/agent-workflow.md & .agents/skills/write-testcase/SKILL.md.
      Dùng cho cả 2 luồng:
-       (1) Mode: proposal-paired — sinh đồng thời với implemented/<id>/ khi Proposal §9 Approved.
+       (1) Mode: single-file-test — sinh đồng thời với implemented/<id>/ khi Proposal §9 Approved.
        (2) Mode: single-file-test — kiểm thử riêng 1 file cụ thể (checkout nhánh test/<id> -> viết unit test -> lỗi đưa vào .agents/notes/bugs/). -->
 
 # Testcase: Bảo vệ hợp đồng và ranh giới lỗi backend
 
 ## Metadata
 - ID: 2026-11-13-backend-lint-validation-son
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-13-backend-lint-validation-son.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/
 - Test File: apps/api/tests/unit/test_quality_boundaries.py, apps/api/tests/unit/test_worker_error_boundaries.py, apps/api/tests/unit/test_api_error_boundaries.py
 - Author: agent | son

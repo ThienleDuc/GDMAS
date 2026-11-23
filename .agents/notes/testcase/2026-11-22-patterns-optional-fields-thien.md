@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-patterns-optional-fields-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-patterns-optional-fields-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/api/routes/patterns.py
 - Test File: apps/api/tests/unit/test_patterns_contract_fields.py
 - Author: agent | thien
