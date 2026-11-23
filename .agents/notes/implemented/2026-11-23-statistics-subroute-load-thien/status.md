@@ -2,14 +2,14 @@
 
 ## Metadata
 - ID: 2026-11-23-statistics-subroute-load-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-23
 - Last Updated: 2026-11-23
 - Owner: agent | thien
 
 ## Tiến độ
 Progress: 100%
-Current Phase: validation — chờ CHECKPOINT 1
+Current Phase: completed — PR #99 đã merge vào develop (merge SHA `fc69acd`)
 
 Completed:
 - Proposal §9 Approved; plan/status/testcase sinh đồng thời
@@ -37,7 +37,7 @@ Blocked: none
 - Cờ enabled tính từ slug active; đổi `?country=&region=` hoặc `interval` vẫn refetch nguồn đang xem.
 
 ## Next Actions
-- CHECKPOINT 1: chờ `tiếp tục workflow`.
+- none — đã merge PR #99 vào develop, đồng bộ xong.
 
 ## Last Update
-2026-11-23 — Validation xanh, dừng CHECKPOINT 1.
+2026-11-23 — PR #99 merged vào develop (`fc69acd`); status → completed.
