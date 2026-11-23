@@ -12,17 +12,17 @@ import {
 import type { SeasonalityBar } from "../../features/overview/overview-view.ts";
 import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP } from "./chart-theme.ts";
 
-// Ngưỡng màu: Cao = đỏ (destructive), Trung bình = xám, Thấp = xanh (chart-3).
+// Dùng chung quy ước earthquakes: Mạnh = đỏ (error), Trung bình = vàng (warning), Nhẹ = xanh (success).
 const BAR_COLORS: Record<SeasonalityBar["position"], string> = {
   above: "var(--destructive)",
-  average: "var(--muted)",
+  average: "var(--chart-4)",
   below: "var(--chart-3)",
 };
 
 const LEVEL_LABELS: Record<SeasonalityBar["position"], string> = {
-  above: "Cao",
+  above: "Mạnh",
   average: "Trung bình",
-  below: "Thấp",
+  below: "Nhẹ",
 };
 
 /** D — "Chu kỳ nào (tháng/thứ) hoạt động cao hơn bình thường?" — baseline 1.0 = trung bình. */

@@ -41,8 +41,30 @@ test("TC-10: App dùng OverviewPage, đủ 4 chart + bảng xếp hạng + live 
   assert.match(hotspots, /Độ lớn cao nhất<\/th>/u);
   assert.match(hotspots, /<th>Mức độ<\/th>/u);
   assert.match(hotspots, /severityLabel\(row\.maxMagnitude\)/u);
-  assert.match(hotspots, /ov-severity--\$\{severityLabel\(row\.maxMagnitude\)\.tone\}/u);
-  assert.match(page, /ov-severity--\$\{severity\.tone\}/u); // 2 bảng dùng chung 1 kiểu nhãn
+  assert.match(hotspots, /ds-badge \$\{severityLabel\(row\.maxMagnitude\)\.badgeClass\}/u);
+  assert.match(page, /ds-badge \$\{severity\.badgeClass\}/u); // 2 bảng dùng chung badge earthquakes
+  assert.match(page, /depthLabel\(event\.depth_km\)/u);
+  assert.match(page, /SEVERITY_FOOTNOTE/u);
+  // MỌI label card dùng một kiểu duy nhất: ov-card__label.
+  for (const label of [
+    '<h2 className="ov-card__label">Động đất tập trung ở đâu?</h2>',
+    '<p className="ov-card__label">Chu kỳ hoạt động · 7 ngày / 12 tháng</p>',
+    '<h2 className="ov-card__label">Danh mục động đất gần đây</h2>',
+    '<h2 className="ov-card__label">Dự báo ngày tiếp theo</h2>',
+  ]) {
+    assert.ok(page.includes(label), `thiếu label card: ${label}`);
+  }
+  assert.doesNotMatch(page, /className="card-title"/u);
+  // Card dự báo luôn hiện; khi chưa chọn quốc gia → giá trị "—" (không ẩn card).
+  assert.match(page, /predictedValue:\s*null/u);
+  assert.match(page, /riskLabel:\s*null/u);
+  assert.doesNotMatch(page, /country !== ALL_COUNTRIES && \(\s*<article/u);
+  assert.match(page, /ds-badge \$\{riskBadgeClass\(forecast\.riskLabel\)\}/u);
+  assert.match(css, /\.ov-card__label\s*\{[^}]*font-family:\s*var\(--font-sans\)/u);
+  assert.match(css, /\.ov-card__label\s*\{[^}]*font-size:\s*var\(--text-base\)/u);
+  assert.match(css, /\.ov-card__label\s*\{[^}]*font-weight:\s*var\(--font-bold\)/u);
+  assert.match(css, /\.ov-card__label\s*\{[^}]*color:\s*var\(--foreground\)/u);
+  assert.doesNotMatch(css, /\.ov-card__title\s*\{/u);
   assert.match(hotspots, /ov-rank-index/u);
   assert.match(hotspots, /ov-cell-count/u);
   assert.match(page, /ov-cell-time/u);
@@ -70,9 +92,10 @@ test("TC-11: grid 12/6/1, dùng design token, không hardcode màu", () => {
   assert.doesNotMatch(css, /ov-card--12|ov-terminal/u);
   assert.match(css, /\.ov-severity\s*\{[^}]*background:\s*transparent/u);
   assert.match(css, /\.ov-severity\s*\{[^}]*font-weight:\s*var\(--font-bold\)/u);
-  assert.match(css, /\.ov-severity--high\s*\{[^}]*color:\s*var\(--destructive\)/u);
-  assert.match(css, /\.ov-severity--medium\s*\{[^}]*color:\s*var\(--chart-4\)/u);
-  assert.match(css, /\.ov-severity--low\s*\{[^}]*color:\s*var\(--chart-3\)/u);
+  assert.match(css, /\.ov-severity--very_high[\s\S]{0,80}var\(--error-dark\)/u);
+  assert.match(css, /\.ov-severity--medium[\s\S]{0,80}var\(--warning-dark\)/u);
+  assert.match(css, /\.ov-severity--very_low[\s\S]{0,80}var\(--success-dark\)/u);
+  assert.match(css, /\.ov-severity-footnote\s*\{/u);
   assert.match(css, /\.ov-page \.ds-table-wrapper\s*\{[^}]*border:\s*1px solid var\(--border\)/u);
   assert.match(css, /\.ov-page \.ds-table/u);
   assert.match(css, /\.ov-rank-index/u);

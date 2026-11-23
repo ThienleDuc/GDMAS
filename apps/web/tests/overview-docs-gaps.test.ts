@@ -71,9 +71,9 @@ test("TC-06: biểu đồ chu kỳ có chú giải màu", () => {
   const chart = read("components/charts/OverviewSeasonalityChart.tsx");
   assert.match(chart, /ov-season-legend/u);
   assert.match(chart, /LEVEL_LABELS/u);
-  assert.match(chart, /Cao/u);
+  assert.match(chart, /Mạnh/u);
   assert.match(chart, /Trung bình/u);
-  assert.match(chart, /Thấp/u);
+  assert.match(chart, /Nhẹ/u);
   assert.match(chart, /style=\{\{ fill: BAR_COLORS/u); // CSS var trong SVG chắc chắn áp dụng
   const css = read("features/overview/OverviewPage.css");
   assert.match(css, /\.ov-season-legend\s*\{/u);

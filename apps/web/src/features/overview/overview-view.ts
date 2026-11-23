@@ -17,6 +17,23 @@ import { ALL_COUNTRIES } from "../earthquakes/country-filter.ts";
 import { countryFromPlace } from "../earthquakes/country-clusters.ts";
 import { regionFromPlace } from "../earthquakes/region-filter.ts";
 import type { DateRangePreset } from "../earthquakes/earthquake-view.ts";
+import {
+  DEPTH_BANDS,
+  MAGNITUDE_BANDS,
+  SEVERITY_FOOTNOTE,
+} from "../earthquakes/earthquake-insights.ts";
+
+export { SEVERITY_FOOTNOTE };
+
+/**
+ * Số thập phân hiển thị thống nhất: đúng 3 chữ số sau dấu chấm (dùng dấu chấm theo yêu cầu).
+ * Số nguyên giữ nguyên để không tạo ra "120.000" giả; null/NaN → "—" (I3/I5).
+ */
+export function formatDecimal3(value: number | null | undefined): string {
+  if (!isFiniteNumber(value)) return "—";
+  const numeric = value as number;
+  return Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(3);
+}
 
 export interface KpiCard {
   key: string;
@@ -30,6 +47,8 @@ export interface SeveritySlice {
   key: string;
   label: string;
   value: number;
+  /** Badge class của earthquakes — dùng để ánh xạ màu biểu đồ/legend. */
+  badgeClass: string;
 }
 
 export interface SeverityMix {
@@ -37,19 +56,47 @@ export interface SeverityMix {
   partial: boolean;
 }
 
-export type SeverityTone = "high" | "medium" | "low";
+export type SeverityTone = "very_low" | "low" | "medium" | "high" | "very_high";
+export type DepthTone = "shallow" | "mid" | "deep";
 
 export interface SeverityLabel {
   label: string;
   tone: SeverityTone;
+  badgeClass: string;
 }
 
-/** Nhãn mức độ bằng tiếng Việt cho bảng xếp hạng/live feed — không phải cảnh báo chính thức. */
+export interface DepthLabel {
+  label: string;
+  tone: DepthTone;
+  badgeClass: string;
+}
+
+const MAGNITUDE_TONES: readonly SeverityTone[] = ["very_low", "low", "medium", "high", "very_high"];
+const DEPTH_TONES: readonly DepthTone[] = ["shallow", "mid", "deep"];
+
+/**
+ * Nhãn 5 mức độ lớn — tái dùng label + badgeClass từ `MAGNITUDE_BANDS` của earthquakes (nguồn quy ước duy nhất).
+ * Ngưỡng số khớp các khoảng Rất nhẹ / Nhẹ / Trung bình / Mạnh / Rất mạnh.
+ */
 export function severityLabel(magnitude: number | null | undefined): SeverityLabel {
-  if (!isFiniteNumber(magnitude)) return { label: "—", tone: "low" };
-  if (magnitude >= 6) return { label: "Cao", tone: "high" };
-  if (magnitude >= 5) return { label: "Trung bình", tone: "medium" };
-  return { label: "Thấp", tone: "low" };
+  if (!isFiniteNumber(magnitude)) return { label: "—", tone: "low", badgeClass: "ds-badge-neutral" };
+  const index = magnitude < 3 ? 0 : magnitude < 5 ? 1 : magnitude < 6 ? 2 : magnitude < 7 ? 3 : 4;
+  return {
+    label: MAGNITUDE_BANDS[index].level,
+    tone: MAGNITUDE_TONES[index],
+    badgeClass: MAGNITUDE_BANDS[index].badgeClass,
+  };
+}
+
+/** Nhãn 3 mức độ sâu — tái dùng `DEPTH_BANDS` của earthquakes; thiếu số liệu trả "—" (I5). */
+export function depthLabel(depthKm: number | null | undefined): DepthLabel {
+  if (!isFiniteNumber(depthKm)) return { label: "—", tone: "mid", badgeClass: "ds-badge-neutral" };
+  const index = depthKm < 70 ? 0 : depthKm <= 300 ? 1 : 2;
+  return {
+    label: DEPTH_BANDS[index].level,
+    tone: DEPTH_TONES[index],
+    badgeClass: DEPTH_BANDS[index].badgeClass,
+  };
 }
 
 export interface RankRow {
@@ -85,6 +132,8 @@ export interface LatestEventRow {
   time: string;
   place: string;
   magnitude: number;
+  /** Độ sâu từ API/SSE — null khi nguồn không trả (không bịa số khi hiển thị). */
+  depth_km: number | null;
   latitude: number;
   longitude: number;
 }
@@ -120,6 +169,24 @@ export function riskLabelVietnamese(level: string | null): string | null {
   return RISK_LABELS[level] ?? level;
 }
 
+/**
+ * Badge class cho mức rủi ro — ánh xạ sang palette earthquakes (I2):
+ * Thấp → success, Trung bình → warning, Cao/Rất cao → error. Nhãn lạ → neutral.
+ */
+export function riskBadgeClass(label: string | null): string {
+  switch (label) {
+    case "Thấp":
+      return "ds-badge-success";
+    case "Trung bình":
+      return "ds-badge-warning";
+    case "Cao":
+    case "Rất cao":
+      return "ds-badge-error";
+    default:
+      return "ds-badge-neutral";
+  }
+}
+
 /** 4 KPI — giá trị lấy trực tiếp từ contract; thiếu → null (không trả 0 giả). */
 export function buildKpis(
   statistics: StatisticsResponse | null,
@@ -133,7 +200,7 @@ export function buildKpis(
       key: "total",
       label: "Tổng sự kiện",
       value: isFiniteNumber(data?.total_events) ? data!.total_events! : null,
-      hint: avgMagnitude === null ? "Chưa có dữ liệu thống kê" : `Độ lớn TB M${avgMagnitude.toFixed(1)}`,
+      hint: avgMagnitude === null ? "Chưa có dữ liệu thống kê" : `Độ lớn TB M${formatDecimal3(avgMagnitude)}`,
       tone: "primary",
     },
     {
@@ -167,14 +234,35 @@ export function buildKpis(
 /** Cơ cấu độ lớn — chỉ lấy field có thật; nếu thiếu nhóm nhỏ thì đánh dấu partial. */
 export function buildSeverityMix(statistics: StatisticsResponse | null): SeverityMix {
   const data = statistics?.data;
-  const known: ReadonlyArray<{ key: string; label: string; raw: unknown }> = [
-    { key: "minor", label: "Dưới 5.0", raw: data?.minor_events_count },
-    { key: "moderate", label: "5.0 – 5.9", raw: data?.moderate_events_count },
-    { key: "strong", label: "Từ 6.0", raw: data?.strong_events_count },
+  // `/statistics` chỉ trả 3 field — giữ 3 nhóm thật, không tự chia 5 nhóm giả (I5).
+  const known: ReadonlyArray<{ key: string; label: string; raw: unknown; badgeClass: string }> = [
+    {
+      key: "minor",
+      label: `${MAGNITUDE_BANDS[0].level} + ${MAGNITUDE_BANDS[1].level}`,
+      raw: data?.minor_events_count,
+      badgeClass: MAGNITUDE_BANDS[0].badgeClass,
+    },
+    {
+      key: "moderate",
+      label: MAGNITUDE_BANDS[2].level,
+      raw: data?.moderate_events_count,
+      badgeClass: MAGNITUDE_BANDS[2].badgeClass,
+    },
+    {
+      key: "strong",
+      label: `${MAGNITUDE_BANDS[3].level} + ${MAGNITUDE_BANDS[4].level}`,
+      raw: data?.strong_events_count,
+      badgeClass: MAGNITUDE_BANDS[3].badgeClass,
+    },
   ];
   const slices = known
     .filter((item) => isFiniteNumber(item.raw))
-    .map((item) => ({ key: item.key, label: item.label, value: Math.max(0, Math.trunc(item.raw as number)) }));
+    .map((item) => ({
+      key: item.key,
+      label: item.label,
+      value: Math.max(0, Math.trunc(item.raw as number)),
+      badgeClass: item.badgeClass,
+    }));
 
   return { slices, partial: slices.length < known.length };
 }
@@ -322,6 +410,7 @@ export function applySseLatestEvent(
     time,
     place: typeof record.place === "string" && record.place.trim() ? record.place.trim() : "Khác",
     magnitude,
+    depth_km: Number.isFinite(Number(record.depth_km)) ? Number(record.depth_km) : null,
     latitude,
     longitude,
   };
@@ -401,6 +490,7 @@ export function buildLatestEvents(items: readonly EarthquakeItem[] | null | unde
       time: item.event_time,
       place: item.place?.trim() || "Khác",
       magnitude: item.magnitude,
+      depth_km: isFiniteNumber(item.depth_km) ? item.depth_km : null,
       latitude: item.latitude,
       longitude: item.longitude,
     }));

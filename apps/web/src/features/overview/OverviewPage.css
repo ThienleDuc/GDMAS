@@ -79,11 +79,14 @@
   font-size: var(--text-xs);
 }
 
+/* Kiểu duy nhất cho MỌI label/title card — font, size, màu đồng bộ (quy ước earthquakes). */
 .ov-card__label {
-  margin: 0 0 var(--space-2);
+  margin: 0 0 var(--space-3);
   color: var(--foreground);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-base);
 }
 
 .ov-notice {
@@ -395,7 +398,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Nhãn mức độ trên cả 2 bảng tổng quan: không nền highlight, chữ đậm có màu */
+/* Nhãn mức độ — giữ class cũ làm alias tương thích (I2); màu lấy từ token earthquakes. */
 .ov-severity {
   display: inline-flex;
   align-items: center;
@@ -409,16 +412,30 @@
   white-space: nowrap;
 }
 
+.ov-severity--very_high,
 .ov-severity--high {
-  color: var(--destructive);
+  color: var(--error-dark);
 }
 
-.ov-severity--medium {
-  color: var(--chart-4);
+.ov-severity--medium,
+.ov-severity--shallow {
+  color: var(--warning-dark);
 }
 
-.ov-severity--low {
-  color: var(--chart-3);
+.ov-severity--low,
+.ov-severity--mid {
+  color: var(--info-dark);
+}
+
+.ov-severity--very_low,
+.ov-severity--deep {
+  color: var(--success-dark);
+}
+
+.ov-severity-footnote {
+  margin: var(--space-3) 0 0;
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
 }
 
 /* Bảng có viền rõ; nội dung trong ô được chăm riêng (xem .ov-cell-*) */

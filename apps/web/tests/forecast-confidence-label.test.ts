@@ -39,8 +39,8 @@ test("TC-02: payload thiếu → null, không bịa 95%", () => {
 test("TC-03: UI Overview ghi rõ mức & cơ sở", () => {
   const page = readFileSync(resolve(src, "features/overview/OverviewPage.tsx"), "utf8");
   assert.match(page, /Khoảng tin cậy/u);
-  assert.match(page, /Math\.round\(prediction\.confidenceLevel \* 100\)/u);
-  assert.match(page, /Dựa trên mô hình \{prediction\.modelName\}/u);
+  assert.match(page, /Math\.round\(forecast\.confidenceLevel \* 100\)/u);
+  assert.match(page, /Dựa trên mô hình \{forecast\.modelName\}/u);
 });
 
 test("TC-04: AI insights ghi rõ mức & cơ sở", () => {

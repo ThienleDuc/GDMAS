@@ -7,7 +7,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { severityLabel, type RankRow } from "../../features/overview/overview-view.ts";
+import { formatDecimal3, severityLabel, type RankRow } from "../../features/overview/overview-view.ts";
 import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP } from "./chart-theme.ts";
 
 interface OverviewHotspotsChartProps {
@@ -72,13 +72,13 @@ export function OverviewHotspotsChart({ rows, mode, note, onSelect }: OverviewHo
                 </td>
                 <td className="numeric"><span className="ov-cell-count">{row.eventCount}</span></td>
                 <td className="numeric">
-                  <span className="ov-cell-mag">{row.avgMagnitude === null ? "—" : row.avgMagnitude.toFixed(1)}</span>
+                  <span className="ov-cell-mag">{formatDecimal3(row.avgMagnitude)}</span>
                 </td>
                 <td className="numeric">
-                  <span className="ov-cell-mag">{row.maxMagnitude === null ? "—" : row.maxMagnitude.toFixed(1)}</span>
+                  <span className="ov-cell-mag">{formatDecimal3(row.maxMagnitude)}</span>
                 </td>
                 <td>
-                  <span className={`ov-severity ov-severity--${severityLabel(row.maxMagnitude).tone}`}>
+                  <span className={`ds-badge ${severityLabel(row.maxMagnitude).badgeClass}`}>
                     {severityLabel(row.maxMagnitude).label}
                   </span>
                 </td>

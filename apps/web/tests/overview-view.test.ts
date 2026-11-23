@@ -14,9 +14,12 @@ import {
   buildSeasonalityBars,
   buildSeverityMix,
   buildTrendComparison,
+  depthLabel,
   rankCountries,
   rankRegionsForCountry,
   riskLabelVietnamese,
+  riskBadgeClass,
+  formatDecimal3,
   formatPrediction,
   severityLabel,
 } from "../src/features/overview/overview-view.ts";
@@ -109,7 +112,7 @@ test("TC-01: KPI lấy đúng giá trị từ statistics/clusters", () => {
     kpis.map((card) => card.value),
     [120, 7, 6.4, 2],
   );
-  assert.equal(kpis[0].hint, "Độ lớn TB M4.2");
+  assert.equal(kpis[0].hint, "Độ lớn TB M4.200");
 
   const empty = buildKpis(null, null);
   assert.ok(empty.every((card) => card.value === null));
@@ -118,6 +121,11 @@ test("TC-01: KPI lấy đúng giá trị từ statistics/clusters", () => {
 test("TC-02: cơ cấu độ lớn — tổng đúng, thiếu nhóm thì partial", () => {
   const mix = buildSeverityMix(statistics);
   assert.deepEqual(mix.slices.map((slice) => slice.value), [90, 25, 5]);
+  assert.deepEqual(mix.slices.map((slice) => slice.badgeClass), [
+    "ds-badge-success",
+    "ds-badge-warning",
+    "ds-badge-error",
+  ]);
   assert.equal(mix.partial, false);
 
   const partial = buildSeverityMix({ success: true, data: { ...statistics.data, minor_events_count: undefined } });
@@ -216,11 +224,39 @@ test("TC-13: nhãn rủi ro Pattern 6 bằng tiếng Việt", () => {
   assert.equal(view.riskLabel, "Cao");
 });
 
-test("TC-12: nhãn mức độ tiếng Việt Cao / Trung bình / Thấp", () => {
-  assert.deepEqual(severityLabel(6.4), { label: "Cao", tone: "high" });
-  assert.deepEqual(severityLabel(5.2), { label: "Trung bình", tone: "medium" });
-  assert.deepEqual(severityLabel(4.1), { label: "Thấp", tone: "low" });
-  assert.deepEqual(severityLabel(null), { label: "—", tone: "low" });
+test("TC-15: formatDecimal3 — đúng 3 chữ số sau dấu chấm", () => {
+  assert.equal(formatDecimal3(5.2), "5.200");
+  assert.equal(formatDecimal3(6), "6");
+  assert.equal(formatDecimal3(4.25), "4.250");
+  assert.equal(formatDecimal3(null), "—");
+  assert.equal(formatDecimal3(Number.NaN), "—");
+});
+
+test("TC-14: riskBadgeClass dùng chung palette earthquakes", () => {
+  assert.equal(riskBadgeClass("Thấp"), "ds-badge-success");
+  assert.equal(riskBadgeClass("Trung bình"), "ds-badge-warning");
+  assert.equal(riskBadgeClass("Cao"), "ds-badge-error");
+  assert.equal(riskBadgeClass("Rất cao"), "ds-badge-error");
+  assert.equal(riskBadgeClass(null), "ds-badge-neutral");
+  assert.equal(riskBadgeClass("lạ"), "ds-badge-neutral");
+});
+
+test("TC-12: nhãn 5 mức độ lớn theo quy ước earthquakes", () => {
+  assert.deepEqual(severityLabel(2.9), { label: "Rất nhẹ", tone: "very_low", badgeClass: "ds-badge-success" });
+  assert.deepEqual(severityLabel(3.2), { label: "Nhẹ", tone: "low", badgeClass: "ds-badge-info" });
+  assert.deepEqual(severityLabel(5.2), { label: "Trung bình", tone: "medium", badgeClass: "ds-badge-warning" });
+  assert.deepEqual(severityLabel(6.4), { label: "Mạnh", tone: "high", badgeClass: "ds-badge-error" });
+  assert.deepEqual(severityLabel(7.1), { label: "Rất mạnh", tone: "very_high", badgeClass: "ds-badge-error" });
+  assert.deepEqual(severityLabel(null), { label: "—", tone: "low", badgeClass: "ds-badge-neutral" });
+});
+
+test("TC-13: nhãn 3 mức độ sâu theo quy ước earthquakes", () => {
+  assert.deepEqual(depthLabel(0), { label: "Nông", tone: "shallow", badgeClass: "ds-badge-warning" });
+  assert.deepEqual(depthLabel(69.9), { label: "Nông", tone: "shallow", badgeClass: "ds-badge-warning" });
+  assert.deepEqual(depthLabel(70), { label: "Trung bình", tone: "mid", badgeClass: "ds-badge-info" });
+  assert.deepEqual(depthLabel(300), { label: "Trung bình", tone: "mid", badgeClass: "ds-badge-info" });
+  assert.deepEqual(depthLabel(300.1), { label: "Sâu", tone: "deep", badgeClass: "ds-badge-success" });
+  assert.deepEqual(depthLabel(Number.NaN), { label: "—", tone: "mid", badgeClass: "ds-badge-neutral" });
 });
 
 test("TC-09: sự kiện mới nhất sort theo UTC, giữ WGS84", () => {
