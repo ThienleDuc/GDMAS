@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-22-patterns-cluster-fallback-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-patterns-cluster-fallback-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/services/earthquake-api.ts (`getClustersOptional`), apps/web/src/lib/transforms/cluster-fallback.ts, apps/web/src/contracts/common.ts (`isApiEnvelope` — sửa để `/patterns` aggregate hợp lệ)
 - Test File: apps/web/tests/cluster-fallback.test.ts, apps/web/tests/services.test.ts
 - Author: agent | thien

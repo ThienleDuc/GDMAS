@@ -5,8 +5,8 @@
 
 ## Metadata
 - ID: 2026-11-23-earthquakes-filter-header-controls-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-23-earthquakes-filter-header-controls-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/dev-mock.ts`, `apps/web/src/layouts/header/`, `apps/web/src/features/earthquakes/components/MagnitudeHistogramChart.tsx`, `apps/web/src/layouts/DashboardLayout.tsx`
 - Test File: `apps/web/tests/header-aside-controls.test.ts`, `apps/web/tests/header-region-filter.test.ts`, `apps/web/tests/dev-mock.test.ts` (bổ sung)
 - Author: agent | thien

@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-21-statistics-six-patterns-charts-thien
-- Mode: proposal-paired   <!-- proposal-paired | single-file-test -->
-- Proposal: .agents/notes/proposed/2026-11-21-statistics-six-patterns-charts-thien.md
+- Mode: single-file-test   <!-- proposal-paired | single-file-test -->
+- Proposal: none
 - Target: `apps/web/src/features/statistics/statistics-view.ts`, `apps/web/src/lib/transforms/chart-{data,types}.ts` (adapter, giữ chữ ký)
 - Test File: `apps/web/tests/statistics-view.test.ts`, `apps/web/tests/pattern-nav.test.ts`, `apps/web/tests/ai-insights.test.ts`, `apps/web/tests/insight-structure.test.ts`, `apps/web/tests/chart-guides.test.ts` (mới) + bổ sung `apps/web/tests/chart-data.test.ts`
 - Author: agent | thien

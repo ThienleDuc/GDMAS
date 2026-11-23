@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-22-sse-standard-endpoint-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-sse-standard-endpoint-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/hooks/useSSE.ts, apps/web/src/layouts/DashboardLayout.tsx
 - Test File: apps/web/tests/sse-default.test.ts, apps/web/tests/dev-mock.test.ts
 - Author: agent | thien

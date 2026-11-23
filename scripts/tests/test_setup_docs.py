@@ -13,7 +13,7 @@ WEB_ENV_EXAMPLE = (REPO_ROOT / "apps/web/.env.example").read_text(encoding="utf-
 
 class SetupDocsTests(unittest.TestCase):
     def test_01_fe_env_var_names_correct(self) -> None:
-        for token in ("VITE_API_BASE_URL", "VITE_SSE_ENDPOINT", "VITE_API_MOCKING"):
+        for token in ("VITE_API_BASE_URL", "VITE_SSE_ENDPOINT"):
             with self.subTest(token=token):
                 self.assertIn(token, SETUP_DOC)
 
@@ -30,9 +30,9 @@ class SetupDocsTests(unittest.TestCase):
         self.assertIn("printf '%s\\n'", SETUP_DOC)
         self.assertNotIn('echo "VITE_API_BASE_URL=', SETUP_DOC)
 
-    def test_05_mock_must_be_disabled(self) -> None:
-        self.assertIn("VITE_API_MOCKING=disabled", SETUP_DOC)
-        self.assertIn("VITE_API_MOCKING", WEB_ENV_EXAMPLE)
+    def test_05_mock_mode_removed(self) -> None:
+        self.assertNotIn("VITE_API_MOCKING", SETUP_DOC)
+        self.assertNotIn("VITE_API_MOCKING", WEB_ENV_EXAMPLE)
 
     def test_06_health_response_uses_envelope(self) -> None:
         self.assertIn('"success": true', SETUP_DOC)

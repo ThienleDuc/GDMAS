@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-12-api-rest-endpoints-tai
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-12-api-rest-endpoints-tai.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/api/routes/ (system.py, predictions.py, analysis.py, clusters.py, earthquakes.py)
 - Test File: apps/api/tests/unit/test_system_prediction_routes.py (+ phần bộ lọc trong test_earthquakes_routes.py)
 - Author: agent | tai

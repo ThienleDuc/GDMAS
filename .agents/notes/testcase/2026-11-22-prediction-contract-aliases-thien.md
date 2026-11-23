@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-prediction-contract-aliases-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-prediction-contract-aliases-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/api/routes/predictions.py
 - Test File: apps/api/tests/unit/test_system_prediction_routes.py
 - Author: agent | thien

@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-22-terminal-status-panel-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-terminal-status-panel-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/layouts/header/header-data.ts, apps/web/src/layouts/header/SystemStatusPanel.tsx
 - Test File: apps/web/tests/terminal-status.test.ts
 - Author: agent | thien

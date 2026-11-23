@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-24-prediction-filtered-precision-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-24-prediction-filtered-precision-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/api/src/gdmas/services/analysis/filtered.py`
 - Test File: `apps/api/tests/unit/test_prediction_filtered_precision.py`
 - Author: agent | thien

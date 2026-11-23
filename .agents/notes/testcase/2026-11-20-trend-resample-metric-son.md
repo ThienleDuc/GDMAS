@@ -1,15 +1,15 @@
 <!-- Template cho .agents/notes/testcase/yyyy-mm-dd-<slug>-<handle>.md — copy ra file mới, không sửa file này.
      Luật xung quanh: docs/agent-workflow.md & .agents/skills/write-testcase/SKILL.md.
      Dùng cho cả 2 luồng:
-       (1) Mode: proposal-paired — sinh đồng thời với implemented/<id>/ khi Proposal §9 Approved.
+       (1) Mode: single-file-test — sinh đồng thời với implemented/<id>/ khi Proposal §9 Approved.
        (2) Mode: single-file-test — kiểm thử riêng 1 file cụ thể (checkout nhánh test/<id> -> viết unit test -> lỗi đưa vào .agents/notes/bugs/). -->
 
 # Testcase: Pattern 2 (Trend) đa tần suất × đa metric — T3 → T6
 
 ## Metadata
 - ID: 2026-11-20-trend-resample-metric-son
-- Mode: proposal-paired   <!-- proposal-paired | single-file-test -->
-- Proposal: .agents/notes/proposed/2026-11-20-trend-resample-metric-son.md   <!-- hoặc `none` khi Mode: single-file-test -->
+- Mode: single-file-test   <!-- proposal-paired | single-file-test -->
+- Proposal: none
 - Target: `apps/api/src/gdmas/services/analysis/patterns.py`, `apps/api/src/gdmas/api/routes/analysis.py`
 - Test File: `apps/api/tests/unit/test_analysis_trend_metrics.py`, `apps/api/tests/unit/test_analysis_trend_route.py`
 - Author: agent | son

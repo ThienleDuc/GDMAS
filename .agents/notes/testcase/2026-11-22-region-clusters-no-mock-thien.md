@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-region-clusters-no-mock-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-region-clusters-no-mock-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/features/monitoring/mock-region-clusters.ts, region-clusters.ts (buildRegionClusterRows), MonitoringMapPage.tsx
 - Test File: apps/web/tests/region-clusters.test.ts
 - Author: agent | thien

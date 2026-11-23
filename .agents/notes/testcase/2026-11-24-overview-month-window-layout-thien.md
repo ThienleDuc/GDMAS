@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-24-overview-month-window-layout-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-24-overview-month-window-layout-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: BE window config/analysis route + `apps/web/src/features/overview/`, `OverviewPage.css`
 - Test File: `apps/api/tests/unit/test_analysis_query_params.py`, `apps/web/tests/overview-page.test.ts`, `apps/web/tests/services.test.ts`
 - Author: agent | thien

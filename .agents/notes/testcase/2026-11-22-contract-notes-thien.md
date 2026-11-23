@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-contract-notes-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-contract-notes-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/contracts/earthquake.ts, docs/api/API.md
 - Test File: apps/web/tests/api-contract-notes.test.ts
 - Author: agent | thien

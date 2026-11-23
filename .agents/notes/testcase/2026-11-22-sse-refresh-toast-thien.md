@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-sse-refresh-toast-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-sse-refresh-toast-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/layouts/header/{header-data,DataRefreshLabel,HeaderActions}.tsx, DashboardLayout.tsx
 - Test File: apps/web/tests/header-sse-refresh.test.ts
 - Author: agent | thien

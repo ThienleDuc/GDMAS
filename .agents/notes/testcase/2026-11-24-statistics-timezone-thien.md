@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-24-statistics-timezone-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-24-statistics-timezone-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/features/statistics/`, `apps/web/src/components/charts/TemporalPatternCharts.tsx`
 - Test File: `apps/web/tests/statistics-view.test.ts` bổ sung
 - Author: agent | thien

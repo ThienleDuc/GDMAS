@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-analysis-contract-fields-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-analysis-contract-fields-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/api/routes/analysis.py (4 build)
 - Test File: apps/api/tests/unit/test_analysis_contract_fields.py, apps/api/tests/unit/test_analysis_trend_route.py
 - Author: agent | thien

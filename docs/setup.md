@@ -74,7 +74,7 @@ Trước khi cấu hình, đảm bảo 3 cổng mạng sau trên `localhost` kh�
 > **Ghi chú Corepack (Frontend `apps/web/`):** `apps/web/package.json` khai báo `"packageManager": "pnpm@10.20.0"` để Corepack (có sẵn từ Node 16.10+) tự tải/ep đúng phiên bản, khớp `pnpm-lock.yaml` (`lockfileVersion: '9.0'`). Bản 10.20.0 yêu cầu Node $\ge 18.12$, nên chạy được ở cả ngưỡng tối thiểu $18.18.0$ lẫn Node $22+$. Corepack **chỉ nhận semver chính xác**, không nhận range như `pnpm@>=9`; do đó không ghi range vào `packageManager`. Ngưỡng tương thích được khai báo riêng qua `"engines": { "node": ">=18.18.0", "pnpm": ">=8.15.0" }`.
 >
 > - Kiểm tra đúng phiên bản FE dùng: `cd apps/web && corepack pnpm -v` → `10.20.0`. Lệnh `pnpm -v` ở trên có thể trả về pnpm cài global (khác bản) nên chỉ dùng để đối chiếu ngưỡng §1.4.
-> - Chạy riêng FE: `cd apps/web && corepack pnpm dev` (Vite cổng `3000`). Chạy không cần BE: `VITE_API_MOCKING=enabled corepack pnpm dev`. Không dùng `PUBLIC_*` — Vite chỉ expose biến `VITE_*`.
+> - Chạy riêng FE: `cd apps/web && corepack pnpm dev` (Vite cổng `3000`) — cần BE thật chạy cùng. Không dùng `PUBLIC_*` — Vite chỉ expose biến `VITE_*`.
 > - **Tránh lỗi CORS / `Status code: (null)`:** FE gọi BE qua `VITE_API_BASE_URL`. Với `docker compose`, cấu hình mặc định là `VITE_API_BASE_URL=/` + `VITE_API_PROXY_TARGET=http://api:8000`: mọi request `/api/...` (kể cả SSE) đi **cùng origin** qua Vite dev proxy, trình duyệt không cần truy cập trực tiếp `localhost:8000`. Khi chạy `pnpm dev` trên host, giữ `VITE_API_BASE_URL=http://localhost:8000`, để trống `VITE_API_PROXY_TARGET` và đảm bảo `CORS_ORIGINS` của BE chứa origin của FE (`http://localhost:3000`, `http://127.0.0.1:3000`).
 
 ### 1.5 Cấu hình Biến Môi trường Cục bộ (`.env` Configuration)
@@ -144,9 +144,6 @@ VITE_API_BASE_URL=http://localhost:8000
 # Endpoint SSE chuẩn theo API.md §3.5 (legacy: /api/v1/stream/earthquakes)
 VITE_SSE_ENDPOINT=/api/v1/events/stream
 
-# BẮT BUỘC disabled để dùng dữ liệu BE thật. "enabled" chỉ dành cho dev không có BE.
-VITE_API_MOCKING=disabled
-
 # Tile bản đồ (trang /monitoring): để trống → dùng /tile/{z}/{x}/{y}.png cùng origin.
 # Vite dev/preview proxy và nginx trong apps/web/Dockerfile chuyển /tile tới OSM DE
 # (tile miễn phí, KHÔNG cần API key — CARTO hiện trả ảnh "API KEY REQUIRED").
@@ -181,7 +178,6 @@ if (-not (Test-Path "apps\web\.env")) {
     @"
 VITE_API_BASE_URL=http://localhost:8000
 VITE_SSE_ENDPOINT=/api/v1/events/stream
-VITE_API_MOCKING=disabled
 "@ | Out-File -FilePath "apps\web\.env" -Encoding utf8
 } else {
     Write-Host "[2/5] File apps\web\.env đã tồn tại." -ForegroundColor Green
@@ -233,8 +229,7 @@ echo "--> [1/5] Thiết lập tệp cấu hình biến môi trường..."
 [ ! -f .env ] && cp .env.example .env
 [ ! -f apps/web/.env ] && printf '%s\n' \
   'VITE_API_BASE_URL=http://localhost:8000' \
-  'VITE_SSE_ENDPOINT=/api/v1/events/stream' \
-  'VITE_API_MOCKING=disabled' > apps/web/.env
+  'VITE_SSE_ENDPOINT=/api/v1/events/stream' > apps/web/.env
 
 # 2. Cấu hình Backend Python
 echo "--> [2/5] Cấu hình môi trường ảo Backend (uv)..."
@@ -432,7 +427,7 @@ Mở trình duyệt web truy cập địa chỉ: `http://localhost:3000`. Giao d
 ```bash
 bash scripts/test.sh
 ```
-Script chạy lần lượt 3 bước offline: kiểm tra nhất quán notes (`notes_index.py --check`), toàn bộ test Backend (`uv run pytest -q`) và toàn bộ test Frontend (`pnpm test`). Script **không đo độ phủ mã nguồn** — dừng lại với exit code khác 0 ngay khi có bước nào fail. Lưu ý: mock FE phải tắt (`VITE_API_MOCKING=disabled`) thì dữ liệu trên Dashboard mới đến từ BE thật.
+Script chạy lần lượt 3 bước offline: kiểm tra nhất quán notes (`notes_index.py --check`), toàn bộ test Backend (`uv run pytest -q`) và toàn bộ test Frontend (`pnpm test`). Script **không đo độ phủ mã nguồn** — dừng lại với exit code khác 0 ngay khi có bước nào fail. FE luôn dùng BE thật (không còn chế độ mock).
 
 ---
 

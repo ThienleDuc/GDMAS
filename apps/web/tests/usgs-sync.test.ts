@@ -133,11 +133,3 @@ test("TC-07 — trang /earthquakes bỏ actions, vẫn cấm table thô", () => 
   assert.doesNotMatch(page, /<UsgsSyncButton\b/u);
   assert.doesNotMatch(page, /<table\b/u);
 });
-
-test("TC-08 — dev-mock vẫn không phục vụ POST sync (không mock runtime)", () => {
-  const devMockTest = readFileSync(
-    resolve(import.meta.dirname, "dev-mock.test.ts"),
-    "utf8",
-  );
-  assert.match(devMockTest, /resolveContractMock\("POST", "\/api\/v1\/earthquakes\/sync"/u);
-});

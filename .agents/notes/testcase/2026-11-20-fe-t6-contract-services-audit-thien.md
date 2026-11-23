@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-20-fe-t6-contract-services-audit-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-20-fe-t6-contract-services-audit-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/contracts/`, `apps/web/src/services/`, `apps/web/src/lib/api-client.ts`
 - Test File: `apps/web/tests/services.test.ts`, `apps/web/tests/contract-mocks.test.ts`, `apps/web/tests/sse-api.test.ts`
 - Author: agent | thien

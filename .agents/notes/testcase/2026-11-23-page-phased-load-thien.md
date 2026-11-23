@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-23-page-phased-load-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-23-page-phased-load-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/features/overview/, apps/web/src/hooks/useEarthquakeInsights.ts, apps/web/src/features/earthquakes/EarthquakesPage.tsx
 - Test File: apps/web/tests/page-phased-load.test.ts
 - Author: agent | thien

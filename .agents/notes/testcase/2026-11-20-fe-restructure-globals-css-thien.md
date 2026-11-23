@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-20-fe-restructure-globals-css-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-20-fe-restructure-globals-css-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/` — `styles/`, `layouts/`, `contracts/`, `lib/`, `services/`, `hooks/`, `app/`
 - Test File: `apps/web/tests/lib-redesign.test.ts`, `apps/web/tests/layout-styles.test.ts`, `apps/web/tests/{chart-data,geo-format,map-data,settings-data}.test.ts`
 - Author: agent | thien

@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-24-temporal-timezone-buckets-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-24-temporal-timezone-buckets-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/api/src/gdmas/services/analysis/patterns.py`, `/analysis/temporal`, FE service
 - Test File: `apps/api/tests/unit/test_analysis_temporal_window.py`, FE test bổ sung
 - Author: agent | thien

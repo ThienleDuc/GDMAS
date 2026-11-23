@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-21-darkmode-toggle-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-21-darkmode-toggle-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/styles/globals.css`, `apps/web/src/layouts/header/{ThemeToggle,HeaderActions}.tsx`, `apps/web/src/layouts/layout.css`
 - Test File: `apps/web/tests/theme-toggle.test.ts`
 - Author: agent | thien

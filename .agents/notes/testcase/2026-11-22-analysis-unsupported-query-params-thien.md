@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-analysis-unsupported-query-params-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-analysis-unsupported-query-params-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/services/earthquake-api.ts`, `apps/web/src/features/overview/useOverviewData.ts`
 - Test File: `apps/web/tests/analysis-query-params.test.ts`
 - Author: agent | thien

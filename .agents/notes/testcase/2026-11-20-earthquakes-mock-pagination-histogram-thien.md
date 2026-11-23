@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-20-earthquakes-mock-pagination-histogram-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-20-earthquakes-mock-pagination-histogram-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/dev-mock.ts`, `apps/web/src/features/earthquakes/`
 - Test File: `apps/web/tests/mock-earthquakes.test.ts`, `apps/web/tests/earthquakes-insights.test.ts`
 - Author: agent | thien

@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-sync-feed-env-config-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-sync-feed-env-config-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/api/src/gdmas/api/routes/earthquakes.py`
 - Test File: `apps/api/tests/unit/test_sync_feed_config.py`
 - Author: agent | thien

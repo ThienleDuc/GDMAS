@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-24-catalog-selection-persistence-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-24-catalog-selection-persistence-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/features/earthquakes/{catalog-selection,useCatalogSelection}.ts`, `apps/web/src/layouts/`, `apps/web/src/features/{overview,statistics}/`
 - Test File: `apps/web/tests/catalog-selection-persistence.test.ts` (mới), bổ sung `header-global.test.ts`, `overview-page.test.ts`
 - Author: agent | thien

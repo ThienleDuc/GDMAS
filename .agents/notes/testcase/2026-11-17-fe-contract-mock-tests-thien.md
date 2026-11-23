@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-17-fe-contract-mock-tests-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-17-fe-contract-mock-tests-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/tests/mocks/` + `apps/web/tests/contract-mocks.test.ts` + `contracts/schemas/earthquake.json` + examples/README
 - Test File: `apps/web/tests/contract-mocks.test.ts`, `apps/web/tests/dev-mock.test.ts`
 - Author: agent | thien

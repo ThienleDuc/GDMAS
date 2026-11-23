@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-24-statistics-geo-filter-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-24-statistics-geo-filter-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/web/src/features/statistics/StatisticsLayout.tsx`
 - Test File: `apps/web/tests/statistics-subroute.test.ts`, `apps/web/tests/chart-region-filter.test.ts`
 - Author: agent | thien

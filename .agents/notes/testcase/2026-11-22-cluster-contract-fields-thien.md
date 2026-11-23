@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-22-cluster-contract-fields-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-cluster-contract-fields-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/api/routes/clusters.py (`_cluster`)
 - Test File: apps/api/tests/unit/test_cluster_contract_fields.py
 - Author: agent | thien

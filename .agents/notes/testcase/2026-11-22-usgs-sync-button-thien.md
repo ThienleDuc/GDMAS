@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-22-usgs-sync-button-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-22-usgs-sync-button-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/web/src/features/earthquakes/usgs-sync.ts, components/UsgsSyncButton.tsx, contracts/common.ts, services/earthquake-api.ts
 - Test File: apps/web/tests/usgs-sync.test.ts *(gồm cả case service 200/503/500/abort — gom chung thay vì sửa services.test.ts)*
 - Author: agent | thien

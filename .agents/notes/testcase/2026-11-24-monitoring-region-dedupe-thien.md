@@ -4,8 +4,8 @@
 
 ## Metadata
 - ID: 2026-11-24-monitoring-region-dedupe-thien
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-24-monitoring-region-dedupe-thien.md
+- Mode: single-file-test
+- Proposal: none
 - Target: `apps/api/src/gdmas/api/routes/earthquakes.py`, `apps/web/src/{layouts/header,features/monitoring,components/map}`
 - Test File: `apps/api/tests/unit/test_earthquakes_routes.py`, `apps/web/tests/monitoring-region-map.test.ts`, `apps/web/tests/header-region-filter.test.ts`
 - Author: agent | thien
