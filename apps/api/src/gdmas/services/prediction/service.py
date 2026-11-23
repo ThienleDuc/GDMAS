@@ -107,9 +107,9 @@ class PredictionService:
             PredictionResult(
                 target_date=today,
                 metric_name=METRIC_NAME,
-                predicted_value=round(fc["predicted"], 1),
-                lower_bound=round(fc["lower"], 1),
-                upper_bound=round(fc["upper"], 1),
+                predicted_value=round(fc["predicted"], 3),
+                lower_bound=round(fc["lower"], 3),
+                upper_bound=round(fc["upper"], 3),
                 model_name=fc_name[:64],
                 model_version=MODEL_VERSION,
                 evaluation_metrics={**fc_eval, "history_days_observed": observed},

@@ -28,6 +28,21 @@ from gdmas.services.prediction import inference
 
 logger = logging.getLogger("gdmas.services.analysis.filtered")
 
+
+def rounded_forecast(forecast: dict[str, Any]) -> dict[str, Any]:
+    """Chuẩn hóa 3 field dự báo về đúng 3 chữ số thập phân (giữ số thật, không đệm `000`).
+
+    Cả 2 đường BE snapshot (`prediction/service.py`) và on-the-fly dùng cùng độ chính xác này.
+    Hàm thuần — không đụng artifact, không ghi DB, giữ nguyên các field khác (I1/I2/I3).
+    """
+    rounded = dict(forecast)
+    for field in ("predicted", "lower", "upper"):
+        value = rounded.get(field)
+        if isinstance(value, (int, float)):
+            rounded[field] = round(float(value), 3)
+    return rounded
+
+
 FREQ_TO_INTERVAL = {"D": "day", "W": "week", "M": "month"}
 
 
@@ -144,7 +159,7 @@ def build_filtered_forecast(
         raise InsufficientDataError("Phạm vi này chưa có đủ ngày dữ liệu để dự báo.")
     series = inference.build_series(art["history"], counts, today - timedelta(days=1))
     try:
-        forecast = inference.forecast_next(series)
+        forecast = rounded_forecast(inference.forecast_next(series))
         classification = inference.classify_next(series)
     except ValueError as exc:
         raise InsufficientDataError(str(exc)) from exc
