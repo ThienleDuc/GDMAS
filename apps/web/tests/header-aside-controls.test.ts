@@ -43,7 +43,7 @@ test("TC-05: footer aside render countdown trước ThemeToggle", () => {
 test("TC-06: header bỏ countdown/toggle, giữ region filter + toast host", () => {
   assert.doesNotMatch(actions, /<DataRefreshLabel/u);
   assert.doesNotMatch(actions, /<ThemeToggle/u);
-  assert.match(actions, /<GlobalRegionFilter\s*\/>/u);
+  assert.match(actions, /<GlobalRegionFilter catalog=/u);
   assert.match(actions, /<RefreshToastHost/u);
   assert.match(toastHost, /dataRefreshKey/u);
   assert.match(toastHost, /<RefreshToast/u);

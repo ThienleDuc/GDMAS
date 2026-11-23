@@ -9,9 +9,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 import type { RegionCatalogResponse } from "../src/contracts/geo-catalog.ts";
-import { regionOptionsFromCatalog } from "../src/layouts/header/header-data.ts";
+import { catalogFromSse, regionOptionsFromCatalog } from "../src/layouts/header/header-data.ts";
 
 const root = resolve(import.meta.dirname, "../src");
+const read = (path: string): string => readFileSync(resolve(root, path), "utf8");
 
 const PAYLOAD: RegionCatalogResponse = {
   success: true,
@@ -53,6 +54,38 @@ test("TC-04b: payload rỗng/sai shape trả [] — không fallback dữ liệu 
   );
 });
 
+test("TC-06: catalogFromSse — có field thì đọc, thiếu thì null (giữ nguyên)", () => {
+  const catalog = {
+    countries: [{ country: "Japan", count: 3 }],
+    regions: [{ region: "Tokyo", count: 2 }],
+  };
+  assert.deepEqual(
+    catalogFromSse({ event: "ingestion_cycle_completed", timestamp: "2026-11-24T00:00:00Z", data: { catalog } }),
+    catalog,
+  );
+  assert.equal(
+    catalogFromSse({ event: "ingestion_cycle_completed", timestamp: "2026-11-24T00:00:00Z", data: {} }),
+    null,
+  );
+  assert.equal(catalogFromSse(null), null);
+});
+
+test("TC-07: 2 filter nhận catalog prop, DashboardLayout truyền sse.data", () => {
+  const country = read("layouts/header/GlobalCountryFilter.tsx");
+  const region = read("layouts/header/GlobalRegionFilter.tsx");
+  const actions = read("layouts/header/HeaderActions.tsx");
+  const layout = read("layouts/DashboardLayout.tsx");
+  assert.match(country, /catalog\?: HeaderCatalog/u);
+  assert.match(region, /catalog\?: HeaderCatalog/u);
+  assert.match(country, /if \(!catalog\) return;/u);
+  assert.match(region, /if \(catalog\)/u);
+  assert.match(actions, /catalogFromSse\(sseData\)/u);
+  assert.match(layout, /sseData=\{sse\.data\}/u);
+  // Fetch lần đầu cũng dùng cửa sổ tháng (không lấy dữ liệu 1 năm).
+  assert.match(country, /getCountryCatalog\(controller\.signal, resolveWindow\("month"\)\)/u);
+  assert.match(region, /getRegionCatalog\(country, controller\.signal, resolveWindow\("month"\)\)/u);
+});
+
 test("TC-05: GlobalRegionFilter ghi ?region= và nằm trong HeaderActions", () => {
   const source = readFileSync(resolve(root, "layouts/header/GlobalRegionFilter.tsx"), "utf8");
   const actions = readFileSync(resolve(root, "layouts/header/HeaderActions.tsx"), "utf8");
@@ -62,7 +95,7 @@ test("TC-05: GlobalRegionFilter ghi ?region= và nằm trong HeaderActions", () 
   assert.match(source, /ALL_COUNTRIES/u);
   assert.match(source, /ALL_REGIONS/u);
   assert.match(source, /aria-label="Lọc khu vực dùng chung toàn cục"/u);
-  assert.match(actions, /<GlobalCountryFilter\s*\/>/u);
+  assert.match(actions, /<GlobalCountryFilter catalog=/u);
   assert.ok(
     actions.indexOf("<GlobalCountryFilter") < actions.indexOf("<GlobalRegionFilter"),
     "GlobalRegionFilter phải đứng sau GlobalCountryFilter",

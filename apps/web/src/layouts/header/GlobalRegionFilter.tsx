@@ -4,7 +4,8 @@ import { ALL_COUNTRIES } from "../../features/earthquakes/country-filter.ts";
 import { ALL_REGIONS } from "../../features/earthquakes/region-filter.ts";
 import { useCatalogSelection } from "../../features/earthquakes/useCatalogSelection.ts";
 import { getRegionCatalog } from "../../services/geo-catalog-api.ts";
-import { regionOptionsFromCatalog, type RegionOption } from "./header-data.ts";
+import { resolveWindow } from "../../features/earthquakes/earthquake-view.ts";
+import { regionOptionsFromCatalog, type HeaderCatalog, type RegionOption } from "./header-data.ts";
 
 const ALL_LABEL = "Tất cả khu vực";
 
@@ -13,7 +14,12 @@ const ALL_LABEL = "Tất cả khu vực";
  * Ghi vào `?region=` (cùng nguồn sự thật với quốc gia). Khi chưa chọn quốc gia hoặc API lỗi
  * → disable + nhãn rõ ràng, không thay bằng dữ liệu giả (I5).
  */
-export const GlobalRegionFilter: React.FC = () => {
+interface GlobalRegionFilterProps {
+  /** Catalog BE đẩy qua SSE — thiếu thì giữ nguyên options, không fetch lại. */
+  catalog?: HeaderCatalog;
+}
+
+export const GlobalRegionFilter: React.FC<GlobalRegionFilterProps> = ({ catalog }) => {
   const { country, region, setRegion } = useCatalogSelection();
   const [options, setOptions] = useState<RegionOption[]>([]);
   const [unavailable, setUnavailable] = useState(false);
@@ -28,8 +34,14 @@ export const GlobalRegionFilter: React.FC = () => {
       setUnavailable(false);
       return;
     }
+    // SSE đã đẩy catalog mới → dùng ngay, không gọi API (chỉ khi field tồn tại).
+    if (catalog) {
+      setOptions(regionOptionsFromCatalog({ success: true, data: catalog.regions }));
+      setUnavailable(false);
+      return;
+    }
     const controller = new AbortController();
-    getRegionCatalog(country, controller.signal)
+    getRegionCatalog(country, controller.signal, resolveWindow("month"))
       .then((payload) => {
         if (controller.signal.aborted) return;
         setOptions(regionOptionsFromCatalog(payload));
@@ -39,7 +51,7 @@ export const GlobalRegionFilter: React.FC = () => {
         if (!controller.signal.aborted) setUnavailable(true);
       });
     return () => controller.abort();
-  }, [country, needsCountry]);
+  }, [country, needsCountry, catalog]);
 
   const visibleOptions = useMemo(() => options.slice(0, 50), [options]);
   const disabled = needsCountry || unavailable || (!open && options.length === 0);

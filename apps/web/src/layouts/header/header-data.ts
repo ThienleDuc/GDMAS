@@ -32,6 +32,23 @@ export interface RegionOption {
   count: number;
 }
 
+/** Snapshot catalog do BE đẩy qua SSE `ingestion_cycle_completed` (chỉ khi đổi). */
+export interface HeaderCatalog {
+  countries: Array<{ country: string; count: number }>;
+  regions: Array<{ region: string; count: number }>;
+}
+
+/** Đọc catalog từ payload SSE — thiếu/sai shape → null (FE giữ nguyên options cũ). */
+export function catalogFromSse(payload: SSEEventPayload | null | undefined): HeaderCatalog | null {
+  const raw = payload?.data;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const catalog = (raw as Record<string, unknown>).catalog;
+  if (!catalog || typeof catalog !== "object" || Array.isArray(catalog)) return null;
+  const value = catalog as Record<string, unknown>;
+  if (!Array.isArray(value.countries) || !Array.isArray(value.regions)) return null;
+  return { countries: value.countries as HeaderCatalog["countries"], regions: value.regions as HeaderCatalog["regions"] };
+}
+
 /** Danh mục khu vực từ GET /api/v1/earthquakes/regions — payload lạ/rỗng → [] (I3/I5). */
 export function regionOptionsFromCatalog(
   payload: RegionCatalogResponse | null | undefined,

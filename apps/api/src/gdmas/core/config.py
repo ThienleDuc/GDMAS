@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     CLUSTERING_WINDOW_DAYS: int = 30
     CLUSTERING_EPS_KM: float = 150.0
     CLUSTERING_MIN_SAMPLES: int = 5
-    # Ngưỡng tối thiểu khi backfill 1 năm qua FDSN (giới hạn 20000 kết quả/query).
+    # Ngưỡng tối thiểu khi backfill 1 tháng qua FDSN (giới hạn 20000 kết quả/query).
     BACKFILL_MIN_MAGNITUDE: float = 2.5
     BACKFILL_QUERY_URL: str = "https://earthquake.usgs.gov/fdsnws/event/1/query"
     PREDICTION_MIN_OBSERVED: int = 10
