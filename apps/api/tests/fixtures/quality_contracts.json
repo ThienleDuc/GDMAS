@@ -351,8 +351,46 @@
             "Earthquakes"
           ],
           "summary": "List Earthquake Countries",
-          "description": "Danh mục quốc gia suy từ `place`, kèm số sự kiện — cho bộ lọc FE.",
+          "description": "Danh mục quốc gia kèm count/avg/max — cho bộ lọc và xếp hạng FE.",
           "operationId": "list_earthquake_countries_api_v1_earthquakes_countries_get",
+          "parameters": [
+            {
+              "name": "start_time",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Từ thời điểm ISO 8601 UTC",
+                "title": "Start Time"
+              },
+              "description": "Từ thời điểm ISO 8601 UTC"
+            },
+            {
+              "name": "end_time",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Đến thời điểm ISO 8601 UTC",
+                "title": "End Time"
+              },
+              "description": "Đến thời điểm ISO 8601 UTC"
+            }
+          ],
           "responses": {
             "200": {
               "description": "Successful Response",
@@ -360,6 +398,16 @@
                 "application/json": {
                   "schema": {
                     "$ref": "#/components/schemas/CountryListResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
                   }
                 }
               }
@@ -373,7 +421,7 @@
             "Earthquakes"
           ],
           "summary": "List Earthquake Regions",
-          "description": "Danh mục khu vực suy từ `place`, kèm số sự kiện — cho bộ lọc FE.",
+          "description": "Danh mục khu vực kèm count/avg/max trong cửa sổ thời gian — cho xếp hạng FE.",
           "operationId": "list_earthquake_regions_api_v1_earthquakes_regions_get",
           "parameters": [
             {
@@ -393,6 +441,42 @@
                 "title": "Country"
               },
               "description": "Chỉ lấy khu vực của quốc gia này"
+            },
+            {
+              "name": "start_time",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Từ thời điểm ISO 8601 UTC",
+                "title": "Start Time"
+              },
+              "description": "Từ thời điểm ISO 8601 UTC"
+            },
+            {
+              "name": "end_time",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Đến thời điểm ISO 8601 UTC",
+                "title": "End Time"
+              },
+              "description": "Đến thời điểm ISO 8601 UTC"
             }
           ],
           "responses": {
@@ -506,6 +590,42 @@
                 "title": "Region"
               },
               "description": "Lọc theo khu vực"
+            },
+            {
+              "name": "start_time",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Từ thời điểm ISO 8601 UTC",
+                "title": "Start Time"
+              },
+              "description": "Từ thời điểm ISO 8601 UTC"
+            },
+            {
+              "name": "end_time",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Đến thời điểm ISO 8601 UTC",
+                "title": "End Time"
+              },
+              "description": "Đến thời điểm ISO 8601 UTC"
             }
           ],
           "responses": {
@@ -515,6 +635,76 @@
                 "application/json": {
                   "schema": {
                     "$ref": "#/components/schemas/StatisticsResponse"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/statistics/monthly-peaks": {
+        "get": {
+          "tags": [
+            "Statistics"
+          ],
+          "summary": "Get Monthly Peaks",
+          "description": "Số sự kiện theo tháng UTC (1..12) — biểu đồ cao điểm theo tháng trên Overview.\n\nĐếm từ sự kiện thật, không snapshot mùa vụ: dùng được ngay cả khi chưa đủ 24 tháng\nđể `seasonal_decompose`. Không truyền filter → toàn cục.",
+          "operationId": "get_monthly_peaks_api_v1_statistics_monthly_peaks_get",
+          "parameters": [
+            {
+              "name": "country",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo quốc gia",
+                "title": "Country"
+              },
+              "description": "Lọc theo quốc gia"
+            },
+            {
+              "name": "region",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo khu vực",
+                "title": "Region"
+              },
+              "description": "Lọc theo khu vực"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MonthlyPeaksResponse"
                   }
                 }
               }
@@ -969,6 +1159,42 @@
                 "title": "Region"
               },
               "description": "Lọc theo khu vực"
+            },
+            {
+              "name": "start_time",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "ISO 8601 UTC",
+                "title": "Start Time"
+              },
+              "description": "ISO 8601 UTC"
+            },
+            {
+              "name": "end_time",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "ISO 8601 UTC",
+                "title": "End Time"
+              },
+              "description": "ISO 8601 UTC"
             }
           ],
           "responses": {
@@ -1037,6 +1263,25 @@
                 "title": "Region"
               },
               "description": "Lọc theo khu vực"
+            },
+            {
+              "name": "interval",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(week|month)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Ép chu kỳ tuần (7 ngày) hoặc tháng (12 tháng)",
+                "title": "Interval"
+              },
+              "description": "Ép chu kỳ tuần (7 ngày) hoặc tháng (12 tháng)"
             }
           ],
           "responses": {
@@ -1135,14 +1380,62 @@
             "Clustering"
           ],
           "summary": "Get Clusters",
-          "description": "Kết quả phân cụm DBSCAN mới nhất.",
+          "description": "Kết quả phân cụm DBSCAN mới nhất — có thể lọc theo quốc gia/khu vực.",
           "operationId": "get_clusters_api_v1_clusters_get",
+          "parameters": [
+            {
+              "name": "country",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo quốc gia suy từ dominant_place",
+                "title": "Country"
+              },
+              "description": "Lọc theo quốc gia suy từ dominant_place"
+            },
+            {
+              "name": "region",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lọc theo khu vực suy từ dominant_place",
+                "title": "Region"
+              },
+              "description": "Lọc theo khu vực suy từ dominant_place"
+            }
+          ],
           "responses": {
             "200": {
               "description": "Successful Response",
               "content": {
                 "application/json": {
                   "schema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
                 }
               }
             }
@@ -1193,6 +1486,28 @@
             "count": {
               "type": "integer",
               "title": "Count"
+            },
+            "avg_magnitude": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Avg Magnitude"
+            },
+            "max_magnitude": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Magnitude"
             }
           },
           "type": "object",
@@ -1521,6 +1836,50 @@
           ],
           "title": "HourlyTimeSeriesPoint"
         },
+        "MonthlyPeak": {
+          "properties": {
+            "month": {
+              "type": "integer",
+              "title": "Month"
+            },
+            "label": {
+              "type": "string",
+              "title": "Label"
+            },
+            "count": {
+              "type": "integer",
+              "title": "Count"
+            }
+          },
+          "type": "object",
+          "required": [
+            "month",
+            "label",
+            "count"
+          ],
+          "title": "MonthlyPeak"
+        },
+        "MonthlyPeaksResponse": {
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "title": "Success",
+              "default": true
+            },
+            "data": {
+              "items": {
+                "$ref": "#/components/schemas/MonthlyPeak"
+              },
+              "type": "array",
+              "title": "Data"
+            }
+          },
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "title": "MonthlyPeaksResponse"
+        },
         "RegionCount": {
           "properties": {
             "region": {
@@ -1530,6 +1889,28 @@
             "count": {
               "type": "integer",
               "title": "Count"
+            },
+            "avg_magnitude": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Avg Magnitude"
+            },
+            "max_magnitude": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Magnitude"
             }
           },
           "type": "object",
@@ -2434,6 +2815,6 @@
       "StatisticsResponse"
     ]
   },
-  "config_defaults_sha256": "c1bd3fd190be16a33ac4f6bf2aa2b2ff49084f5c35632861e5bebf896bb83d75",
+  "config_defaults_sha256": "68200fe56c8b5bb0315527679145f69f905031d141bdb785f65960782ee29082",
   "migration_sha256": "0be5da1e803e1ce26fb919f1d88932c5143ab79af03fc9949896c6bf0e1e973d"
 }

@@ -2,6 +2,7 @@ import { ApiError, fetchApi } from "../lib/api-client.ts";
 import { clustersFromPatterns } from "../lib/transforms/cluster-fallback.ts";
 import { isUtcTimestamp, isWgs84Bounds } from "../contracts/common.ts";
 import { geoQuery, type GeoFilter } from "../contracts/geo-filter.ts";
+import type { MonthlyPeaksResponse } from "../contracts/monthly-peaks.ts";
 import type {
   ClassificationsResponse,
   ClustersResponse,
@@ -131,9 +132,19 @@ export async function getEarthquakeDetail(
 export async function getEarthquakeStatistics(
   signal?: AbortSignal,
   filter?: GeoFilter | null,
+  window?: { start_time?: string; end_time?: string } | null,
 ): Promise<StatisticsResponse> {
-  const qs = buildQuery(geoQuery(filter));
+  const qs = buildQuery({ ...geoQuery(filter), ...window });
   return fetchApi<StatisticsResponse>(`/api/v1/statistics/earthquakes${qs}`, { signal });
+}
+
+/** Số sự kiện theo tháng (UTC) — biểu đồ cao điểm theo tháng. */
+export async function getMonthlyPeaks(
+  filter?: GeoFilter | null,
+  signal?: AbortSignal,
+): Promise<MonthlyPeaksResponse> {
+  const qs = buildQuery(geoQuery(filter));
+  return fetchApi<MonthlyPeaksResponse>(`/api/v1/statistics/monthly-peaks${qs}`, { signal });
 }
 
 /**
@@ -224,16 +235,15 @@ export async function getTemporalAnalysis(
 
 /**
  * Pattern 2 — `GET /api/v1/analysis/trend`.
- * API.md §3.3: BE chỉ nhận `resample_freq` và `metric`. Các tham số thời gian
- * bên dưới chỉ giữ để tương thích caller cũ (RULE-03) — KHÔNG được forward.
+ * API.md §3.3: `resample_freq`/`metric` là tham số chuẩn; từ 2026-11-23 BE có thêm
+ * cửa sổ `start_time`/`end_time` (tính on-the-fly) để lọc Ngày/Tuần/Tháng trên Overview.
  */
 export async function getTrendAnalysis(
   params: {
     resample_freq?: "D" | "W" | "M";
     metric?: "count" | "avg_magnitude" | "max_magnitude";
-    /** @deprecated BE /analysis/trend không nhận start_time — xem API.md §3.3. */
+    /** Cửa sổ thời gian UTC — BE tính on-the-fly khi có (2026-11-23). */
     start_time?: string;
-    /** @deprecated BE /analysis/trend không nhận end_time — xem API.md §3.3. */
     end_time?: string;
     country?: string;
     region?: string;
@@ -243,6 +253,8 @@ export async function getTrendAnalysis(
   const qs = buildQuery({
     resample_freq: params.resample_freq,
     metric: params.metric,
+    start_time: params.start_time,
+    end_time: params.end_time,
     ...geoQuery(params),
   });
   return fetchApi<TrendResponse>(`/api/v1/analysis/trend${qs}`, { signal });
@@ -262,10 +274,12 @@ export async function getSeasonalityAnalysis(
     end_time?: string;
     country?: string;
     region?: string;
+    /** Ép chu kỳ: week (7 ngày) hoặc month (12 tháng). */
+    interval?: "week" | "month";
   } = {},
   signal?: AbortSignal,
 ): Promise<SeasonalityResponse> {
-  const qs = buildQuery(geoQuery(params));
+  const qs = buildQuery({ ...geoQuery(params), interval: params.interval });
   return fetchApi<SeasonalityResponse>(`/api/v1/analysis/seasonality${qs}`, { signal });
 }
 
@@ -306,9 +320,13 @@ export async function getClassifications(
   return fetchApi<ClassificationsResponse>(`/api/v1/classifications${qs}`, { signal });
 }
 
-/** Kết quả DBSCAN mới nhất — `GET /api/v1/clusters`. */
-export async function getClusters(signal?: AbortSignal): Promise<ClustersResponse> {
-  return fetchApi<ClustersResponse>("/api/v1/clusters", { signal });
+/** Kết quả DBSCAN mới nhất — `GET /api/v1/clusters` (có thể lọc quốc gia/khu vực). */
+export async function getClusters(
+  signal?: AbortSignal,
+  filter?: GeoFilter | null,
+): Promise<ClustersResponse> {
+  const qs = buildQuery(geoQuery(filter));
+  return fetchApi<ClustersResponse>(`/api/v1/clusters${qs}`, { signal });
 }
 
 /**
@@ -324,8 +342,10 @@ export async function getClusters(signal?: AbortSignal): Promise<ClustersRespons
  */
 export async function getClustersOptional(
   signal?: AbortSignal,
+  filter?: GeoFilter | null,
 ): Promise<OptionalApiResult<ClustersResponse>> {
-  const primary = await getOptionalApi<ClustersResponse>("/api/v1/clusters", { signal });
+  const qs = buildQuery(geoQuery(filter));
+  const primary = await getOptionalApi<ClustersResponse>(`/api/v1/clusters${qs}`, { signal });
   if (!primary.unavailable) return primary;
 
   try {

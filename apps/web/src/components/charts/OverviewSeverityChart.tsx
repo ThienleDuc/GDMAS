@@ -1,4 +1,4 @@
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { SeverityMix } from "../../features/overview/overview-view.ts";
 import { CHART_TOOLTIP } from "./chart-theme.ts";
 
@@ -8,7 +8,7 @@ const SLICE_COLORS: Record<string, string> = {
   strong: "var(--destructive)",
 };
 
-/** B — "Trong tổng số sự kiện, bao nhiêu là sự kiện mạnh?" */
+/** B — "Trong tổng số sự kiện, bao nhiêu là sự kiện mạnh?" — thanh xếp chồng (proposal §3). */
 export function OverviewSeverityChart({ data }: { data: SeverityMix }) {
   if (data.slices.length === 0) {
     return <p className="ov-chart-empty">Chưa có dữ liệu phân bố độ lớn.</p>;
@@ -16,6 +16,10 @@ export function OverviewSeverityChart({ data }: { data: SeverityMix }) {
 
   const total = data.slices.reduce((sum, slice) => sum + slice.value, 0);
   const strong = data.slices.find((slice) => slice.key === "strong")?.value ?? 0;
+  const stacked = {
+    label: "Tỷ lệ",
+    ...Object.fromEntries(data.slices.map((slice) => [slice.key, slice.value])),
+  };
 
   return (
     <div className="ov-chart">
@@ -25,23 +29,22 @@ export function OverviewSeverityChart({ data }: { data: SeverityMix }) {
           : "Chưa ghi nhận sự kiện mạnh"}
         {data.partial ? " · một số nhóm chưa có số liệu" : ""}
       </p>
-      <ResponsiveContainer width="100%" height={180}>
-        <PieChart>
-          <Pie
-            data={data.slices}
-            dataKey="value"
-            nameKey="label"
-            innerRadius={44}
-            outerRadius={72}
-            paddingAngle={2}
-            stroke="var(--card)"
-          >
-            {data.slices.map((slice) => (
-              <Cell key={slice.key} fill={SLICE_COLORS[slice.key] ?? "var(--muted)"} />
-            ))}
-          </Pie>
+      <ResponsiveContainer width="100%" height={72}>
+        <BarChart data={[stacked]} layout="vertical" margin={{ top: 4, right: 8, bottom: 4, left: 8 }}>
+          <XAxis type="number" hide domain={[0, total || 1]} />
+          <YAxis type="category" dataKey="label" hide />
           <Tooltip {...CHART_TOOLTIP} />
-        </PieChart>
+          {data.slices.map((slice) => (
+            <Bar
+              key={slice.key}
+              dataKey={slice.key}
+              name={slice.label}
+              stackId="severity"
+              barSize={22}
+              fill={SLICE_COLORS[slice.key] ?? "var(--muted)"}
+            />
+          ))}
+        </BarChart>
       </ResponsiveContainer>
       <ul className="ov-legend">
         {data.slices.map((slice) => (

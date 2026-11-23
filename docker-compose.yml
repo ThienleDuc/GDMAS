@@ -37,6 +37,14 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-development}
       DEBUG: ${DEBUG:-True}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      DATA_WINDOW_DAYS: ${DATA_WINDOW_DAYS:-365}
+      ANALYSIS_WINDOW_DAYS: ${ANALYSIS_WINDOW_DAYS:-365}
+      CLUSTERING_WINDOW_DAYS: ${CLUSTERING_WINDOW_DAYS:-365}
+      CLUSTERING_EPS_KM: ${CLUSTERING_EPS_KM:-150}
+      CLUSTERING_MIN_SAMPLES: ${CLUSTERING_MIN_SAMPLES:-5}
+      BACKFILL_MIN_MAGNITUDE: ${BACKFILL_MIN_MAGNITUDE:-2.5}
+      BACKFILL_QUERY_URL: ${BACKFILL_QUERY_URL:-https://earthquake.usgs.gov/fdsnws/event/1/query}
+      PREDICTION_MIN_OBSERVED: ${PREDICTION_MIN_OBSERVED:-10}
       WATCHFILES_FORCE_POLLING: "true"
     ports:
       - "${API_PORT:-8000}:8000"
@@ -87,6 +95,9 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-gdmas_user}:${POSTGRES_PASSWORD:-gdmas_secure_password_2026}@postgres:5432/${POSTGRES_DB:-gdmas_db}
       USGS_FEED_URL: ${USGS_FEED_URL}
       INGESTION_INTERVAL_SECONDS: ${INGESTION_INTERVAL_SECONDS:-300}
+      DATA_WINDOW_DAYS: ${DATA_WINDOW_DAYS:-365}
+      BACKFILL_MIN_MAGNITUDE: ${BACKFILL_MIN_MAGNITUDE:-2.5}
+      BACKFILL_QUERY_URL: ${BACKFILL_QUERY_URL:-https://earthquake.usgs.gov/fdsnws/event/1/query}
     depends_on:
       postgres:
         condition: service_healthy
@@ -105,6 +116,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-gdmas_user}:${POSTGRES_PASSWORD:-gdmas_secure_password_2026}@postgres:5432/${POSTGRES_DB:-gdmas_db}
       ANALYSIS_INTERVAL_SECONDS: ${ANALYSIS_INTERVAL_SECONDS:-300}
+      ANALYSIS_WINDOW_DAYS: ${ANALYSIS_WINDOW_DAYS:-365}
     depends_on:
       postgres:
         condition: service_healthy
@@ -123,6 +135,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-gdmas_user}:${POSTGRES_PASSWORD:-gdmas_secure_password_2026}@postgres:5432/${POSTGRES_DB:-gdmas_db}
       PREDICTION_INTERVAL_SECONDS: ${PREDICTION_INTERVAL_SECONDS:-300}
+      PREDICTION_MIN_OBSERVED: ${PREDICTION_MIN_OBSERVED:-10}
     depends_on:
       postgres:
         condition: service_healthy
@@ -141,6 +154,9 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-gdmas_user}:${POSTGRES_PASSWORD:-gdmas_secure_password_2026}@postgres:5432/${POSTGRES_DB:-gdmas_db}
       CLUSTERING_INTERVAL_SECONDS: ${CLUSTERING_INTERVAL_SECONDS:-86400}
+      CLUSTERING_WINDOW_DAYS: ${CLUSTERING_WINDOW_DAYS:-365}
+      CLUSTERING_EPS_KM: ${CLUSTERING_EPS_KM:-150}
+      CLUSTERING_MIN_SAMPLES: ${CLUSTERING_MIN_SAMPLES:-5}
     depends_on:
       postgres:
         condition: service_healthy

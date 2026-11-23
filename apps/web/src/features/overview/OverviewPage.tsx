@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Activity, ArrowUpRight, MapPinned, Radio } from "lucide-react";
 import { APP_ROUTES } from "../../app/routes.tsx";
 import {
@@ -10,15 +10,26 @@ import {
 } from "../../components/charts/index.ts";
 import { ALL_COUNTRIES } from "../earthquakes/country-filter.ts";
 import { useCatalogSelection } from "../earthquakes/useCatalogSelection.ts";
+import {
+  RANGE_PRESETS,
+  resolveWindow,
+  type DateRangePreset,
+} from "../earthquakes/earthquake-view.ts";
 import { useSseMarkers } from "../monitoring/sse-context.ts";
+import { useDatabaseResetFromEvent } from "../../hooks/useDatabaseReset.ts";
 import { formatEventTime, formatWgs84Point, getStoredTimezone } from "../../lib/formatters.ts";
 import {
+  applySseLatestEvent,
   buildKpis,
   buildLatestEvents,
+  buildMonthlyBars,
   buildSeasonalityBars,
   buildSeverityMix,
+  applyMonthWindow,
+  applyWeekdayWindow,
   buildTrendComparison,
   formatPrediction,
+  padWeekdaysTo7,
   rankFromCountryCatalog,
   rankFromRegionCatalog,
   rankRegionsForCountry,
@@ -29,15 +40,38 @@ import { useOverviewData } from "./useOverviewData.ts";
 
 /** Trang Tổng quan (Home `/`) — Bento dashboard từ API thật, không mock. */
 export const OverviewPage: React.FC = () => {
+  const navigate = useNavigate();
   const { country, region, setSelection } = useCatalogSelection();
-  const data = useOverviewData({ country, region });
   const sse = useSseMarkers();
+  // Dùng chung luồng SSE của shell — tự reset/refetch khi CSDL xoá rồi phục hồi (Demo §4).
+  const dbReset = useDatabaseResetFromEvent(sse?.data ?? null);
+  // Cửa sổ Ngày/Tuần/Tháng lưu trên URL — áp cho mọi biểu đồ trừ 2 biểu đồ chu kỳ.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawRange = searchParams.get("range");
+  const range: DateRangePreset =
+    rawRange === "day" || rawRange === "week" || rawRange === "month" ? rawRange : "month";
+  const window = useMemo(() => resolveWindow(range), [range]);
+  const setRange = (value: DateRangePreset) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("range", value);
+    setSearchParams(next, { replace: true });
+  };
+  const data = useOverviewData({ country, region }, dbReset.refreshVersion, window);
   const timezone = getStoredTimezone();
 
   const kpis = useMemo(() => buildKpis(data.statistics, data.clusters), [data.statistics, data.clusters]);
   const severity = useMemo(() => buildSeverityMix(data.statistics), [data.statistics]);
   const trend = useMemo(() => buildTrendComparison(data.trend), [data.trend]);
-  const seasonality = useMemo(() => buildSeasonalityBars(data.seasonality), [data.seasonality]);
+  const seasonality = useMemo(
+    () => applyWeekdayWindow(padWeekdaysTo7(buildSeasonalityBars(data.seasonality)), range),
+    [data.seasonality, range],
+  );
+  // Ưu tiên đếm sự kiện/tháng (có số ngay); fallback phân rã mùa vụ khi đủ ≥24 tháng.
+  // 12 cột từ BE monthly-peaks; tháng thiếu số liệu đã được buildMonthlyBars hạ về 0.
+  const monthlyBars = useMemo(
+    () => applyMonthWindow(buildMonthlyBars(data.monthlyPeaks)),
+    [data.monthlyPeaks],
+  );
   // Ưu tiên danh mục sự kiện thật (có count); fallback cụm cũ khi catalog rỗng (I2/I5).
   const ranking = useMemo(() => {
     const fromCatalog =
@@ -46,7 +80,10 @@ export const OverviewPage: React.FC = () => {
         : rankFromRegionCatalog(data.regionCatalog);
     return fromCatalog.length > 0 ? fromCatalog : rankRegionsForCountry(data.clusters, country);
   }, [country, data.countryCatalog, data.regionCatalog, data.clusters]);
-  const latest = useMemo(() => buildLatestEvents(data.latestEvents), [data.latestEvents]);
+  const latest = useMemo(
+    () => applySseLatestEvent(buildLatestEvents(data.latestEvents), sse?.data ?? null),
+    [data.latestEvents, sse?.data],
+  );
   const prediction = useMemo(
     () => formatPrediction(data.predictions, data.classifications),
     [data.predictions, data.classifications],
@@ -61,6 +98,7 @@ export const OverviewPage: React.FC = () => {
 
   const handleRankSelect = (row: RankRow) => {
     setSelection(isCountryMode ? row.key : country, isCountryMode ? "all" : row.key);
+    navigate(APP_ROUTES.MONITORING);
   };
 
   return (
@@ -80,6 +118,19 @@ export const OverviewPage: React.FC = () => {
           </p>
         </div>
         <div className="ov-hero__actions">
+          <div className="ov-range" role="group" aria-label="Lọc cửa sổ thời gian">
+            {RANGE_PRESETS.map((preset) => (
+              <button
+                key={preset.value}
+                type="button"
+                className={`ov-range__button ${range === preset.value ? "is-active" : ""}`}
+                aria-pressed={range === preset.value}
+                onClick={() => setRange(preset.value)}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
           <span className={`ov-live ${sse?.isConnected ? "is-live" : ""}`}>
             <Radio className="h-4 w-4" aria-hidden="true" />
             {sse?.isConnected ? "SSE trực tiếp" : "Đang kết nối SSE…"}
@@ -93,6 +144,20 @@ export const OverviewPage: React.FC = () => {
           </Link>
         </div>
       </header>
+
+      {dbReset.isCleared && !data.loading && (
+        <p className="ov-notice" role="status">
+          Cơ sở dữ liệu vừa được xoá — đang hiển thị trạng thái rỗng, sẽ tự cập nhật khi có dữ liệu mới.
+        </p>
+      )}
+      {data.error && !data.loading && (
+        <p className="ov-notice ov-notice--error" role="alert">
+          Một số nguồn chưa tải được: {data.error}
+          <button type="button" className="ov-notice__retry" onClick={data.refresh}>
+            Thử lại
+          </button>
+        </p>
+      )}
 
       {data.loading && !data.statistics ? (
         <div className="ov-skeleton" role="status" aria-label="Đang tải dữ liệu tổng quan">
@@ -109,7 +174,9 @@ export const OverviewPage: React.FC = () => {
                 <p className={`ov-kpi__value ov-kpi__value--${card.tone}`}>
                   {card.value === null ? "—" : card.value.toLocaleString("vi-VN")}
                 </p>
-                <p className="ov-kpi__hint">{card.hint}</p>
+                <p className="ov-kpi__hint">
+                  {card.key === "clusters" && isCountryMode ? `${card.hint} · toàn cục` : card.hint}
+                </p>
               </article>
             ))}
           </div>
@@ -122,7 +189,7 @@ export const OverviewPage: React.FC = () => {
             <OverviewSeverityChart data={severity} />
           </article>
 
-          <article className="ov-card ov-card--6">
+          <article className="ov-card ov-card--wide">
             <OverviewHotspotsChart
               rows={ranking}
               mode={isCountryMode ? "country" : "region"}
@@ -131,8 +198,18 @@ export const OverviewPage: React.FC = () => {
             />
           </article>
 
-          <article className="ov-card ov-card--6">
-            <OverviewSeasonalityChart data={seasonality} />
+          <article className="ov-card ov-card--cycles">
+            <p className="ov-card__label">Chu kỳ hoạt động · 7 ngày / 12 tháng</p>
+            <div className="ov-cycles">
+              <div className="ov-cycles__item">
+                <p className="ov-cycle__label">Cao điểm theo ngày trong tuần</p>
+                <OverviewSeasonalityChart data={seasonality} />
+              </div>
+              <div className="ov-cycles__item">
+                <p className="ov-cycle__label">Cao điểm theo tháng</p>
+                <OverviewSeasonalityChart data={monthlyBars} />
+              </div>
+            </div>
           </article>
 
           <article className="ov-card ov-card--8">

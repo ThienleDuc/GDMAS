@@ -9,6 +9,7 @@ import logging
 import time
 from datetime import UTC, datetime
 
+from gdmas.core.config import settings
 from gdmas.db.connection import SessionLocal
 from gdmas.services.clustering.service import run_cycle
 
@@ -41,7 +42,11 @@ def run(argv: list[str] | None = None) -> None:
         except Exception as exc:  # noqa: BLE001 — worker không được crash
             logger.error("[GDMAS-Clustering] Lỗi chu kỳ: %s", exc)
         try:
-            time.sleep(DEFAULT_INTERVAL_SECONDS)
+            # §1.2 docs/yeucaubatbuoc.md: Clustering chạy 1 ngày/lần, chỉnh qua .env.
+            interval = getattr(
+                settings, "CLUSTERING_INTERVAL_SECONDS", DEFAULT_INTERVAL_SECONDS
+            )
+            time.sleep(interval)
         except (KeyboardInterrupt, SystemExit):
             print("[GDMAS-Clustering] Service stopping...", flush=True)
             break

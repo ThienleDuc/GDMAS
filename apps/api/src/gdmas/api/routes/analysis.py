@@ -165,6 +165,8 @@ def get_trend(
     metric: str = Query("count", pattern="^(count|avg_magnitude|max_magnitude)$"),
     country: str | None = Query(None, description="Lọc theo quốc gia"),
     region: str | None = Query(None, description="Lọc theo khu vực"),
+    start_time: str | None = Query(None, description="ISO 8601 UTC"),
+    end_time: str | None = Query(None, description="ISO 8601 UTC"),
     db: Session = Depends(get_db),
 ):
     """Pattern 2: xu hướng sau re-sampling."""
@@ -219,9 +221,17 @@ def get_trend(
         data["status"] = source.get("status") or "computed"
         return data
 
-    if country or region:
+    start, end = _utc(start_time), _utc(end_time)
+    if country or region or start or end:
         metrics = compute_filtered_metrics(
-            db, "trend", country, region, interval=resample_freq, metric=metric
+            db,
+            "trend",
+            country,
+            region,
+            interval=resample_freq,
+            metric=metric,
+            start=start,
+            end=end,
         )
         return {"success": True, "data": build(metrics)}
     # Chỉ nhận bản đúng tần suất yêu cầu; không có thì Empty State thay vì trả tần suất khác
@@ -232,6 +242,11 @@ def get_trend(
 def get_seasonality(
     country: str | None = Query(None, description="Lọc theo quốc gia"),
     region: str | None = Query(None, description="Lọc theo khu vực"),
+    interval: str | None = Query(
+        None,
+        pattern="^(week|month)$",
+        description="Ép chu kỳ tuần (7 ngày) hoặc tháng (12 tháng)",
+    ),
     db: Session = Depends(get_db),
 ):
     """Pattern 3: tính chu kỳ / mùa vụ."""
@@ -268,8 +283,10 @@ def get_seasonality(
                 data[field] = m[field]
         return data
 
-    if country or region:
-        metrics = compute_filtered_metrics(db, "seasonality", country, region)
+    if country or region or interval:
+        metrics = compute_filtered_metrics(
+            db, "seasonality", country, region, interval=interval
+        )
         return {"success": True, "data": build(metrics)}
     return _respond(db, "seasonality", build)
 

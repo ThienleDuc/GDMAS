@@ -22,6 +22,38 @@ def _seed(db, clusters):
     db.commit()
 
 
+def test_clusters_filter_by_country_and_region(client, db):
+    _seed(
+        db,
+        [
+            {
+                "cluster_id": 1,
+                "center_latitude": 38.0,
+                "center_longitude": 142.0,
+                "event_count": 10,
+                "dominant_place": "Honshu, Japan",
+            },
+            {
+                "cluster_id": 2,
+                "center_latitude": 37.0,
+                "center_longitude": -122.0,
+                "event_count": 5,
+                "dominant_place": "The Geysers, USA",
+            },
+        ],
+    )
+
+    japan = client.get(API, params={"country": "Japan"}).json()["data"]
+    assert japan["clusters_count"] == 1
+    assert japan["clusters"][0]["dominant_place"] == "Honshu, Japan"
+
+    none = client.get(API, params={"country": "Japan", "region": "California"}).json()[
+        "data"
+    ]
+    assert none["clusters_count"] == 0
+    assert none["clusters"] == []
+
+
 def test_canonical_cluster_exposes_place_and_radius(client, db):
     _seed(
         db,

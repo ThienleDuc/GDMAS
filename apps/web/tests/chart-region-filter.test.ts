@@ -87,7 +87,7 @@ test("TC-04: EarthquakesPage dùng URL + lọc cả region", () => {
 
 test("TC-05: Overview & Statistics truyền filter", () => {
   const overview = read("features/overview/OverviewPage.tsx");
-  assert.match(overview, /useOverviewData\(\{ country, region \}\)/u);
+  assert.match(overview, /useOverviewData\(\{ country, region \}, dbReset\.refreshVersion, window\)/u);
   const statistics = read("features/statistics/statistics-data.tsx");
   assert.match(statistics, /useCatalogSelection\(\)/u);
   assert.match(statistics, /getPredictions\(signal, filter\)/u);

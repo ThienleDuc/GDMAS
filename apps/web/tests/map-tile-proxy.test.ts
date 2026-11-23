@@ -21,6 +21,13 @@ test("TC-05: vite.config proxy /tile → CARTO", () => {
   assert.match(config, /rewrite:/u);
 });
 
+test("TC-06: proxy /api thân thiện với SSE (không timeout)", () => {
+  const config = readFileSync(resolve(import.meta.dirname, "../vite.config.ts"), "utf8");
+  assert.match(config, /["']\/api["']\s*:\s*\{/u);
+  assert.match(config, /proxyTimeout:\s*0/u);
+  assert.match(config, /timeout:\s*0/u);
+});
+
 test("TC-06: MapRegionPanel không còn combobox quốc gia", () => {
   const panel = readFileSync(resolve(src, "components/map/MapRegionPanel.tsx"), "utf8");
   assert.doesNotMatch(panel, /gm-country-combo/u);

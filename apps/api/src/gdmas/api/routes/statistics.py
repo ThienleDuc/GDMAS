@@ -1,4 +1,5 @@
 import logging
+from collections import Counter
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
@@ -12,6 +13,8 @@ from gdmas.models.earthquake import EarthquakeEvent
 from gdmas.schemas.earthquake import (
     EarthquakeStatistics,
     HourlyTimeSeriesPoint,
+    MonthlyPeak,
+    MonthlyPeaksResponse,
     StatisticsResponse,
 )
 from gdmas.services.analysis.filtered import scope
@@ -22,6 +25,16 @@ router = APIRouter(prefix="/statistics", tags=["Statistics"])
 
 BUCKET_HOURS = 3
 BUCKET_COUNT = 8  # 8 khoảng x 3 giờ = 24 giờ gần nhất
+
+
+def _parse_utc(raw: str | None) -> datetime | None:
+    if raw is None:
+        return None
+    try:
+        value = datetime.fromisoformat(raw.strip())
+    except ValueError:
+        return None
+    return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
 
 
 def _time_series_24h(
@@ -70,6 +83,8 @@ def _time_series_24h(
 def get_earthquake_statistics(
     country: str | None = Query(None, description="Lọc theo quốc gia"),
     region: str | None = Query(None, description="Lọc theo khu vực"),
+    start_time: str | None = Query(None, description="Từ thời điểm ISO 8601 UTC"),
+    end_time: str | None = Query(None, description="Đến thời điểm ISO 8601 UTC"),
     db: Session = Depends(get_db),
 ):
     """Chỉ số KPI và chuỗi thời gian cho Dashboard.
@@ -78,50 +93,47 @@ def get_earthquake_statistics(
     """
     now_utc = datetime.now(UTC)
     one_day_ago = now_utc - timedelta(hours=24)
+    start_dt, end_dt = _parse_utc(start_time), _parse_utc(end_time)
+
+    def scoped(query):
+        """Áp quốc gia/khu vực và cửa sổ Ngày/Tuần/Tháng cho mọi KPI."""
+        query = scope(query, country, region)
+        if start_dt is not None:
+            query = query.filter(EarthquakeEvent.event_time >= start_dt)
+        if end_dt is not None:
+            query = query.filter(EarthquakeEvent.event_time <= end_dt)
+        return query
 
     try:
-        total = (
-            scope(db.query(func.count(EarthquakeEvent.id)), country, region).scalar()
-            or 0
-        )
+        total = scoped(db.query(func.count(EarthquakeEvent.id))).scalar() or 0
         strong = (
-            scope(db.query(func.count(EarthquakeEvent.id)), country, region)
+            scoped(db.query(func.count(EarthquakeEvent.id)))
             .filter(EarthquakeEvent.magnitude >= 5.0)
             .scalar()
             or 0
         )
         moderate = (
-            scope(db.query(func.count(EarthquakeEvent.id)), country, region)
+            scoped(db.query(func.count(EarthquakeEvent.id)))
             .filter(EarthquakeEvent.magnitude >= 4.0, EarthquakeEvent.magnitude < 5.0)
             .scalar()
             or 0
         )
         minor = (
-            scope(db.query(func.count(EarthquakeEvent.id)), country, region)
+            scoped(db.query(func.count(EarthquakeEvent.id)))
             .filter(EarthquakeEvent.magnitude < 4.0)
             .scalar()
             or 0
         )
         recent_24h = (
-            scope(db.query(func.count(EarthquakeEvent.id)), country, region)
+            scoped(db.query(func.count(EarthquakeEvent.id)))
             .filter(EarthquakeEvent.event_time >= one_day_ago)
             .scalar()
             or 0
         )
-        avg_mag = (
-            scope(
-                db.query(func.avg(EarthquakeEvent.magnitude)), country, region
-            ).scalar()
-            or 0.0
-        )
-        max_mag = (
-            scope(
-                db.query(func.max(EarthquakeEvent.magnitude)), country, region
-            ).scalar()
-            or 0.0
-        )
+        avg_mag = scoped(db.query(func.avg(EarthquakeEvent.magnitude))).scalar() or 0.0
+        max_mag = scoped(db.query(func.max(EarthquakeEvent.magnitude))).scalar() or 0.0
         latest = (
-            scope(db.query(EarthquakeEvent.event_time), country, region)
+            scoped(db.query(EarthquakeEvent.event_time))
             .order_by(EarthquakeEvent.event_time.desc())
             .first()
         )
@@ -148,4 +160,41 @@ def get_earthquake_statistics(
             latest_event_time=latest[0] if (latest and total > 0) else None,
             time_series_preview=series,
         ),
+    )
+
+
+@router.get("/monthly-peaks", response_model=MonthlyPeaksResponse)
+def get_monthly_peaks(
+    country: str | None = Query(None, description="Lọc theo quốc gia"),
+    region: str | None = Query(None, description="Lọc theo khu vực"),
+    db: Session = Depends(get_db),
+):
+    """Số sự kiện theo tháng UTC (1..12) — biểu đồ cao điểm theo tháng trên Overview.
+
+    Đếm từ sự kiện thật, không snapshot mùa vụ: dùng được ngay cả khi chưa đủ 24 tháng
+    để `seasonal_decompose`. Không truyền filter → toàn cục.
+    """
+    try:
+        rows = scope(db.query(EarthquakeEvent.event_time), country, region).all()
+    except SQLAlchemyError as exc:
+        logger.error("Lỗi CSDL khi thống kê theo tháng: %s", type(exc).__name__)
+        return error_response(
+            "DATABASE_ERROR",
+            "Không thể truy vấn cơ sở dữ liệu.",
+            500,
+            type(exc).__name__,
+        )
+
+    counts: Counter[int] = Counter()
+    for (value,) in rows:
+        if value is None:
+            continue
+        moment = value if value.tzinfo is not None else value.replace(tzinfo=UTC)
+        counts[moment.astimezone(UTC).month] += 1
+
+    return MonthlyPeaksResponse(
+        data=[
+            MonthlyPeak(month=month, label=f"Tháng {month}", count=counts.get(month, 0))
+            for month in range(1, 13)
+        ]
     )

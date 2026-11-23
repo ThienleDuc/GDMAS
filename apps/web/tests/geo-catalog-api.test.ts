@@ -34,13 +34,34 @@ test("TC-10: getCountryCatalog gọi đúng endpoint và trả data", async () =
   }
 });
 
+test("TC-12: catalog forward cửa sổ thời gian", async () => {
+  const window = {
+    start_time: "2026-11-01T00:00:00.000Z",
+    end_time: "2026-11-23T00:00:00.000Z",
+  };
+  const urls: string[] = [];
+  const restore = withFetch({ success: true, data: [] }, urls);
+  try {
+    await getCountryCatalog(undefined, window);
+    await getRegionCatalog("Japan", undefined, window);
+  } finally {
+    restore();
+  }
+  for (const url of urls) {
+    const parsed = new URL(url);
+    assert.equal(parsed.searchParams.get("start_time"), window.start_time);
+    assert.equal(parsed.searchParams.get("end_time"), window.end_time);
+  }
+  assert.equal(new URL(urls[1]).searchParams.get("country"), "Japan");
+});
+
 test("TC-11: getRegionCatalog mã hoá country, 'all' → không query", async () => {
   const urls: string[] = [];
   const restore = withFetch({ success: true, data: [] }, urls);
   try {
     await getRegionCatalog("Papua New Guinea");
     await getRegionCatalog(ALL_COUNTRIES);
-    assert.equal(urls[0], "http://localhost:8000/api/v1/earthquakes/regions?country=Papua%20New%20Guinea");
+    assert.equal(urls[0], "http://localhost:8000/api/v1/earthquakes/regions?country=Papua+New+Guinea");
     assert.equal(urls[1], "http://localhost:8000/api/v1/earthquakes/regions");
   } finally {
     restore();

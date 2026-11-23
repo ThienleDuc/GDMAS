@@ -16,6 +16,7 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 from sqlalchemy.orm import Session
 
+from gdmas.core.config import settings
 from gdmas.models.clustering import ClusteringEventMapping, ClusteringResult
 from gdmas.models.earthquake import EarthquakeEvent
 from gdmas.models.service_run import ServiceRun
@@ -156,12 +157,22 @@ def run_cycle(
     db: Session,
     *,
     now: datetime | None = None,
-    window_days: int = DEFAULT_WINDOW_DAYS,
-    eps_km: float = DEFAULT_EPS_KM,
-    min_samples: int = DEFAULT_MIN_SAMPLES,
+    window_days: int | None = None,
+    eps_km: float | None = None,
+    min_samples: int | None = None,
 ) -> dict[str, Any]:
-    """Một chu kỳ T4: đọc sự kiện → DBSCAN → ghi ServiceRun/result/mappings."""
+    """Một chu kỳ T4: đọc sự kiện → DBSCAN → ghi ServiceRun/result/mappings.
+
+    Mặc định lấy từ settings (.env): CLUSTERING_WINDOW_DAYS / EPS_KM / MIN_SAMPLES.
+    """
     now = now or datetime.now(UTC)
+    window_days = (
+        window_days if window_days is not None else settings.CLUSTERING_WINDOW_DAYS
+    )
+    eps_km = eps_km if eps_km is not None else settings.CLUSTERING_EPS_KM
+    min_samples = (
+        min_samples if min_samples is not None else settings.CLUSTERING_MIN_SAMPLES
+    )
     started = now
     run = ServiceRun(
         service_name="clustering",

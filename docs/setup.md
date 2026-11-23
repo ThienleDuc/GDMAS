@@ -104,6 +104,18 @@ ENVIRONMENT=development
 DEBUG=True
 CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
+# --- Cấu hình dữ liệu & mô hình (docs/yeucaubatbuoc.md §6.4) ---
+# DATA_WINDOW_DAYS=365 → 1 năm; USGS không có feed all_year nên backfill dùng
+# FDSN ?starttime=&endtime= chia từng cửa sổ ~30 ngày (limit 20000/query).
+DATA_WINDOW_DAYS=365
+ANALYSIS_WINDOW_DAYS=365
+CLUSTERING_WINDOW_DAYS=365
+CLUSTERING_EPS_KM=150
+CLUSTERING_MIN_SAMPLES=5
+BACKFILL_MIN_MAGNITUDE=2.5
+BACKFILL_QUERY_URL=https://earthquake.usgs.gov/fdsnws/event/1/query
+PREDICTION_MIN_OBSERVED=10
+
 # ==============================================================================
 # CẤU HÌNH DỊCH VỤ NẠP DỮ LIỆU ĐỊA CHẤN (USGS INGESTION WORKER)
 # ==============================================================================
@@ -114,6 +126,8 @@ INGESTION_TIMEOUT_SECONDS=30
 
 # ==============================================================================
 # CẤU HÌNH DỊCH VỤ PHÂN TÍCH & DỰ BÁO CHUỖI THỜI GIAN
+# Chu kỳ theo sơ đồ ASCII yeucaubatbuoc.md §1.2: Ingestion 5p, Analysis 5p,
+# Prediction 5p, Clustering 1 ngày. Cả 4 runner đều đọc biến này từ .env.
 # ==============================================================================
 ANALYSIS_INTERVAL_SECONDS=300
 CLUSTERING_INTERVAL_SECONDS=86400

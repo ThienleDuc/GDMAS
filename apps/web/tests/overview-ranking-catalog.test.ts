@@ -15,13 +15,13 @@ test("TC-01: rankFromCountryCatalog trả RankRow trung thực", () => {
   const rows = rankFromCountryCatalog({
     success: true,
     data: [
-      { country: "USA", count: 8142 },
-      { country: "Japan", count: 80 },
+      { country: "USA", count: 8142, avg_magnitude: 1.62, max_magnitude: 5.0 },
+      { country: "Japan", count: 80, avg_magnitude: 2.1, max_magnitude: 4.3 },
     ],
   });
   assert.deepEqual(rows, [
-    { key: "USA", label: "USA", eventCount: 8142, avgMagnitude: null, maxMagnitude: null, clusterIds: [] },
-    { key: "Japan", label: "Japan", eventCount: 80, avgMagnitude: null, maxMagnitude: null, clusterIds: [] },
+    { key: "USA", label: "USA", eventCount: 8142, avgMagnitude: 1.62, maxMagnitude: 5.0, clusterIds: [] },
+    { key: "Japan", label: "Japan", eventCount: 80, avgMagnitude: 2.1, maxMagnitude: 4.3, clusterIds: [] },
   ]);
 });
 
@@ -51,6 +51,9 @@ test("TC-03: OverviewPage ưu tiên ranking catalog, fallback cũ", () => {
   assert.match(page, /rankFromRegionCatalog\(data\.regionCatalog\)/u);
   assert.match(page, /rankRegionsForCountry\(data\.clusters, country\)/u);
   const hook = readFileSync(resolve(src, "features/overview/useOverviewData.ts"), "utf8");
-  assert.match(hook, /getCountryCatalog\(controller\.signal\)/u);
-  assert.match(hook, /getRegionCatalog\(filter\?\.country \?\? undefined, controller\.signal\)/u);
+  assert.match(hook, /getCountryCatalog\(controller\.signal, window\)/u);
+  assert.match(
+    hook,
+    /getRegionCatalog\(filter\?\.country \?\? undefined, controller\.signal, window\)/u,
+  );
 });

@@ -56,7 +56,7 @@ def load_filtered_events_df(
 ) -> pd.DataFrame:
     """Nạp 6 cột `EVENT_COLUMNS` của T3 cho phạm vi đã lọc → DataFrame đã chuẩn hoá."""
     as_of = as_of or datetime.now(UTC)
-    days = window_days or getattr(settings, "ANALYSIS_WINDOW_DAYS", 365)
+    days = window_days or settings.ANALYSIS_WINDOW_DAYS
     since = as_of - timedelta(days=days)
     query = scope(
         db.query(
@@ -105,7 +105,7 @@ def compute_filtered_metrics(
             )
         return bundle
     if kind == "seasonality":
-        return compute_seasonality(df, as_of=as_of)
+        return compute_seasonality(df, as_of=as_of, interval=interval)
     if kind == "correlation":
         return compute_correlation(df)
     raise ValueError(f"Kind không hợp lệ: {kind}")

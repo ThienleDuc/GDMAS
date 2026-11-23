@@ -29,10 +29,16 @@ function isNotFound(reason: unknown): boolean {
   return reason instanceof ApiError && reason.status === 404;
 }
 
+export interface TimeWindow {
+  start_time?: string;
+  end_time?: string;
+}
+
 export function useEarthquakeInsights(
   interval: AnalysisInterval,
   refreshKey = 0,
   filter?: GeoFilter | null,
+  window?: TimeWindow | null,
 ): EarthquakeInsightsState {
   const [state, setState] = useState<EarthquakeInsightsState>(INITIAL_STATE);
 
@@ -41,9 +47,9 @@ export function useEarthquakeInsights(
     setState((previous) => ({ ...previous, loading: true, error: null, unavailable: [] }));
 
     Promise.allSettled([
-      getEarthquakeStatistics(controller.signal, filter),
-      getTemporalAnalysis({ interval, ...geoQuery(filter) }, controller.signal),
-      getClustersOptional(controller.signal),
+      getEarthquakeStatistics(controller.signal, filter, window),
+      getTemporalAnalysis({ interval, ...geoQuery(filter), ...window }, controller.signal),
+      getClustersOptional(controller.signal, filter),
     ])
       .then(([statisticsResult, temporalResult, clustersResult]) => {
         if (controller.signal.aborted) return;
@@ -84,7 +90,7 @@ export function useEarthquakeInsights(
       });
 
     return () => controller.abort();
-  }, [interval, refreshKey, filter?.country, filter?.region]);
+  }, [interval, refreshKey, filter?.country, filter?.region, window?.start_time, window?.end_time]);
 
   return state;
 }
