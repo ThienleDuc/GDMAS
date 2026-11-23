@@ -1,9 +1,10 @@
 /**
- * Context nạp dữ liệu 6 nguồn phân tích MỘT LẦN tại sublayout.
- * Các pattern con chỉ đọc — chuyển giữa các route không refetch lại.
+ * Context dữ liệu 6 nguồn phân tích — từ 2026-11-23 chỉ fetch nguồn của sub-route
+ * đang active (tối đa 1 request, P5+P6 = 2). Các pattern con vẫn đọc qua context.
  */
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import type { CorrelationResponse, SeasonalityResponse, TemporalResponse, TrendResponse } from "../../contracts/analysis.ts";
 import type { AnalysisInterval } from "../../contracts/common.ts";
 import type { ClassificationsResponse } from "../../contracts/classifications.ts";
@@ -24,6 +25,7 @@ import {
   getTrendAnalysis,
 } from "../../services/earthquake-api.ts";
 import { intervalToParams, metricsFor, statisticsView, type PanelState } from "./statistics-view.ts";
+import { patternSlugFor } from "./pattern-nav.ts";
 
 export interface PanelData<T> {
   loading: boolean;
@@ -52,10 +54,22 @@ export interface StatisticsData {
 
 const StatisticsContext = createContext<StatisticsData | null>(null);
 
-function usePanel<T>(fetcher: (signal: AbortSignal) => Promise<T>, deps: React.DependencyList): PanelData<T> {
-  const [state, setState] = useState<PanelData<T>>({ loading: true, error: null, data: null });
+export function usePanel<T>(
+  fetcher: (signal: AbortSignal) => Promise<T>,
+  deps: React.DependencyList,
+  enabled = true,
+): PanelData<T> {
+  const [state, setState] = useState<PanelData<T>>({
+    loading: enabled,
+    error: null,
+    data: null,
+  });
 
   useEffect(() => {
+    if (!enabled) {
+      setState({ loading: false, error: null, data: null });
+      return;
+    }
     const controller = new AbortController();
     setState((prev) => ({ ...prev, loading: true, error: null }));
     void fetcher(controller.signal)
@@ -68,7 +82,7 @@ function usePanel<T>(fetcher: (signal: AbortSignal) => Promise<T>, deps: React.D
     return () => controller.abort();
     // fetcher được tạo lại mỗi render; only deps quyết định refetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [...deps, enabled]);
 
   return state;
 }
@@ -76,10 +90,20 @@ function usePanel<T>(fetcher: (signal: AbortSignal) => Promise<T>, deps: React.D
 export const StatisticsDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [interval, setInterval] = useState<AnalysisInterval>("week");
   const window = useMemo(() => intervalToParams(interval), [interval]);
-  // ?country=&region= là nguồn sự thật chung — đổi phạm vi thì nạp lại 6 nguồn.
+  // ?country=&region= là nguồn sự thật chung — đổi phạm vi thì nạp lại nguồn đang xem.
   const { country, region } = useCatalogSelection();
   const filter = useMemo(() => ({ country, region }), [country, region]);
   const geo = { country, region };
+  // Chỉ fetch endpoint của pattern đang active — giảm 6 request xuống 1 (P5+P6 = 2).
+  const { pathname } = useLocation();
+  const activeSlug = patternSlugFor(pathname);
+  const enabled = {
+    temporal: activeSlug === "bieu-dien-thoi-gian",
+    trend: activeSlug === "xuan-huong",
+    seasonality: activeSlug === "mua-vu",
+    correlation: activeSlug === "tuong-quan",
+    forecast: activeSlug === "du-bao-phan-loai",
+  };
 
   const temporal = usePanel<TemporalResponse>(
     (signal) =>
@@ -88,26 +112,32 @@ export const StatisticsDataProvider: React.FC<{ children: React.ReactNode }> = (
         signal,
       ),
     [interval, window, country, region],
+    enabled.temporal,
   );
   const trend = usePanel<TrendResponse>(
     (signal) => getTrendAnalysis({ resample_freq: "W", metric: "count", ...geo }, signal),
     [country, region],
+    enabled.trend,
   );
   const seasonality = usePanel<SeasonalityResponse>(
     (signal) => getSeasonalityAnalysis(geo, signal),
     [country, region],
+    enabled.seasonality,
   );
   const correlation = usePanel<CorrelationResponse>(
     (signal) => getCorrelationAnalysis(geo, signal),
     [country, region],
+    enabled.correlation,
   );
   const predictions = usePanel<PredictionsResponse>(
     (signal) => getPredictions(signal, filter),
     [country, region],
+    enabled.forecast,
   );
   const classifications = usePanel<ClassificationsResponse>(
     (signal) => getClassifications(signal, filter),
     [country, region],
+    enabled.forecast,
   );
 
   const temporalData = metricsFor(temporal.data);
