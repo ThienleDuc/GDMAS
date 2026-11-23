@@ -63,7 +63,7 @@ export function OverviewHotspotsChart({ rows, mode, note, onSelect }: OverviewHo
                 <td><span className="ov-rank-index">{index + 1}</span></td>
                 <td>
                   {onSelect ? (
-                    <button type="button" className="ov-rank-link" onClick={() => onSelect(row)}>
+                    <button type="button" className="ov-rank-link" title={row.label} onClick={() => onSelect(row)}>
                       {row.label}
                     </button>
                   ) : (

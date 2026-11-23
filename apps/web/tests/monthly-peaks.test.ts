@@ -99,14 +99,13 @@ test("TC-03: service gọi đúng endpoint + interval", async () => {
   assert.equal(new URL(urls[1]).searchParams.get("interval"), "month");
 });
 
-test("TC-04: Overview render biểu đồ tháng bên dưới biểu đồ tuần", () => {
+test("TC-04: Overview chỉ còn 1 biểu đồ chu kỳ tuần (2026-11-24)", () => {
   const page = read("features/overview/OverviewPage.tsx");
-  const weekIndex = page.indexOf("<OverviewSeasonalityChart data={seasonality} />");
-  const monthIndex = page.indexOf("<OverviewSeasonalityChart data={monthlyBars} />");
-  assert.ok(weekIndex > 0 && monthIndex > weekIndex, "biểu đồ tháng phải nằm sau biểu đồ tuần");
-  assert.match(page, /Cao điểm theo tháng/u);
+  assert.equal((page.match(/<OverviewSeasonalityChart/gu) ?? []).length, 1);
+  assert.match(page, /Chu kỳ hoạt động · 7 ngày/u);
+  assert.doesNotMatch(page, /monthlyBars/u);
+  assert.doesNotMatch(page, /Cao điểm theo tháng/u);
   const hook = read("features/overview/useOverviewData.ts");
-  assert.match(hook, /getMonthlyPeaks\(filter, controller\.signal\)/u);
-  // Bỏ request seasonality?interval=month vô dụng (phase-load 2026-11-23).
-  assert.doesNotMatch(hook, /interval: "month"/u);
+  assert.doesNotMatch(hook, /getMonthlyPeaks/u);
+  assert.match(hook, /getSeasonalityAnalysis\(\{ \.\.\.geoQuery\(filter\), \.\.\.window \}/u);
 });

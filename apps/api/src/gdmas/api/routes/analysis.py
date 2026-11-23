@@ -17,6 +17,18 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
+
+def _parse_window(raw: str | None) -> datetime | None:
+    """Parse ISO 8601 UTC (có/không hậu tố Z); sai → None (không làm crash route)."""
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=UTC)
+
+
 # Chấp nhận cả tên chuẩn của API.md lẫn tên đang được demo_seeder ghi
 TYPE_ALIASES = {
     "temporal": ["temporal", "time_series"],
@@ -247,6 +259,8 @@ def get_seasonality(
         pattern="^(week|month)$",
         description="Ép chu kỳ tuần (7 ngày) hoặc tháng (12 tháng)",
     ),
+    start_time: str | None = Query(None, description="Từ thời điểm ISO 8601 UTC"),
+    end_time: str | None = Query(None, description="Đến thời điểm ISO 8601 UTC"),
     db: Session = Depends(get_db),
 ):
     """Pattern 3: tính chu kỳ / mùa vụ."""
@@ -285,7 +299,13 @@ def get_seasonality(
 
     if country or region or interval:
         metrics = compute_filtered_metrics(
-            db, "seasonality", country, region, interval=interval
+            db,
+            "seasonality",
+            country,
+            region,
+            interval=interval,
+            start=_parse_window(start_time),
+            end=_parse_window(end_time),
         )
         return {"success": True, "data": build(metrics)}
     return _respond(db, "seasonality", build)

@@ -414,7 +414,7 @@ export function applySseLatestEvent(
     latitude,
     longitude,
   };
-  return [row, ...rows.filter((item) => item.id !== row.id)].slice(0, 5);
+  return [row, ...rows.filter((item) => item.id !== row.id)].slice(0, 8);
 }
 
 /**
@@ -484,7 +484,7 @@ export function buildLatestEvents(items: readonly EarthquakeItem[] | null | unde
     .filter((item) => item && Number.isFinite(Date.parse(item.event_time)) && isFiniteNumber(item.magnitude))
     .slice()
     .sort((left, right) => Date.parse(right.event_time) - Date.parse(left.event_time))
-    .slice(0, 5)
+    .slice(0, 8)
     .map((item) => ({
       id: item.id,
       time: item.event_time,

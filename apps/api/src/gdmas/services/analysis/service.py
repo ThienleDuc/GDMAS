@@ -28,7 +28,7 @@ from gdmas.services.analysis.patterns import (
 logger = logging.getLogger("gdmas.services.analysis")
 
 SERVICE_NAME = "analysis"
-DEFAULT_WINDOW_DAYS = 365
+DEFAULT_WINDOW_DAYS = 30
 ERROR_MESSAGE_MAX_LEN = 200
 
 

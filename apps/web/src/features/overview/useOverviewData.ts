@@ -18,7 +18,6 @@ import {
   getEarthquakes,
   getPredictions,
   getSeasonalityAnalysis,
-  getMonthlyPeaks,
   getTrendAnalysis,
 } from "../../services/earthquake-api.ts";
 import { getCountryCatalog, getRegionCatalog } from "../../services/geo-catalog-api.ts";
@@ -131,7 +130,7 @@ export function useOverviewData(
       ),
       getEarthquakes(
         {
-          limit: 5,
+          limit: 8,
           sort_by: "event_time",
           order: "desc",
           ...geoQuery(filter),
@@ -200,22 +199,21 @@ export function useOverviewData(
     window?.end_time,
   ]);
 
-  // Phase 2 — secondary: catalog, chu kỳ, monthly-peaks, forecast (dưới fold).
+  // Phase 2 — secondary: catalog, chu kỳ (1 tháng), forecast (dưới fold).
   useEffect(() => {
     if (!secondaryEnabled) return;
     const controller = new AbortController();
     setState((previous) => ({ ...previous, secondaryLoading: true }));
 
     Promise.allSettled([
-      getSeasonalityAnalysis(geoQuery(filter), controller.signal),
+      getSeasonalityAnalysis({ ...geoQuery(filter), ...window }, controller.signal),
       getPredictions(controller.signal, filter),
       getClassifications(controller.signal, filter),
       getCountryCatalog(controller.signal, window),
       getRegionCatalog(filter?.country ?? undefined, controller.signal, window),
-      getMonthlyPeaks(filter, controller.signal),
     ])
       .then(
-        ([seasonality, predictions, classifications, countries, regions, monthly]) => {
+        ([seasonality, predictions, classifications, countries, regions]) => {
           if (controller.signal.aborted) return;
 
           const unavailable: string[] = [];
@@ -245,10 +243,7 @@ export function useOverviewData(
               regions.status === "fulfilled" && Array.isArray(regions.value?.data)
                 ? regions.value
                 : null,
-            monthlyPeaks:
-              monthly.status === "fulfilled" && Array.isArray(monthly.value?.data)
-                ? monthly.value
-                : null,
+            monthlyPeaks: null, // Không còn gọi /statistics/monthly-peaks (giữ field tương thích — I2).
             secondaryLoading: false,
             error: previous.error ?? error,
             unavailable: [...previous.unavailable, ...unavailable],
