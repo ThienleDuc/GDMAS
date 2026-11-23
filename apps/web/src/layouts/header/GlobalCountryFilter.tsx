@@ -3,8 +3,9 @@ import { ChevronDown, Search } from "lucide-react";
 import { ALL_COUNTRIES } from "../../features/earthquakes/country-filter.ts";
 import { useCatalogSelection } from "../../features/earthquakes/useCatalogSelection.ts";
 import { getClustersOptional } from "../../services/earthquake-api.ts";
+import { resolveWindow } from "../../features/earthquakes/earthquake-view.ts";
 import { getCountryCatalog } from "../../services/geo-catalog-api.ts";
-import { countriesFromClusters, type CountryOption } from "./header-data.ts";
+import { countriesFromClusters, type CountryOption, type HeaderCatalog } from "./header-data.ts";
 
 const ALL_LABEL = "Tất cả quốc gia";
 
@@ -13,7 +14,12 @@ const ALL_LABEL = "Tất cả quốc gia";
  * Fallback GET /api/v1/clusters → countriesFromClusters khi endpoint mới lỗi (RULE-03).
  * Combobox có ô tìm kiếm; lựa chọn ghi vào ?country= → mọi trang FE dùng chung (I5).
  */
-export const GlobalCountryFilter: React.FC = () => {
+interface GlobalCountryFilterProps {
+  /** Catalog BE đẩy qua SSE — thiếu thì giữ nguyên options, không fetch lại. */
+  catalog?: HeaderCatalog;
+}
+
+export const GlobalCountryFilter: React.FC<GlobalCountryFilterProps> = ({ catalog }) => {
   const { country, setCountry } = useCatalogSelection();
   const [options, setOptions] = useState<CountryOption[]>([]);
   const [unavailable, setUnavailable] = useState(false);
@@ -34,7 +40,7 @@ export const GlobalCountryFilter: React.FC = () => {
           if (!controller.signal.aborted) setUnavailable(true);
         });
 
-    getCountryCatalog(controller.signal)
+    getCountryCatalog(controller.signal, resolveWindow("month"))
       .then((catalog) => {
         if (controller.signal.aborted) return;
         const options: CountryOption[] = catalog.data.map((item) => ({
@@ -53,6 +59,19 @@ export const GlobalCountryFilter: React.FC = () => {
 
     return () => controller.abort();
   }, []);
+
+  // SSE chỉ gửi `catalog` khi dữ liệu đổi — có field thì update ngay, thiếu thì giữ nguyên.
+  useEffect(() => {
+    if (!catalog) return;
+    setOptions(
+      catalog.countries.map((item) => ({
+        country: item.country,
+        eventCount: item.count,
+        clusterIds: [],
+      })),
+    );
+    setUnavailable(false);
+  }, [catalog]);
 
   const visibleOptions = useMemo(() => {
     const term = query.trim().toLowerCase();

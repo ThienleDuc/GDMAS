@@ -99,7 +99,7 @@ export const DashboardLayout: React.FC = () => {
             <span className="layout__breadcrumb-current">{routeLabel(location.pathname)}</span>
           </div>
 
-          <HeaderActions onRefresh={sse.reconnect} dataRefreshKey={sseRefreshKey} />
+          <HeaderActions onRefresh={sse.reconnect} dataRefreshKey={sseRefreshKey} sseData={sse.data} />
         </header>
 
         <main

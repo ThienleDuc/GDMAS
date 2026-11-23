@@ -2,7 +2,7 @@
 
 Worker T2 thường chỉ chạy `all_hour`, nên DB ban đầu quá hẹp. USGS **không có**
 feed summary `all_year`; module này dùng FDSN `?starttime=&endtime=` chia theo từng
-cửa sổ ~30 ngày cho tới `settings.DATA_WINDOW_DAYS` (mặc định 365 = 1 năm).
+cửa sổ ~30 ngày cho tới `settings.DATA_WINDOW_DAYS` (mặc định 30 = 1 tháng).
 Mỗi query có `limit=20000` nên cần chia nhỏ. Tái dùng parse/upsert của T2, không
 nhân bản logic, không nhúng vào `main.py` (I1).
 

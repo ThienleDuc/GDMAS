@@ -163,12 +163,14 @@ def get_temporal(
             data["stats"] = stats
         return data
 
-    if country or region:
+    # Có cửa sổ (FE luôn gửi) hoặc filter → tính on-the-fly: 3 biểu đồ cùng lấy dữ liệu
+    # trong khoảng Ngày/Tuần/Tháng. Snapshot chỉ dùng khi không có cả hai (I2).
+    if country or region or start is not None or end is not None:
         metrics = compute_filtered_metrics(
             db, "temporal", country, region, interval=interval, start=start, end=end
         )
         return {"success": True, "data": build(metrics)}
-    return _respond(db, "temporal", build, interval=interval, start=start, end=end)
+    return _respond(db, "temporal", build, interval=interval)
 
 
 @router.get("/trend")

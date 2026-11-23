@@ -13,10 +13,12 @@ from typing import Any
 
 from fastapi import Request
 from sqlalchemy import desc
+from sqlalchemy.exc import SQLAlchemyError
 
 from gdmas.db.connection import SessionLocal
 from gdmas.models.earthquake import EarthquakeEvent
 from gdmas.models.service_run import ServiceRun
+from gdmas.services.catalog import EMPTY_CATALOG, catalog_hash, catalog_payload
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +61,23 @@ def _event_to_dict(ev: EarthquakeEvent) -> dict[str, Any]:
 
 SSE_RETRY_MS = 5_000
 _packet_ids = count(1)
+
+# Hash snapshot catalog gần nhất — SSE chỉ gửi `catalog` khi có khác biệt (2026-11-24).
+_last_catalog_hash: str | None = None
+
+
+def _catalog_snapshot() -> dict[str, list[dict[str, Any]]] | None:
+    """Chạy trong worker thread (`asyncio.to_thread`) — SessionLocal riêng, không chia luồng."""
+    db = SessionLocal()
+    try:
+        return catalog_payload(db)
+    except (
+        SQLAlchemyError
+    ) as exc:  # DB lỗi → không đính catalog, SSE vẫn phát bình thường.
+        logger.warning("Không dựng được catalog cho SSE: %s", type(exc).__name__)
+        return None
+    finally:
+        db.close()
 
 
 def _packet(event: str, data: dict[str, Any]) -> dict[str, Any]:
@@ -121,12 +140,15 @@ def _cleared_packet() -> dict[str, Any]:
             ),
             "total_events": 0,
             "strong_count": 0,
+            "catalog": EMPTY_CATALOG,
         },
     )
 
 
 def broadcast_database_cleared_event() -> int:
     """Đẩy database_cleared tới mọi client đang kết nối. Trả về số client đã báo."""
+    global _last_catalog_hash
+    _last_catalog_hash = catalog_hash(EMPTY_CATALOG)
     message = _cleared_packet()
     count = 0
     for q in list(_connected_sse_queues):
@@ -301,17 +323,23 @@ async def earthquake_event_generator(
                     if cnt > 0
                     else "Đã hoàn thành chu kỳ quét 5 phút: dữ liệu hiện tại là mới nhất."
                 )
-                yield _packet(
-                    "ingestion_cycle_completed",
-                    {
-                        "title": "Cập Nhật Dữ Liệu Tự Động (Chu kỳ 5 phút)",
-                        "message": message,
-                        "records_processed": cnt,
-                        "total_events": current_total,
-                        "new_events": new_events,
-                        "timestamp": new_run_info.get("finished_at") or utc_now_iso(),
-                    },
-                )
+                # Tính catalog ngoài luồng; chỉ đính vào packet khi có khác biệt.
+                global _last_catalog_hash
+                catalog = await asyncio.to_thread(_catalog_snapshot)
+                cycle_data: dict[str, Any] = {
+                    "title": "Cập Nhật Dữ Liệu Tự Động (Chu kỳ 5 phút)",
+                    "message": message,
+                    "records_processed": cnt,
+                    "total_events": current_total,
+                    "new_events": new_events,
+                    "timestamp": new_run_info.get("finished_at") or utc_now_iso(),
+                }
+                if catalog is not None:
+                    digest = catalog_hash(catalog)
+                    if digest != _last_catalog_hash:
+                        cycle_data["catalog"] = catalog
+                        _last_catalog_hash = digest
+                yield _packet("ingestion_cycle_completed", cycle_data)
             elif new_events:
                 last_id = state["max_id"]
                 yield _packet(
