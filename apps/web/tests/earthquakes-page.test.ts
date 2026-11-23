@@ -175,3 +175,13 @@ test("TC-09: đổi filter rebuild query với page = 1", () => {
   assert.equal(afterFilterChange.page, 1);
   assert.equal(afterFilterChange.min_magnitude, 5);
 });
+
+test("TC-26: KPI lấy từ statistics BE, cùng nguồn với Overview", () => {
+  const root = resolve(import.meta.dirname, "../src");
+  const page = readFileSync(resolve(root, "features/earthquakes/EarthquakesPage.tsx"), "utf8");
+  assert.match(page, /statistics=\{insights\.statistics\}/u);
+  assert.match(page, /resolveWindow\(appliedForm\.range\)/u);
+  assert.match(page, /numeric: statisticsNumeric/u);
+  assert.doesNotMatch(page, /buildCatalogStatistics/u);
+  assert.doesNotMatch(page, /CHART_PAGE_SIZE.*max/u);
+});

@@ -82,7 +82,7 @@ test("TC-04: EarthquakesPage dùng URL + lọc cả region", () => {
   assert.match(page, /useCatalogSelection\(\)/u);
   assert.match(page, /filterByCountryAndRegion\(chartItems, selectedCountry, selectedRegion\)/u);
   assert.match(page, /setSelection\(country, ALL_REGIONS\)/u);
-  assert.match(page, /refreshKey, geo, undefined, \{/u);
+  assert.match(page, /refreshKey, geo, statisticsWindow, \{/u);
 });
 
 test("TC-05: Overview & Statistics truyền filter", () => {

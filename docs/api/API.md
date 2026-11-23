@@ -246,7 +246,9 @@ Thống kê nhanh các chỉ số địa chấn tổng quan phục vụ thẻ Da
   | :--- | :--- | :--- | :--- |
   | `country` | string | - | Giới hạn KPI theo quốc gia do BE suy từ `place` |
   | `region` | string | - | Giới hạn tiếp theo khu vực (dùng cùng `country`) |
-  | `start_time` / `end_time` | string | - | Cửa sổ UTC cho bộ lọc Ngày/Tuần/Tháng trên Overview (bổ sung 2026-11-23) |
+  | `start_time` / `end_time` | string | - | Cửa sổ UTC cho bộ lọc Ngày/Tuần/Tháng (Overview & Danh mục) |
+  | `min_magnitude` / `max_magnitude` | number | - | Giới hạn độ lớn cho KPI Danh mục (bổ sung 2026-11-24) |
+  | `min_depth` / `max_depth` | number | - | Giới hạn độ sâu km cho KPI Danh mục (bổ sung 2026-11-24) |
 
   Không truyền → số liệu toàn cục y hệt trước đây. `/analysis/trend` cũng nhận `start_time`/`end_time` và tính on-the-fly; `/analysis/seasonality` (chu kỳ tuần) và `/statistics/monthly-peaks` (12 tháng) **không** chịu cửa sổ này.
 

@@ -85,6 +85,18 @@ def get_earthquake_statistics(
     region: str | None = Query(None, description="Lọc theo khu vực"),
     start_time: str | None = Query(None, description="Từ thời điểm ISO 8601 UTC"),
     end_time: str | None = Query(None, description="Đến thời điểm ISO 8601 UTC"),
+    min_magnitude: float | None = Query(
+        None, description="Độ lớn tối thiểu (bộ lọc Danh mục)"
+    ),
+    max_magnitude: float | None = Query(
+        None, description="Độ lớn tối đa (bộ lọc Danh mục)"
+    ),
+    min_depth: float | None = Query(
+        None, description="Độ sâu tối thiểu km (bộ lọc Danh mục)"
+    ),
+    max_depth: float | None = Query(
+        None, description="Độ sâu tối đa km (bộ lọc Danh mục)"
+    ),
     db: Session = Depends(get_db),
 ):
     """Chỉ số KPI và chuỗi thời gian cho Dashboard.
@@ -102,6 +114,14 @@ def get_earthquake_statistics(
             query = query.filter(EarthquakeEvent.event_time >= start_dt)
         if end_dt is not None:
             query = query.filter(EarthquakeEvent.event_time <= end_dt)
+        if min_magnitude is not None:
+            query = query.filter(EarthquakeEvent.magnitude >= min_magnitude)
+        if max_magnitude is not None:
+            query = query.filter(EarthquakeEvent.magnitude <= max_magnitude)
+        if min_depth is not None:
+            query = query.filter(EarthquakeEvent.depth_km >= min_depth)
+        if max_depth is not None:
+            query = query.filter(EarthquakeEvent.depth_km <= max_depth)
         return query
 
     try:

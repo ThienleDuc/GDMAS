@@ -390,3 +390,25 @@ test("TC-03: getClusters nhận phản hồi canonical thành công", async () =
     globalThis.fetch = originalFetch;
   }
 });
+
+test("getEarthquakeStatistics gửi bộ lọc số cho KPI Danh mục", async () => {
+  const originalFetch = globalThis.fetch;
+  const urls: string[] = [];
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    urls.push(String(input));
+    return new Response(JSON.stringify({ success: true, data: { data: {} } }), { status: 200 });
+  };
+  try {
+    await getEarthquakeStatistics(undefined, { country: "Japan", region: "Tokyo" },
+      { start_time: "2026-11-01T00:00:00.000Z", end_time: "2026-11-24T00:00:00.000Z" },
+      { min_magnitude: 5, max_magnitude: 7, min_depth: 10, max_depth: 100 });
+    const url = new URL(urls[0]);
+    assert.equal(url.pathname, "/api/v1/statistics/earthquakes");
+    assert.equal(url.searchParams.get("country"), "Japan");
+    assert.equal(url.searchParams.get("min_magnitude"), "5");
+    assert.equal(url.searchParams.get("max_depth"), "100");
+    assert.equal(url.searchParams.get("start_time"), "2026-11-01T00:00:00.000Z");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

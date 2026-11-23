@@ -12,9 +12,10 @@ import {
   deriveViewState,
   fetchPage,
   formatEventRow,
+  resolveWindow,
   type EarthquakeFilters,
 } from "./earthquake-view.ts";
-import { buildCatalogStatistics, mapRangeToInterval } from "./earthquake-insights.ts";
+import { mapRangeToInterval } from "./earthquake-insights.ts";
 import { countriesFromItems } from "./country-filter.ts";
 import { geoQuery } from "../../contracts/geo-filter.ts";
 import { ALL_REGIONS, filterByCountryAndRegion, regionsFromItems } from "./region-filter.ts";
@@ -55,8 +56,6 @@ export const EarthquakesPage: React.FC = () => {
   // Nguồn sự thật là URL ?country=&region= — đồng bộ với header/bản đồ.
   const { country: selectedCountry, region: selectedRegion, setSelection } = useCatalogSelection();
   const [chartItems, setChartItems] = useState<EarthquakeItem[]>([]);
-  const [chartTotal, setChartTotal] = useState(0);
-  const [chartLoaded, setChartLoaded] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detail, setDetail] = useState<EarthquakeItem | null>(null);
   const [detailState, setDetailState] = useState<DetailState>("idle");
@@ -135,14 +134,9 @@ export const EarthquakesPage: React.FC = () => {
       .then((result) => {
         if (controller.signal.aborted) return;
         setChartItems(result.data);
-        setChartTotal(result.total);
-        setChartLoaded(true);
       })
       .catch(() => {
-        if (controller.signal.aborted) return;
-        setChartItems([]);
-        setChartTotal(0);
-        setChartLoaded(true);
+        if (!controller.signal.aborted) setChartItems([]);
       });
     return () => controller.abort();
   }, [filters, refreshKey, selectedCountry, selectedRegion]);
@@ -156,18 +150,28 @@ export const EarthquakesPage: React.FC = () => {
     () => filterByCountryAndRegion(chartItems, selectedCountry, selectedRegion),
     [chartItems, selectedCountry, selectedRegion],
   );
-  // KPI và histogram dùng chung tập đã lọc — cả 4 chỉ số đều ăn Ngày/Tuần/Tháng + độ lớn/độ sâu + quốc gia/khu vực.
-  const catalogStats = useMemo(() => buildCatalogStatistics(chartFiltered, chartTotal), [chartFiltered, chartTotal]);
   const visibleItems = useMemo(
     () => filterByCountryAndRegion(items, selectedCountry, selectedRegion),
     [items, selectedCountry, selectedRegion],
   );
   const rows = useMemo(() => visibleItems.map((item) => formatEventRow(item, timezone)), [visibleItems, timezone]);
   const viewState = deriveViewState({ loading, error, data: rows });
-  // Chỉ dùng statistics cho KPI — temporal & clusters không có consumer trên page này.
-  const insights = useEarthquakeInsights(mapRangeToInterval(appliedForm.range), refreshKey, geo, undefined, {
+  // KPI lấy từ CÙNG endpoint BE với Overview (/statistics/earthquakes) — cùng cửa sổ, geo và bộ lọc số.
+  // Không còn lấy max từ 100 sự kiện đầu trang (giới hạn CHART_PAGE_SIZE) như trước.
+  const statisticsWindow = useMemo(() => resolveWindow(appliedForm.range), [appliedForm.range]);
+  const statisticsNumeric = useMemo(
+    () => ({
+      min_magnitude: filters.minMagnitude,
+      max_magnitude: filters.maxMagnitude,
+      min_depth: filters.minDepth,
+      max_depth: filters.maxDepth,
+    }),
+    [filters.minMagnitude, filters.maxMagnitude, filters.minDepth, filters.maxDepth],
+  );
+  const insights = useEarthquakeInsights(mapRangeToInterval(appliedForm.range), refreshKey, geo, statisticsWindow, {
     includeTemporal: false,
     includeClusters: false,
+    numeric: statisticsNumeric,
   });
 
   // RD-13: nạp chi tiết sự kiện theo dòng đã chọn — abort khi đổi dòng/unmount (tránh race).
@@ -227,7 +231,7 @@ export const EarthquakesPage: React.FC = () => {
       <EarthquakeFilterBar value={form} onChange={handleFilterChange} onApply={handleApplyFilters} />
 
       <EarthquakeInsights
-        statistics={chartLoaded ? catalogStats : insights.statistics}
+        statistics={insights.statistics}
         items={chartFiltered}
         countries={countries}
         selectedCountry={selectedCountry}

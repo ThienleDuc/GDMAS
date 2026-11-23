@@ -626,6 +626,78 @@
                 "title": "End Time"
               },
               "description": "Đến thời điểm ISO 8601 UTC"
+            },
+            {
+              "name": "min_magnitude",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Độ lớn tối thiểu (bộ lọc Danh mục)",
+                "title": "Min Magnitude"
+              },
+              "description": "Độ lớn tối thiểu (bộ lọc Danh mục)"
+            },
+            {
+              "name": "max_magnitude",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Độ lớn tối đa (bộ lọc Danh mục)",
+                "title": "Max Magnitude"
+              },
+              "description": "Độ lớn tối đa (bộ lọc Danh mục)"
+            },
+            {
+              "name": "min_depth",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Độ sâu tối thiểu km (bộ lọc Danh mục)",
+                "title": "Min Depth"
+              },
+              "description": "Độ sâu tối thiểu km (bộ lọc Danh mục)"
+            },
+            {
+              "name": "max_depth",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Độ sâu tối đa km (bộ lọc Danh mục)",
+                "title": "Max Depth"
+              },
+              "description": "Độ sâu tối đa km (bộ lọc Danh mục)"
             }
           ],
           "responses": {

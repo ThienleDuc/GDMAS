@@ -2,7 +2,7 @@ import { ApiError, fetchApi } from "../lib/api-client.ts";
 import { clustersFromPatterns } from "../lib/transforms/cluster-fallback.ts";
 import { isUtcTimestamp, isWgs84Bounds } from "../contracts/common.ts";
 import type { TimezoneMode } from "../lib/formatters.ts";
-import { geoQuery, type GeoFilter } from "../contracts/geo-filter.ts";
+import { geoQuery, type GeoFilter, type NumericFilter } from "../contracts/geo-filter.ts";
 import type { MonthlyPeaksResponse } from "../contracts/monthly-peaks.ts";
 import type {
   ClassificationsResponse,
@@ -134,8 +134,9 @@ export async function getEarthquakeStatistics(
   signal?: AbortSignal,
   filter?: GeoFilter | null,
   window?: { start_time?: string; end_time?: string } | null,
+  numeric?: NumericFilter | null,
 ): Promise<StatisticsResponse> {
-  const qs = buildQuery({ ...geoQuery(filter), ...window });
+  const qs = buildQuery({ ...geoQuery(filter), ...window, ...numeric });
   return fetchApi<StatisticsResponse>(`/api/v1/statistics/earthquakes${qs}`, { signal });
 }
 

@@ -45,6 +45,25 @@ def test_kpis_are_computed_from_database(client, db):
     assert data["avg_magnitude"] == round((2.0 + 4.4 + 5.0 + 6.4) / 4, 2)
 
 
+def test_numeric_filters_scope_kpis_like_catalog(client, db):
+    """KPI Danh mục (max/avg) dùng chung BE với Overview nhưng ăn thêm bộ lọc số."""
+    now = datetime.now(UTC)
+    add_event(db, 1, magnitude=2.0, depth_km=5.0, event_time=now - timedelta(hours=2))
+    add_event(db, 2, magnitude=6.4, depth_km=150.0, event_time=now - timedelta(hours=3))
+
+    all_data = client.get(URL).json()["data"]
+    assert all_data["max_magnitude"] == 6.4
+    assert all_data["total_events"] == 2
+
+    strong_only = client.get(URL, params={"min_magnitude": 5}).json()["data"]
+    assert strong_only["total_events"] == 1
+    assert strong_only["max_magnitude"] == 6.4
+
+    shallow_only = client.get(URL, params={"max_depth": 10}).json()["data"]
+    assert shallow_only["total_events"] == 1
+    assert shallow_only["max_magnitude"] == 2.0
+
+
 def test_time_series_has_eight_buckets_computed_from_events(client, db):
     now = datetime.now(UTC)
     add_event(db, 1, magnitude=3.0, event_time=now - timedelta(minutes=30))
