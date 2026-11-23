@@ -7,3 +7,4 @@ export { MapViewportHud } from "./MapViewportHud.tsx";
 export { MapEmptyOverlay } from "./MapEmptyOverlay.tsx";
 export { MapLegend } from "./MapLegend.tsx";
 export { MapRegionPanel } from "./MapRegionPanel.tsx";
+export { EventListPanel } from "./EventListPanel.tsx";

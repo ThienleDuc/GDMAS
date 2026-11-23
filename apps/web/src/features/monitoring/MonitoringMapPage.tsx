@@ -1,17 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   EarthquakeMarkerLayer,
-  MapControlsPanel,
+  EventListPanel,
   MapEmptyOverlay,
   MapLegend,
-  MapRegionPanel,
   MapViewportHud,
   SeismicMap,
 } from "../../components/map/index.ts";
 import { ALL_COUNTRIES } from "../earthquakes/country-filter.ts";
-import { filterByCountryAndRegion } from "../earthquakes/region-filter.ts";
+import { ALL_REGIONS, filterByCountryAndRegion } from "../earthquakes/region-filter.ts";
 import { useCatalogSelection } from "../earthquakes/useCatalogSelection.ts";
-import { toMapEarthquake, viewportToBbox } from "../../lib/transforms/map-data.ts";
+import { toMapEarthquake } from "../../lib/transforms/map-data.ts";
 import {
   DEFAULT_MAP_FILTERS,
   type MapEarthquake,
@@ -19,77 +18,46 @@ import {
   type MapViewState,
 } from "../../lib/transforms/map-types.ts";
 import { getEarthquakes } from "../../services/earthquake-api.ts";
-import { getRegionCatalog } from "../../services/geo-catalog-api.ts";
 import {
   applySseEvent,
   buildEarthquakeQuery,
   deriveMapState,
   filterMapEvents,
+  resolveMapMinMagnitude,
+  sortEventsByTimeDesc,
 } from "./monitoring-view.ts";
 import { useSseMarkers } from "./sse-context.ts";
-import { fetchRegionClusters } from "./mock-region-clusters.ts";
-import type { RegionClusterRow } from "./region-clusters.ts";
+import { dataRefreshKey } from "../../layouts/header/header-data.ts";
 
-/** Khung nhìn khởi tạo; HUD luôn lấy toạ độ thật từ map qua `onViewportChange`. */
-const INITIAL_VIEW: MapViewState = { latitude: 16.0544, longitude: 108.2022, zoom: 5 };
-const VIEW_SPAN_LAT = 10;
-const VIEW_SPAN_LON = 15;
+/** Mặc định hiển thị toàn thế giới; HUD luôn lấy toạ độ thật từ map qua `onViewportChange`. */
+const INITIAL_VIEW: MapViewState = { latitude: 15, longitude: 0, zoom: 2 };
+/** Ngưỡng độ lớn lấy từ BACKFILL_MIN_MAGNITUDE (docker-compose → VITE_MAP_MIN_MAGNITUDE). */
+const MAP_MIN_MAGNITUDE = resolveMapMinMagnitude(import.meta.env);
 
 export const MonitoringMapPage: React.FC = () => {
-  const [filters, setFilters] = useState<MapFilters>({ ...DEFAULT_MAP_FILTERS });
+  const [filters] = useState<MapFilters>({
+    ...DEFAULT_MAP_FILTERS,
+    minMagnitude: MAP_MIN_MAGNITUDE,
+    maxMagnitude: undefined,
+  });
   const [view, setView] = useState<MapViewState>(INITIAL_VIEW);
   const [focus, setFocus] = useState<[number, number] | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [events, setEvents] = useState<MapEarthquake[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const [tileError, setTileError] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
-  const [regionClusters, setRegionClusters] = useState<RegionClusterRow[]>([]);
-  // Danh mục khu vực do BE suy từ place (quốc gia lấy từ header/URL).
-  const [catalogRegions, setCatalogRegions] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
-  const { country, region, setRegion, setSelection } = useCatalogSelection();
+  // Nguồn duy nhất của lựa chọn quốc gia/khu vực là combobox trên header (qua URL).
+  const { country, region } = useCatalogSelection();
+  const hasSelection = country !== ALL_COUNTRIES || region !== ALL_REGIONS;
 
-  // Panel khu vực dùng cụm thật từ GET /api/v1/clusters (GAP-05 — không mock).
-  useEffect(() => {
-    const controller = new AbortController();
-    void fetchRegionClusters(controller.signal)
-      .then((rows) => {
-        if (!controller.signal.aborted) setRegionClusters(rows);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setRegionClusters([]);
-      });
-    return () => controller.abort();
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    getRegionCatalog(country, controller.signal)
-      .then((catalog) => {
-        if (!controller.signal.aborted) setCatalogRegions(catalog.data.map((item) => item.region));
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setCatalogRegions([]);
-      });
-    return () => controller.abort();
-  }, [country]);
-
-  const bbox = useMemo(
-    () =>
-      viewportToBbox({
-        north: view.latitude + VIEW_SPAN_LAT,
-        south: view.latitude - VIEW_SPAN_LAT,
-        east: view.longitude + VIEW_SPAN_LON,
-        west: view.longitude - VIEW_SPAN_LON,
-      }),
-    [view],
-  );
-
-  // Chọn quốc gia cụ thể → bỏ bbox để không lọt mất sự kiện của quốc gia đó.
+  // Bản đồ realtime: không gửi start_time/end_time. country/region được đẩy xuống BE
+  // để lọc đúng toàn bộ dữ liệu (FE chỉ lọc lại như một lớp an toàn).
   const params = useMemo(
-    () => buildEarthquakeQuery(filters, country === ALL_COUNTRIES ? bbox : null),
-    [filters, bbox, country],
+    () => buildEarthquakeQuery(filters, null, { country, region, realtime: true }),
+    [filters, country, region],
   );
 
   const load = useCallback(async () => {
@@ -101,17 +69,18 @@ export const MonitoringMapPage: React.FC = () => {
     try {
       const response = await getEarthquakes(params, controller.signal);
       setEvents(response.data.map(toMapEarthquake));
-      setFocus((prev) =>
-        prev ?? (response.data.length > 0
+      setSelectedEventId(null);
+      setFocus(
+        hasSelection && response.data.length > 0
           ? [response.data[0].latitude, response.data[0].longitude]
-          : null),
+          : null,
       );
     } catch (err) {
       if (!controller.signal.aborted) setError(err);
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
-  }, [params]);
+  }, [params, hasSelection]);
 
   useEffect(() => {
     void load();
@@ -126,6 +95,15 @@ export const MonitoringMapPage: React.FC = () => {
     setEvents((prev) => applySseEvent(prev, lastPayload));
   }, [lastPayload]);
 
+  // Worker T2 hoàn thành chu kỳ 5 phút → tải lại toàn bộ dữ liệu (không chỉ marker đẩy).
+  const refreshKey = dataRefreshKey(lastPayload);
+  const lastRefreshKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (!refreshKey || refreshKey === lastRefreshKey.current) return;
+    lastRefreshKey.current = refreshKey;
+    void load();
+  }, [refreshKey, load]);
+
   const handleViewportChange = useCallback((next: MapViewState) => {
     setView((prev) =>
       prev.latitude === next.latitude && prev.longitude === next.longitude && prev.zoom === next.zoom
@@ -134,26 +112,20 @@ export const MonitoringMapPage: React.FC = () => {
     );
   }, []);
 
-  const handleMagnitudeChange = useCallback((minMagnitude: number) => {
-    setFilters((prev) => ({ ...prev, minMagnitude }));
+  const handleEventSelect = useCallback((event: MapEarthquake) => {
+    setSelectedEventId(event.sourceEventId || String(event.id));
+    setFocus([event.latitude, event.longitude]);
   }, []);
-
-  const handleTimeRangeChange = useCallback((timeRange: MapFilters["timeRange"]) => {
-    setFilters((prev) => ({ ...prev, timeRange }));
-  }, []);
-
-  const handleClusterSelect = useCallback(
-    (cluster: RegionClusterRow) => setSelection(cluster.country, cluster.region),
-    [setSelection],
-  );
 
   const visibleEvents = useMemo(
-    () => filterByCountryAndRegion(filterMapEvents(events, filters), country, region),
+    () =>
+      sortEventsByTimeDesc(
+        filterByCountryAndRegion(filterMapEvents(events, filters), country, region),
+      ),
     [events, filters, country, region],
   );
   const phase = deriveMapState({ loading, error, events: visibleEvents });
   const handleTileError = useCallback(() => setTileError(true), []);
-  const handleRefresh = useCallback(() => void load(), [load]);
   const handleRetry = useCallback(() => void load(), [load]);
 
   return (
@@ -173,7 +145,7 @@ export const MonitoringMapPage: React.FC = () => {
           aria-controls="gm-filter-sidebar"
           onClick={() => setPanelOpen((open) => !open)}
         >
-          {panelOpen ? "Ẩn bộ lọc" : "Bộ lọc & khu vực"}
+          {panelOpen ? "Ẩn danh sách" : "Danh sách sự kiện"}
         </button>
 
         <aside
@@ -188,20 +160,10 @@ export const MonitoringMapPage: React.FC = () => {
           >
             ×
           </button>
-          <MapControlsPanel
-            filters={filters}
-            count={visibleEvents.length}
-            onMagnitudeChange={handleMagnitudeChange}
-            onTimeRangeChange={handleTimeRangeChange}
-            onRefresh={handleRefresh}
-          />
-          <MapRegionPanel
-            regions={catalogRegions}
-            clusters={regionClusters}
-            country={country}
-            region={region}
-            onRegionChange={setRegion}
-            onClusterSelect={handleClusterSelect}
+          <EventListPanel
+            events={visibleEvents}
+            selectedId={selectedEventId}
+            onSelect={handleEventSelect}
           />
         </aside>
 
@@ -212,31 +174,32 @@ export const MonitoringMapPage: React.FC = () => {
             focus={focus}
             onViewportChange={handleViewportChange}
             onTileError={handleTileError}
+            tileFailed={tileError}
           >
             {visibleEvents.length > 0 && <EarthquakeMarkerLayer events={visibleEvents} />}
           </SeismicMap>
           <MapViewportHud view={view} />
           <MapLegend />
 
-        {tileError && (
-          <div className="gm-map__tile-warning" role="status">
-            Không tải được tile bản đồ — marker vẫn hiển thị.
-          </div>
-        )}
-        {phase === "loading" && (
-          <div className="gm-map__notice" role="status">
-            Đang nạp sự kiện…
-          </div>
-        )}
-        {phase === "error" && (
-          <div className="gm-map__notice gm-map__notice--error" role="alert">
-            Không nạp được dữ liệu.{" "}
-            <button type="button" onClick={handleRetry}>
-              Thử lại
-            </button>
-          </div>
-        )}
-        {phase === "empty" && <MapEmptyOverlay />}
+          {tileError && (
+            <div className="gm-map__tile-warning" role="status">
+              Không tải được tile — đang dùng bản đồ thế giới local, marker vẫn đúng vị trí.
+            </div>
+          )}
+          {phase === "loading" && (
+            <div className="gm-map__notice" role="status">
+              Đang nạp sự kiện…
+            </div>
+          )}
+          {phase === "error" && (
+            <div className="gm-map__notice gm-map__notice--error" role="alert">
+              Không nạp được dữ liệu.{" "}
+              <button type="button" onClick={handleRetry}>
+                Thử lại
+              </button>
+            </div>
+          )}
+          {phase === "empty" && <MapEmptyOverlay hasEvents={events.length > 0} />}
         </div>
       </div>
     </section>

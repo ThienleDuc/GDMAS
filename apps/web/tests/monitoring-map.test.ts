@@ -67,7 +67,8 @@ test("TC-01: buildEarthquakeQuery — UTC Z, WGS84, magnitude, sort", () => {
   assert.ok(params.start_time?.endsWith("Z"));
   assert.ok(params.end_time?.endsWith("Z"));
   assert.equal(params.min_magnitude, 2.5);
-  assert.equal(params.sort_by, "magnitude");
+  // Bản đồ realtime: sắp theo thời gian, không còn theo độ lớn.
+  assert.equal(params.sort_by, "event_time");
   assert.equal(params.order, "desc");
   assert.equal(params.page, 1);
   assert.equal(params.limit, MAP_PAGE_SIZE);

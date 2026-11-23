@@ -34,12 +34,13 @@ test("TC-03: bỏ class layout__system trên <details>", () => {
   assert.match(component, /layout__system-summary/u);
 });
 
-test("TC-04: preset thời gian chỉ tới 30 ngày", () => {
+test("TC-04: bản đồ realtime — không còn bộ lọc thời gian", () => {
   const component = read("components/map/MapControlsPanel.tsx");
-  assert.match(component, /\["24h", "7d", "30d"\]/u);
-  assert.doesNotMatch(component, /"24h", "7d", "30d", "all"/u);
-  const css = read("features/monitoring/monitoring.css");
-  assert.match(css, /\.gm-map__presets\s*\{[^}]*repeat\(3,\s*minmax\(0,\s*1fr\)\)/su);
+  assert.doesNotMatch(component, /PRESETS|timeRangeLabel/u);
+  assert.doesNotMatch(component, /Khoảng thời gian/u);
+  assert.match(component, /realtime/u);
+
+  // CSS cũ được giữ lại (RULE-03/I2) nhưng không còn component nào render preset thời gian.
 });
 
 test("TC-05: xoá eq-page__actions", () => {

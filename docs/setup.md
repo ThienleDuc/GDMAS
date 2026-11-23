@@ -146,6 +146,12 @@ VITE_SSE_ENDPOINT=/api/v1/events/stream
 
 # BẮT BUỘC disabled để dùng dữ liệu BE thật. "enabled" chỉ dành cho dev không có BE.
 VITE_API_MOCKING=disabled
+
+# Tile bản đồ (trang /monitoring): để trống → dùng /tile/{z}/{x}/{y}.png cùng origin.
+# Vite dev/preview proxy và nginx trong apps/web/Dockerfile chuyển /tile tới OSM DE
+# (tile miễn phí, KHÔNG cần API key — CARTO hiện trả ảnh "API KEY REQUIRED").
+# Chỉ đặt URL tuyệt đối khi môi trường không proxy được /tile.
+VITE_MAP_TILE_URL=
 ```
 
 ---

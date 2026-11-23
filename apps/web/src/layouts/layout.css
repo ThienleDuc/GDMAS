@@ -294,7 +294,8 @@
 
   .layout__header {
     position: relative;
-    z-index: var(--z-sticky);
+    /* Trước đây dùng --z-sticky (200) → thua pane/overlay Leaflet (~1000-1200) của bản đồ. */
+    z-index: var(--z-header);
     display: flex;
     flex: 0 0 var(--header-height);
     align-items: center;
@@ -512,7 +513,8 @@
     position: absolute;
     top: calc(100% + var(--space-2));
     left: 0;
-    z-index: var(--z-dropdown);
+    /* Cao hơn cả header để dropdown tìm kiếm không bị bản đồ che. */
+    z-index: var(--z-header-popover);
     width: max(15rem, 100%);
     padding: var(--space-1);
     border: 1px solid var(--border);
@@ -788,6 +790,18 @@
     margin-inline: 0;
     padding: var(--page-padding);
     background: var(--background);
+  }
+
+  /* Trang Bản đồ giám sát: lấp đúng chiều cao còn lại của viewport (không scroll page). */
+  .layout__content--map {
+    display: flex;
+    overflow: hidden;
+  }
+
+  .layout__content--map > * {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
   }
 
   @media (max-width: 1023px) {

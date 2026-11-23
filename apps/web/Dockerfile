@@ -31,6 +31,11 @@ RUN echo 'server { \
         index index.html index.htm; \
         try_files $uri $uri/ /index.html; \
     } \
+    location /tile/ { \
+        proxy_pass https://tile.openstreetmap.de/; \
+        proxy_set_header Host tile.openstreetmap.de; \
+        proxy_set_header User-Agent "GDMAS/1.0 (https://github.com/ThienleDuc/GDMAS)"; \
+    } \
 }' > /etc/nginx/conf.d/default.conf
 
 EXPOSE 3000

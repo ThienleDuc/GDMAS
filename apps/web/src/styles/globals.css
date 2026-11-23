@@ -364,6 +364,9 @@
   --z-popover: 500;
   --z-tooltip: 600;
   --z-toast: 700;
+  /* Header popup phải nằm trên mọi pane Leaflet (z-index tới ~1200 trong page bản đồ). */
+  --z-header: 1500;
+  --z-header-popover: 1600;
 
 }
 
