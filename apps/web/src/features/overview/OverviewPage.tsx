@@ -10,6 +10,7 @@ import {
 } from "../../components/charts/index.ts";
 import { ALL_COUNTRIES } from "../earthquakes/country-filter.ts";
 import { useCatalogSelection } from "../earthquakes/useCatalogSelection.ts";
+import { pathWithSelection } from "../earthquakes/catalog-selection.ts";
 import {
   RANGE_PRESETS,
   resolveWindow,
@@ -41,7 +42,7 @@ import { useOverviewData } from "./useOverviewData.ts";
 /** Trang Tổng quan (Home `/`) — Bento dashboard từ API thật, không mock. */
 export const OverviewPage: React.FC = () => {
   const navigate = useNavigate();
-  const { country, region, setSelection } = useCatalogSelection();
+  const { country, region, setSelection, withSelection } = useCatalogSelection();
   const sse = useSseMarkers();
   // Dùng chung luồng SSE của shell — tự reset/refetch khi CSDL xoá rồi phục hồi (Demo §4).
   const dbReset = useDatabaseResetFromEvent(sse?.data ?? null);
@@ -97,8 +98,11 @@ export const OverviewPage: React.FC = () => {
     : null;
 
   const handleRankSelect = (row: RankRow) => {
-    setSelection(isCountryMode ? row.key : country, isCountryMode ? "all" : row.key);
-    navigate(APP_ROUTES.MONITORING);
+    // Truyền selection mới trực tiếp — tránh stale closure của `withSelection`.
+    const nextCountry = isCountryMode ? row.key : country;
+    const nextRegion = isCountryMode ? "all" : row.key;
+    setSelection(nextCountry, nextRegion);
+    navigate(pathWithSelection(APP_ROUTES.MONITORING, { country: nextCountry, region: nextRegion }));
   };
 
   return (
@@ -135,10 +139,10 @@ export const OverviewPage: React.FC = () => {
             <Radio className="h-4 w-4" aria-hidden="true" />
             {sse?.isConnected ? "SSE trực tiếp" : "Đang kết nối SSE…"}
           </span>
-          <Link className="ov-cta" to={APP_ROUTES.MONITORING}>
+          <Link className="ov-cta" to={withSelection(APP_ROUTES.MONITORING)}>
             <MapPinned className="h-4 w-4" aria-hidden="true" /> Bản đồ trực tiếp
           </Link>
-          <Link className="ov-cta ov-cta--ghost" to={APP_ROUTES.STATISTICS}>
+          <Link className="ov-cta ov-cta--ghost" to={withSelection(APP_ROUTES.STATISTICS)}>
             <Activity className="h-4 w-4" aria-hidden="true" /> 6 nhóm phân tích
             <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
@@ -264,7 +268,7 @@ export const OverviewPage: React.FC = () => {
                 </table>
               </div>
             )}
-            <Link className="ov-inline-link" to={APP_ROUTES.EARTHQUAKES}>
+            <Link className="ov-inline-link" to={withSelection(APP_ROUTES.EARTHQUAKES)}>
               Xem toàn bộ danh mục <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </article>

@@ -9,6 +9,7 @@ import { CompactRefreshCountdown } from "./header/CompactRefreshCountdown.tsx";
 import { ThemeToggle } from "./header/ThemeToggle.tsx";
 import { dataRefreshKey } from "./header/header-data.ts";
 import { APP_ROUTES } from "../app/routes.tsx";
+import { useCatalogSelection } from "../features/earthquakes/useCatalogSelection.ts";
 
 interface NavItem extends NavMeta {
   icon: React.ComponentType<{ className?: string }>;
@@ -29,6 +30,7 @@ const NAV_ITEMS: NavItem[] = NAV_META.map((meta, index) => ({
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
+  const { withSelection } = useCatalogSelection();
 
   // Giữ một kết nối SSE duy nhất tại shell; page bản đồ chỉ đọc qua context.
   // RD-17: dùng default chuẩn /api/v1/events/stream từ services/sse-api.ts (giữ 1 kết nối tại shell).
@@ -59,7 +61,7 @@ export const DashboardLayout: React.FC = () => {
             return (
               <NavLink
                 key={item.path}
-                to={item.path}
+                to={withSelection(item.path)}
                 className={`layout__nav-link layout__nav-link--rail group ${isActive ? "active" : ""}`}
                 aria-label={item.label}
               >
