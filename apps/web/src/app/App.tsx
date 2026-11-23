@@ -1,10 +1,20 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DashboardLayout } from "../layouts/DashboardLayout";
-import { EarthquakesPage } from "../features/earthquakes/EarthquakesPage";
-import { MonitoringMapPage } from "../features/monitoring/MonitoringMapPage";
+
+// Mỗi page được tải riêng khi route được kích hoạt — giảm bundle ban đầu & tải API.
 const OverviewPage = React.lazy(() =>
   import("../features/overview/OverviewPage.tsx").then((module) => ({ default: module.OverviewPage })),
+);
+const MonitoringMapPage = React.lazy(() =>
+  import("../features/monitoring/MonitoringMapPage.tsx").then((module) => ({
+    default: module.MonitoringMapPage,
+  })),
+);
+const EarthquakesPage = React.lazy(() =>
+  import("../features/earthquakes/EarthquakesPage.tsx").then((module) => ({
+    default: module.EarthquakesPage,
+  })),
 );
 const StatisticsRoutes = React.lazy(() =>
   import("../features/statistics/StatisticsRoutes").then((module) => ({ default: module.StatisticsRoutes })),
@@ -34,8 +44,22 @@ export const App: React.FC = () => {
               </React.Suspense>
             }
           />
-          <Route path={APP_ROUTES.MONITORING} element={<MonitoringMapPage />} />
-          <Route path={APP_ROUTES.EARTHQUAKES} element={<EarthquakesPage />} />
+          <Route
+            path={APP_ROUTES.MONITORING}
+            element={
+              <React.Suspense fallback={<PlaceholderPage title="Bản đồ giám sát" />}>
+                <MonitoringMapPage />
+              </React.Suspense>
+            }
+          />
+          <Route
+            path={APP_ROUTES.EARTHQUAKES}
+            element={
+              <React.Suspense fallback={<PlaceholderPage title="Danh mục động đất" />}>
+                <EarthquakesPage />
+              </React.Suspense>
+            }
+          />
           <Route
             path={`${APP_ROUTES.STATISTICS}/*`}
             element={

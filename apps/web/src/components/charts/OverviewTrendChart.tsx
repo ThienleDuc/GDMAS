@@ -14,7 +14,7 @@ import { CHART_AXIS, CHART_GRID, CHART_LINE_WIDTH, CHART_MARGIN, CHART_TOOLTIP }
 /** A — "Số động đất đang tăng hay giảm, độ tin cậy thế nào?" */
 export function OverviewTrendChart({ data }: { data: TrendComparison }) {
   if (data.rows.length === 0) {
-    return <p className="ov-chart-empty">Chưa đủ dữ liệu để so sánh xu hướng 14 ngày.</p>;
+    return <p className="ov-chart-empty">Chưa đủ dữ liệu để so sánh xu hướng theo ngày.</p>;
   }
 
   const projected = data.rows.filter((row) => row.projected).length;

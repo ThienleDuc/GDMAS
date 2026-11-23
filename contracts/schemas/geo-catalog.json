@@ -13,7 +13,9 @@
         "properties": {
           "country": { "type": "string", "description": "Chỉ có trong GET /earthquakes/countries" },
           "region": { "type": "string", "description": "Chỉ có trong GET /earthquakes/regions" },
-          "count": { "type": "integer", "minimum": 0, "description": "Số sự kiện thuộc nhãn" }
+          "count": { "type": "integer", "minimum": 0, "description": "Số sự kiện thuộc nhãn" },
+          "avg_magnitude": { "type": ["number", "null"], "description": "Độ lớn trung bình (từ sự kiện thật)" },
+          "max_magnitude": { "type": ["number", "null"], "description": "Độ lớn cao nhất (từ sự kiện thật)" }
         },
         "required": ["count"],
         "additionalProperties": true

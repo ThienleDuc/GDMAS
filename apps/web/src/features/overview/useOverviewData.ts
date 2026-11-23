@@ -5,15 +5,20 @@ import type { ClustersResponse } from "../../contracts/clusters.ts";
 import type { EarthquakeItem, StatisticsResponse } from "../../contracts/earthquake.ts";
 import type { PredictionsResponse } from "../../contracts/predictions.ts";
 import type { CountryCatalogResponse, RegionCatalogResponse } from "../../contracts/geo-catalog.ts";
+import type { MonthlyPeaksResponse } from "../../contracts/monthly-peaks.ts";
 import { isApiEmptyEnvelope } from "../../contracts/common.ts";
 import { geoQuery, type GeoFilter } from "../../contracts/geo-filter.ts";
 import { ApiError } from "../../lib/api-client.ts";
-import { useEarthquakeInsights } from "../../hooks/useEarthquakeInsights.ts";
+import {
+  useEarthquakeInsights,
+  type TimeWindow,
+} from "../../hooks/useEarthquakeInsights.ts";
 import {
   getClassifications,
   getEarthquakes,
   getPredictions,
   getSeasonalityAnalysis,
+  getMonthlyPeaks,
   getTrendAnalysis,
 } from "../../services/earthquake-api.ts";
 import { getCountryCatalog, getRegionCatalog } from "../../services/geo-catalog-api.ts";
@@ -26,6 +31,8 @@ interface OverviewState {
   latestEvents: EarthquakeItem[];
   countryCatalog: CountryCatalogResponse | null;
   regionCatalog: RegionCatalogResponse | null;
+  monthlyPeaks: MonthlyPeaksResponse | null;
+  seasonalityMonthly: SeasonalityResponse | null;
   loading: boolean;
   error: string | null;
   unavailable: string[];
@@ -39,6 +46,8 @@ const INITIAL_STATE: OverviewState = {
   latestEvents: [],
   countryCatalog: null,
   regionCatalog: null,
+  monthlyPeaks: null,
+  seasonalityMonthly: null,
   loading: true,
   error: null,
   unavailable: [],
@@ -59,8 +68,12 @@ function errorMessage(reason: unknown): string {
 }
 
 /** Gom dữ liệu trang tổng quan: tất cả endpoint có sẵn, chịu được 404/DB rỗng. */
-export function useOverviewData(filter?: GeoFilter | null): OverviewData {
-  const insights = useEarthquakeInsights("day", 0, filter);
+export function useOverviewData(
+  filter?: GeoFilter | null,
+  refreshVersion = 0,
+  window?: TimeWindow | null,
+): OverviewData {
+  const insights = useEarthquakeInsights("day", 0, filter, window);
   const [state, setState] = useState<OverviewState>(INITIAL_STATE);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -73,18 +86,30 @@ export function useOverviewData(filter?: GeoFilter | null): OverviewData {
     setState((previous) => ({ ...previous, loading: true, error: null, unavailable: [] }));
 
     Promise.allSettled([
-      getTrendAnalysis({ resample_freq: "D", ...geoQuery(filter) }, controller.signal),
+      getTrendAnalysis(
+        { resample_freq: "D", ...geoQuery(filter), ...window },
+        controller.signal,
+      ),
       getSeasonalityAnalysis(geoQuery(filter), controller.signal),
       getPredictions(controller.signal, filter),
       getClassifications(controller.signal, filter),
       getEarthquakes(
-        { limit: 5, sort_by: "event_time", order: "desc", ...geoQuery(filter) },
+        {
+          limit: 5,
+          sort_by: "event_time",
+          order: "desc",
+          ...geoQuery(filter),
+          ...window,
+        },
         controller.signal,
       ),
-      getCountryCatalog(controller.signal),
-      getRegionCatalog(filter?.country ?? undefined, controller.signal),
+      getCountryCatalog(controller.signal, window),
+      getRegionCatalog(filter?.country ?? undefined, controller.signal, window),
+      getMonthlyPeaks(filter, controller.signal),
+      getSeasonalityAnalysis({ ...geoQuery(filter), interval: "month" }, controller.signal),
     ])
-      .then(([trend, seasonality, predictions, classifications, events, countries, regions]) => {
+      .then(
+        ([trend, seasonality, predictions, classifications, events, countries, regions, monthly, monthlySeason]) => {
         if (controller.signal.aborted) return;
 
         const unavailable: string[] = [];
@@ -127,6 +152,11 @@ export function useOverviewData(filter?: GeoFilter | null): OverviewData {
             regions.status === "fulfilled" && Array.isArray(regions.value?.data)
               ? regions.value
               : null,
+          monthlyPeaks:
+            monthly.status === "fulfilled" && Array.isArray(monthly.value?.data)
+              ? monthly.value
+              : null,
+          seasonalityMonthly: pick(monthlySeason, "GET /api/v1/analysis/seasonality?interval=month"),
           loading: false,
           error,
           unavailable,
@@ -139,7 +169,14 @@ export function useOverviewData(filter?: GeoFilter | null): OverviewData {
       });
 
     return () => controller.abort();
-  }, [refreshKey, filter?.country, filter?.region]);
+  }, [
+    refreshKey,
+    refreshVersion,
+    filter?.country,
+    filter?.region,
+    window?.start_time,
+    window?.end_time,
+  ]);
 
   return {
     ...state,

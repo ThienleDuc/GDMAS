@@ -31,17 +31,20 @@ export function OverviewHotspotsChart({ rows, mode, note, onSelect }: OverviewHo
   }
 
   return (
-    <div className="ov-chart">
-      {note && <p className="ov-chart__note">{note}</p>}
-      <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
-          <CartesianGrid {...CHART_GRID} horizontal={false} />
-          <XAxis type="number" {...CHART_AXIS} allowDecimals={false} />
-          <YAxis type="category" dataKey="label" {...CHART_AXIS} width={96} />
-          <Tooltip {...CHART_TOOLTIP} />
-          <Bar dataKey="eventCount" name="Số sự kiện" fill="var(--primary)" radius={[0, 4, 4, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="ov-chart-row">
+      <div className="ov-chart">
+        {note && <p className="ov-chart__note">{note}</p>}
+        {/* Cao bằng bảng xếp hạng nhờ grid stretch của .ov-chart-row */}
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
+            <CartesianGrid {...CHART_GRID} horizontal={false} />
+            <XAxis type="number" {...CHART_AXIS} allowDecimals={false} />
+            <YAxis type="category" dataKey="label" {...CHART_AXIS} width={96} />
+            <Tooltip {...CHART_TOOLTIP} />
+            <Bar dataKey="eventCount" name="Số sự kiện" fill="var(--primary)" radius={[0, 4, 4, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
       <div className="ds-table-wrapper ov-rank-table">
         <table className="ds-table">
           <thead>

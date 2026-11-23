@@ -10,6 +10,105 @@
   gap: var(--section-gap);
 }
 
+.ov-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-secondary);
+}
+
+.ov-range__button {
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.ov-range__button.is-active,
+.ov-range__button:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.ov-cycles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.ov-season-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  list-style: none;
+}
+
+.ov-season-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ov-season-legend__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}
+
+.ov-cycle__label {
+  margin: 0 0 var(--space-1);
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+}
+
+.ov-card__label {
+  margin: 0 0 var(--space-2);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
+.ov-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-secondary);
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+}
+
+.ov-notice--error {
+  border-color: var(--destructive);
+  color: var(--destructive);
+}
+
+.ov-notice__retry {
+  margin-left: auto;
+  padding: 2px var(--space-2);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: var(--text-xs);
+}
+
 .ov-hero {
   display: flex;
   flex-wrap: wrap;
@@ -426,6 +525,32 @@
   50% { opacity: 0.55; }
 }
 
+.ov-card--cycles,
+.ov-card--wide {
+  grid-column: 1 / -1;
+}
+
+/* Xếp hạng: biểu đồ và bảng trên CÙNG một hàng trong card trải ngang. */
+.ov-chart-row {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  align-items: stretch;
+  gap: var(--space-4);
+}
+
+/* Chart xếp hạng trải ngang toàn bộ chiều rộng card, không để khoảng trống 6 cột. */
+.ov-card--wide .ov-chart {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 240px;
+}
+
+.ov-card--wide .ov-chart .recharts-responsive-container {
+  width: 100%;
+  flex: 1 1 auto;
+}
+
 @media (max-width: 1023px) {
   .ov-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .ov-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -438,6 +563,8 @@
   .ov-skeleton { grid-template-columns: minmax(0, 1fr); }
   .ov-card--4, .ov-card--6, .ov-card--8 { grid-column: span 1; }
   .ov-hero { align-items: flex-start; }
+  .ov-cycles,
+  .ov-chart-row { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {

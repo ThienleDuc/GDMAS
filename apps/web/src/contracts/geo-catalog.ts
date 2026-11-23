@@ -3,11 +3,15 @@
 export interface CountryCountItem {
   country: string;
   count: number;
+  avg_magnitude?: number | null;
+  max_magnitude?: number | null;
 }
 
 export interface RegionCountItem {
   region: string;
   count: number;
+  avg_magnitude?: number | null;
+  max_magnitude?: number | null;
 }
 
 export interface CountryCatalogResponse {

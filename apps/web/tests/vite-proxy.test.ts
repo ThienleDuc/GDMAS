@@ -13,8 +13,9 @@ test("TC-01: Vite config có proxy opt-in cho /api tới VITE_API_PROXY_TARGET",
   assert.match(source, /VITE_API_PROXY_TARGET/u);
   // Cập nhật 2026-11-23: proxy giờ là object chứa cả /api (opt-in) và /tile (luôn bật).
   assert.match(source, /proxy:\s*\{/u);
-  assert.match(source, /\.\.\.\(apiProxyTarget \? \{/u);
-  assert.match(source, /["']\/api["']\s*:\s*\{\s*target:\s*apiProxyTarget,\s*changeOrigin:\s*true/u);
+  assert.match(source, /\.\.\.\(apiProxyTarget\s*\?\s*\{/u);
+  assert.match(source, /["']\/api["']\s*:\s*\{[\s\S]*?target:\s*apiProxyTarget/u);
+  assert.match(source, /changeOrigin:\s*true/u);
 });
 
 test("TC-02: docker-compose dùng cùng origin + proxy tới service api", () => {

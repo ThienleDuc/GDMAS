@@ -44,11 +44,15 @@ class EarthquakeListResponse(BaseModel):
 class CountryCount(BaseModel):
     country: str
     count: int
+    avg_magnitude: float | None = None
+    max_magnitude: float | None = None
 
 
 class RegionCount(BaseModel):
     region: str
     count: int
+    avg_magnitude: float | None = None
+    max_magnitude: float | None = None
 
 
 class CountryListResponse(BaseModel):
@@ -65,6 +69,17 @@ class HourlyTimeSeriesPoint(BaseModel):
     time: str
     count: int
     avg_mag: float
+
+
+class MonthlyPeak(BaseModel):
+    month: int
+    label: str
+    count: int
+
+
+class MonthlyPeaksResponse(BaseModel):
+    success: bool = True
+    data: list[MonthlyPeak]
 
 
 class EarthquakeStatistics(BaseModel):

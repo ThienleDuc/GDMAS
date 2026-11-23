@@ -55,7 +55,8 @@ test("TC-01 — trend chỉ gửi resample_freq, không gửi start_time/end_tim
   }
 });
 
-test("TC-02 — param deprecated vẫn không bị forward", async () => {
+// Cập nhật 2026-11-23: trend giờ nhận cửa sổ thời gian thật (lọc Ngày/Tuần/Tháng).
+test("TC-02 — trend forward cửa sổ thời gian khi được truyền", async () => {
   const { urls, restore } = captureUrls();
   try {
     await getTrendAnalysis({
@@ -65,8 +66,8 @@ test("TC-02 — param deprecated vẫn không bị forward", async () => {
     });
     const url = new URL(urls[0]);
     assert.equal(url.searchParams.get("resample_freq"), "D");
-    assert.equal(url.searchParams.has("start_time"), false);
-    assert.equal(url.searchParams.has("end_time"), false);
+    assert.equal(url.searchParams.get("start_time"), "2026-11-08T12:00:00.000Z");
+    assert.equal(url.searchParams.get("end_time"), "2026-11-22T12:00:00.000Z");
   } finally {
     restore();
   }
@@ -102,7 +103,9 @@ test("TC-05 — Overview không còn cửa sổ 14 ngày giả", () => {
   );
   assert.doesNotMatch(source, /toUtcIso/u);
   assert.doesNotMatch(source, /const\s+window\s*=/u);
-  // Cập nhật 2026-11-23: giờ forward filter quốc gia/khu vực, vẫn không gửi cửa sổ giả.
-  assert.match(source, /getTrendAnalysis\(\{ resample_freq: "D", \.\.\.geoQuery\(filter\) \}/u);
+  // Cập nhật 2026-11-23: forward filter + cửa sổ thật (từ ?range=), không còn số giả 14 ngày.
+  assert.match(source, /getTrendAnalysis\(/u);
+  assert.match(source, /resample_freq: "D"/u);
+  assert.match(source, /\.\.\.window/u);
   assert.match(source, /getSeasonalityAnalysis\(geoQuery\(filter\)/u);
 });

@@ -9,11 +9,14 @@ import type { ClassificationsResponse } from "../../contracts/classifications.ts
 import type { ClustersResponse } from "../../contracts/clusters.ts";
 import type { EarthquakeItem, StatisticsResponse } from "../../contracts/earthquake.ts";
 import type { PredictionsResponse } from "../../contracts/predictions.ts";
+import type { SSEEventPayload } from "../../contracts/sse.ts";
+import type { MonthlyPeaksResponse } from "../../contracts/monthly-peaks.ts";
 import type { CountryCatalogResponse, RegionCatalogResponse } from "../../contracts/geo-catalog.ts";
 import { isFiniteNumber, normalizeRiskLabel, buildTrendSeries } from "../../lib/transforms/chart-data.ts";
 import { ALL_COUNTRIES } from "../earthquakes/country-filter.ts";
 import { countryFromPlace } from "../earthquakes/country-clusters.ts";
 import { regionFromPlace } from "../earthquakes/region-filter.ts";
+import type { DateRangePreset } from "../earthquakes/earthquake-view.ts";
 
 export interface KpiCard {
   key: string;
@@ -286,6 +289,106 @@ export function buildSeasonalityBars(seasonality: SeasonalityResponse | null): S
     }));
 }
 
+/**
+ * Đưa sự kiện SSE (`earthquake_detected`/`earthquake_alert`) vào đầu bảng 5 sự kiện.
+ * Dùng đúng field marker của BE (`id`, `event_time`, WGS84); sai/thiếu → giữ nguyên danh sách.
+ */
+export function applySseLatestEvent(
+  rows: readonly LatestEventRow[],
+  payload: SSEEventPayload | null | undefined,
+): LatestEventRow[] {
+  if (!payload || (payload.event !== "earthquake_detected" && payload.event !== "earthquake_alert")) {
+    return [...rows];
+  }
+  const data = payload.data;
+  if (!data || typeof data !== "object" || Array.isArray(data)) return [...rows];
+  const record = data as Record<string, unknown>;
+  const time = typeof record.event_time === "string" ? record.event_time : "";
+  const magnitude = Number(record.magnitude);
+  const latitude = Number(record.latitude);
+  const longitude = Number(record.longitude);
+  const id = Number(record.id);
+  if (
+    !Number.isFinite(Date.parse(time)) ||
+    !Number.isFinite(magnitude) ||
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    !Number.isFinite(id)
+  ) {
+    return [...rows];
+  }
+  const row: LatestEventRow = {
+    id,
+    time,
+    place: typeof record.place === "string" && record.place.trim() ? record.place.trim() : "Khác",
+    magnitude,
+    latitude,
+    longitude,
+  };
+  return [row, ...rows.filter((item) => item.id !== row.id)].slice(0, 5);
+}
+
+/**
+ * Chuyển số sự kiện/tháng thành hệ số so với mức trung bình (baseline 1.0).
+ * Tháng không có dữ liệu bị bỏ qua — không bịa hệ số 0 hoặc mùa vụ (I5).
+ */
+export function buildMonthlyBars(payload: MonthlyPeaksResponse | null | undefined): SeasonalityBar[] {
+  const rows = payload?.data ?? [];
+  const active = rows.filter((row) => row.count > 0);
+  const mean = active.length > 0 ? active.reduce((sum, row) => sum + row.count, 0) / active.length : 0;
+  // Luôn 12 cột: tháng không có dữ liệu từ BE → hệ số 0 (không bỏ cột, không bịa số).
+  return Array.from({ length: 12 }, (_, index) => {
+    const row = rows[index];
+    const count = row?.month === index + 1 ? row.count : 0;
+    const factor = count > 0 && mean > 0 ? Number((count / mean).toFixed(4)) : 0;
+    return {
+      label: row?.label ?? `Tháng ${index + 1}`,
+      factor,
+      position: factor > 1.05 ? "above" : factor > 0 && factor < 0.95 ? "below" : factor === 0 ? "below" : "average",
+    };
+  });
+}
+
+/** Đảm bảo biểu đồ tuần luôn có đủ 7 cột — ngày BE không trả thì hệ số 0. */
+export function padWeekdaysTo7(rows: readonly SeasonalityBar[]): SeasonalityBar[] {
+  return Array.from({ length: 7 }, (_, index) => {
+    const label = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"][index];
+    const row = rows.find((item) => item.label === label);
+    return row ?? { label, factor: 0, position: "below" as const };
+  });
+}
+
+const ZERO_BAR = { factor: 0, position: "below" as const };
+
+/**
+ * Biểu đồ tuần: giữ đủ 7 cột, nhưng chỉ các ngày trong phạm vi được chọn giữ số từ BE.
+ * - `day`: chỉ ngày hiện tại.
+ * - `week`: Thứ 2 → hôm nay (các ngày tương lai trong tuần = 0, không tự bịa).
+ * - `month`: giữ nguyên (xem biểu đồ tháng).
+ */
+export function applyWeekdayWindow(
+  rows: readonly SeasonalityBar[],
+  range: DateRangePreset,
+  now: Date = new Date(),
+): SeasonalityBar[] {
+  // JS getDay(): 0=CN..6=T7; mảng 0=Thứ 2..6=Chủ nhật.
+  const todayIndex = now.getDay() === 0 ? 6 : now.getDay() - 1;
+  return rows.map((row, index) => {
+    if (range === "month") return row;
+    const visible = range === "day" ? index === todayIndex : index <= todayIndex;
+    return visible ? row : { ...row, ...ZERO_BAR };
+  });
+}
+
+/** Biểu đồ tháng: giữ đủ 12 cột, tháng sau tháng hiện tại = 0 (chưa có số liệu). */
+export function applyMonthWindow(
+  rows: readonly SeasonalityBar[],
+  now: Date = new Date(),
+): SeasonalityBar[] {
+  const currentMonth = now.getMonth() + 1;
+  return rows.map((row, index) => (index + 1 <= currentMonth ? row : { ...row, ...ZERO_BAR }));
+}
+
 /** 5 sự kiện mới nhất — sort theo UTC, giữ nguyên tọa độ WGS84. */
 export function buildLatestEvents(items: readonly EarthquakeItem[] | null | undefined): LatestEventRow[] {
   return (items ?? [])
@@ -352,8 +455,8 @@ export function rankFromCountryCatalog(
       key: row.country,
       label: row.country,
       eventCount: row.count,
-      avgMagnitude: null,
-      maxMagnitude: null,
+      avgMagnitude: isFiniteNumber(row.avg_magnitude) ? row.avg_magnitude! : null,
+      maxMagnitude: isFiniteNumber(row.max_magnitude) ? row.max_magnitude! : null,
       clusterIds: [],
     }));
 }
@@ -372,8 +475,8 @@ export function rankFromRegionCatalog(
       key: row.region,
       label: row.region,
       eventCount: row.count,
-      avgMagnitude: null,
-      maxMagnitude: null,
+      avgMagnitude: isFiniteNumber(row.avg_magnitude) ? row.avg_magnitude! : null,
+      maxMagnitude: isFiniteNumber(row.max_magnitude) ? row.max_magnitude! : null,
       clusterIds: [],
     }));
 }

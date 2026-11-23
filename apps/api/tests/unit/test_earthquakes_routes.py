@@ -325,13 +325,11 @@ def test_country_catalog_groups_by_country_and_count(client, db):
 
     resp = client.get(f"{URL}/countries")
     assert resp.status_code == 200
-    assert resp.json() == {
-        "success": True,
-        "data": [
-            {"country": "USA", "count": 2},
-            {"country": "Japan", "count": 1},
-        ],
-    }
+    assert resp.json()["success"] is True
+    assert [(row["country"], row["count"]) for row in resp.json()["data"]] == [
+        ("USA", 2),
+        ("Japan", 1),
+    ]
 
 
 def test_region_catalog_optionally_filters_by_country(client, db):
@@ -343,7 +341,58 @@ def test_region_catalog_optionally_filters_by_country(client, db):
     assert {row["region"] for row in all_regions} == {"Igiugig", "Anchorage", "Honshu"}
 
     japan = client.get(f"{URL}/regions", params={"country": "Japan"}).json()["data"]
-    assert japan == [{"region": "Honshu", "count": 1}]
+    assert [(row["region"], row["count"]) for row in japan] == [("Honshu", 1)]
+
+
+def test_catalogs_include_avg_and_max_magnitude(client, db):
+    add_event(db, 1, country="Japan", region="Honshu", magnitude=4.0)
+    add_event(db, 2, country="Japan", region="Honshu", magnitude=6.0)
+
+    countries = client.get("/api/v1/earthquakes/countries").json()["data"]
+    row = next(item for item in countries if item["country"] == "Japan")
+    assert row["count"] == 2
+    assert row["avg_magnitude"] == 5.0
+    assert row["max_magnitude"] == 6.0
+
+    regions = client.get(
+        "/api/v1/earthquakes/regions", params={"country": "Japan"}
+    ).json()["data"]
+    assert regions[0]["avg_magnitude"] == 5.0
+    assert regions[0]["max_magnitude"] == 6.0
+
+
+def test_catalogs_respect_time_window(client, db):
+    add_event(
+        db,
+        1,
+        country="Japan",
+        region="Honshu",
+        magnitude=4.0,
+        event_time=datetime(2026, 1, 10, tzinfo=UTC),
+    )
+    add_event(
+        db,
+        2,
+        country="Japan",
+        region="Honshu",
+        magnitude=6.0,
+        event_time=datetime(2026, 11, 10, tzinfo=UTC),
+    )
+    params = {"start_time": "2026-01-01T00:00:00Z", "end_time": "2026-02-01T00:00:00Z"}
+
+    countries = client.get("/api/v1/earthquakes/countries", params=params).json()[
+        "data"
+    ]
+    japan = next(row for row in countries if row["country"] == "Japan")
+    assert japan["count"] == 1
+    assert japan["avg_magnitude"] == 4.0
+    assert japan["max_magnitude"] == 4.0
+
+    regions = client.get(
+        "/api/v1/earthquakes/regions", params={**params, "country": "Japan"}
+    ).json()["data"]
+    assert regions[0]["count"] == 1
+    assert regions[0]["max_magnitude"] == 4.0
 
 
 def test_catalogs_are_empty_on_empty_db(client):

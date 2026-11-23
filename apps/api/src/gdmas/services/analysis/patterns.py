@@ -424,16 +424,29 @@ def _interpret_strength(strength: float, cycle_label: str) -> str:
 
 
 def compute_seasonality(
-    df: pd.DataFrame, *, as_of: datetime | None = None
+    df: pd.DataFrame, *, as_of: datetime | None = None, interval: str | None = None
 ) -> dict[str, Any]:
-    """Tách thành phần mùa vụ bằng seasonal_decompose khi đủ ≥ 2 chu kỳ; không mặc định có mùa vụ (P-03)."""
+    """Tách thành phần mùa vụ bằng seasonal_decompose khi đủ ≥ 2 chu kỳ; không mặc định có mùa vụ (P-03).
+
+    `interval="month"`/`"week"` ép một chu kỳ cụ thể (tuần = candidate 7 ngày) thay vì
+    tự chọn candidate đầu tiên đủ dữ liệu.
+    """
     from statsmodels.tsa.seasonal import seasonal_decompose
 
-    for interval, period, min_points, cycle_label, cycle_hours in _SEASONAL_CANDIDATES:
+    forced = {"month": "month", "week": "day"}.get(interval or "") if interval else None
+    candidates = (
+        [item for item in _SEASONAL_CANDIDATES if item[0] == forced]
+        if forced
+        else _SEASONAL_CANDIDATES
+    )
+
+    for candidate_interval, period, min_points, cycle_label, cycle_hours in candidates:
         if df.empty:
             break
-        counts = _resample(df, interval)["magnitude"].count().astype(float)
-        counts = counts[complete_period_mask(counts.index, interval, df, as_of=as_of)]
+        counts = _resample(df, candidate_interval)["magnitude"].count().astype(float)
+        counts = counts[
+            complete_period_mask(counts.index, candidate_interval, df, as_of=as_of)
+        ]
         if len(counts) < min_points:
             continue
 
@@ -449,12 +462,12 @@ def compute_seasonality(
         )
         strength = min(strength, 1.0)
 
-        positions = _seasonal_position(seasonal.index, interval)
+        positions = _seasonal_position(seasonal.index, candidate_interval)
         effect_by_position = pd.Series(seasonal.to_numpy()).groupby(positions).mean()
         mean_level = float(counts.mean())
 
         seasonal_line = []
-        for position, label in _seasonal_labels(interval):
+        for position, label in _seasonal_labels(candidate_interval):
             effect = float(effect_by_position.get(position, 0.0))
             factor = 1.0 + effect / mean_level if mean_level > 0 else 1.0
             seasonal_line.append(
@@ -468,8 +481,8 @@ def compute_seasonality(
         effects = [p["seasonal_effect"] or 0.0 for p in seasonal_line]
         return {
             "status": STATUS_COMPUTED,
-            "resample_freq": _INTERVAL_TO_FREQ_CODE[interval],
-            "interval": interval,
+            "resample_freq": _INTERVAL_TO_FREQ_CODE[candidate_interval],
+            "interval": candidate_interval,
             "period": period,
             "components": {
                 "seasonal_line": seasonal_line,
@@ -488,7 +501,18 @@ def compute_seasonality(
         "interval": None,
         "period": None,
         "components": {
-            "seasonal_line": [],
+            # Giữ đủ 7 ngày / 12 tháng để FE luôn có cột so sánh; 0 = không có số liệu.
+            "seasonal_line": [
+                {
+                    "cycle_index": position,
+                    "period_label": label,
+                    "seasonal_factor": 0.0,
+                    "seasonal_effect": 0.0,
+                }
+                for position, label in _seasonal_labels(
+                    "month" if interval == "month" else "day"
+                )
+            ],
             "residual_variance": None,
             "seasonality_strength": None,
             "interpretation": SEASONALITY_INSUFFICIENT_TEXT,

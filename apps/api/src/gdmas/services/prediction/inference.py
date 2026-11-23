@@ -14,9 +14,12 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.arima.model import ARIMA
 
+from gdmas.core.config import settings
+
 MODEL_DIR = Path(__file__).parent / "models"
 LABELS = ["Low", "Moderate", "High", "Critical"]
-MIN_OBSERVED = 10  # số ngày có dữ liệu tối thiểu để dự báo
+# Số ngày có dữ liệu tối thiểu để dự báo — cấu hình qua .env (docs/yeucaubatbuoc.md §6.4).
+MIN_OBSERVED = settings.PREDICTION_MIN_OBSERVED
 
 
 @lru_cache(maxsize=1)

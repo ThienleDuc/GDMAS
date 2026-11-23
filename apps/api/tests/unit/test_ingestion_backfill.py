@@ -1,12 +1,19 @@
-"""Unit test offline cho backfill all_month (testcase 2026-11-22-be-country-region-derivation-thien).
+"""Unit test offline cho backfill 1 năm qua USGS FDSN (testcase 2026-11-22-be-country-region-derivation-thien).
 
 Không gọi mạng: httpx.MockTransport + FakeSession + upsert giả.
 """
 
+from datetime import UTC, datetime
+from urllib.parse import parse_qs, urlparse
+
 import httpx
 
-from gdmas.services.ingestion import service as service_module
-from gdmas.services.ingestion.backfill import MONTH_FEED_URL, run_backfill
+from gdmas.services.ingestion import backfill as backfill_module
+from gdmas.services.ingestion.backfill import (
+    build_query_url,
+    build_windows,
+    run_backfill,
+)
 from gdmas.services.ingestion.upsert import UpsertStats
 
 
@@ -47,14 +54,28 @@ def feature(event_id: str, place: str) -> dict:
     }
 
 
-def test_backfill_uses_month_feed_and_derives_country_region(monkeypatch):
+def test_build_windows_covers_one_year():
+    now = datetime(2026, 11, 23, tzinfo=UTC)
+    windows = build_windows(now, 365)
+    assert len(windows) == 13  # 12 đoạn 30 ngày + phần dư
+    assert (windows[0][1] - windows[0][0]).days == 30
+    assert windows[-1][1] == now
+
+    url = build_query_url(windows[0][0], windows[0][1], 2.5)
+    params = parse_qs(urlparse(url).query)
+    assert params["format"] == ["geojson"]
+    assert params["minmagnitude"] == ["2.5"]
+    assert params["limit"] == ["20000"]
+
+
+def test_backfill_uses_fdsn_and_derives_country_region(monkeypatch):
     captured = {}
 
     def fake_upsert(db, rows):
         captured["rows"] = list(rows)
         return UpsertStats(inserted=len(rows))
 
-    monkeypatch.setattr(service_module, "upsert_events", fake_upsert)
+    monkeypatch.setattr(backfill_module, "upsert_events", fake_upsert)
 
     payload = {
         "features": [
@@ -71,11 +92,13 @@ def test_backfill_uses_month_feed_and_derives_country_region(monkeypatch):
     result = run_backfill(
         session_factory=FakeSession,
         http_transport=httpx.MockTransport(handler),
+        days=30,
     )
 
     assert result["success"] is True
+    assert result["days"] == 30 and result["windows"] == 1
     assert result["inserted"] == 2
-    assert calls == [MONTH_FEED_URL]
+    assert len(calls) == 1 and "fdsnws/event/1/query" in calls[0]
     assert [(row["country"], row["region"]) for row in captured["rows"]] == [
         ("Japan", "Tokyo"),
         ("Indonesia", "Java"),
@@ -83,7 +106,7 @@ def test_backfill_uses_month_feed_and_derives_country_region(monkeypatch):
 
 
 def test_backfill_never_falls_back_to_live_network(monkeypatch):
-    """Nếu feed tháng lỗi và không có transport thật, backfill không được gọi mạng."""
+    """Nếu FDSN lỗi và không có transport thật, backfill không gọi mạng."""
 
     def handler(_request: httpx.Request):
         raise httpx.ConnectError("offline")
@@ -91,5 +114,6 @@ def test_backfill_never_falls_back_to_live_network(monkeypatch):
     result = run_backfill(
         session_factory=FakeSession,
         http_transport=httpx.MockTransport(handler),
+        days=30,
     )
     assert result["success"] is False

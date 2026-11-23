@@ -58,7 +58,18 @@ export default defineConfig(({ mode }) => {
       // trình duyệt chỉ cần một origin, không còn CORS tới localhost:8000.
       // /tile: đưa tile CARTO về cùng origin để trình duyệt chặn CDN vẫn có bản đồ.
       proxy: {
-        ...(apiProxyTarget ? { "/api": { target: apiProxyTarget, changeOrigin: true } } : {}),
+        ...(apiProxyTarget
+          ? {
+              "/api": {
+                target: apiProxyTarget,
+                changeOrigin: true,
+                // SSE là kết nối dài: không để proxy tự đóng khi reload/build lại.
+                proxyTimeout: 0,
+                timeout: 0,
+                xfwd: true,
+              },
+            }
+          : {}),
         "/tile": {
           target: "https://a.basemaps.cartocdn.com",
           changeOrigin: true,

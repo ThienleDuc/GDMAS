@@ -44,8 +44,10 @@ def _db_error(exc: Exception):
     )
 
 
-def _parse_utc(value: str) -> datetime | None:
-    """Phân tích chuỗi ISO 8601; không có múi giờ thì coi là UTC."""
+def _parse_utc(value: str | None) -> datetime | None:
+    """Phân tích chuỗi ISO 8601; không có múi giờ thì coi là UTC; None → None."""
+    if value is None:
+        return None
     try:
         dt = datetime.fromisoformat(value.strip())
     except ValueError:
@@ -249,13 +251,27 @@ def sync_usgs_earthquakes(db: Session = Depends(get_db)):
 
 
 @router.get("/countries", response_model=CountryListResponse)
-def list_earthquake_countries(db: Session = Depends(get_db)):
-    """Danh mục quốc gia suy từ `place`, kèm số sự kiện — cho bộ lọc FE."""
+def list_earthquake_countries(
+    start_time: str | None = Query(None, description="Từ thời điểm ISO 8601 UTC"),
+    end_time: str | None = Query(None, description="Đến thời điểm ISO 8601 UTC"),
+    db: Session = Depends(get_db),
+):
+    """Danh mục quốc gia kèm count/avg/max — cho bộ lọc và xếp hạng FE."""
+    start, end = _parse_utc(start_time), _parse_utc(end_time)
+    query = db.query(
+        EarthquakeEvent.country,
+        func.count(EarthquakeEvent.id),
+        func.avg(EarthquakeEvent.magnitude),
+        func.max(EarthquakeEvent.magnitude),
+    ).filter(EarthquakeEvent.country.is_not(None))
+    if start is not None:
+        query = query.filter(EarthquakeEvent.event_time >= start)
+    if end is not None:
+        query = query.filter(EarthquakeEvent.event_time <= end)
+
     try:
         rows = (
-            db.query(EarthquakeEvent.country, func.count(EarthquakeEvent.id))
-            .filter(EarthquakeEvent.country.is_not(None))
-            .group_by(EarthquakeEvent.country)
+            query.group_by(EarthquakeEvent.country)
             .order_by(
                 func.count(EarthquakeEvent.id).desc(), EarthquakeEvent.country.asc()
             )
@@ -265,21 +281,39 @@ def list_earthquake_countries(db: Session = Depends(get_db)):
         return _db_error(exc)
 
     return CountryListResponse(
-        data=[CountryCount(country=country, count=count) for country, count in rows]
+        data=[
+            CountryCount(
+                country=country,
+                count=count,
+                avg_magnitude=round(float(avg), 2) if avg is not None else None,
+                max_magnitude=round(float(maximum), 2) if maximum is not None else None,
+            )
+            for country, count, avg, maximum in rows
+        ]
     )
 
 
 @router.get("/regions", response_model=RegionListResponse)
 def list_earthquake_regions(
     country: str | None = Query(None, description="Chỉ lấy khu vực của quốc gia này"),
+    start_time: str | None = Query(None, description="Từ thời điểm ISO 8601 UTC"),
+    end_time: str | None = Query(None, description="Đến thời điểm ISO 8601 UTC"),
     db: Session = Depends(get_db),
 ):
-    """Danh mục khu vực suy từ `place`, kèm số sự kiện — cho bộ lọc FE."""
-    query = db.query(EarthquakeEvent.region, func.count(EarthquakeEvent.id)).filter(
-        EarthquakeEvent.region.is_not(None)
-    )
+    """Danh mục khu vực kèm count/avg/max trong cửa sổ thời gian — cho xếp hạng FE."""
+    query = db.query(
+        EarthquakeEvent.region,
+        func.count(EarthquakeEvent.id),
+        func.avg(EarthquakeEvent.magnitude),
+        func.max(EarthquakeEvent.magnitude),
+    ).filter(EarthquakeEvent.region.is_not(None))
     if country:
         query = query.filter(EarthquakeEvent.country == country)
+    start, end = _parse_utc(start_time), _parse_utc(end_time)
+    if start is not None:
+        query = query.filter(EarthquakeEvent.event_time >= start)
+    if end is not None:
+        query = query.filter(EarthquakeEvent.event_time <= end)
 
     try:
         rows = (
@@ -293,7 +327,15 @@ def list_earthquake_regions(
         return _db_error(exc)
 
     return RegionListResponse(
-        data=[RegionCount(region=region, count=count) for region, count in rows]
+        data=[
+            RegionCount(
+                region=region,
+                count=count,
+                avg_magnitude=round(float(avg), 2) if avg is not None else None,
+                max_magnitude=round(float(maximum), 2) if maximum is not None else None,
+            )
+            for region, count, avg, maximum in rows
+        ]
     )
 
 

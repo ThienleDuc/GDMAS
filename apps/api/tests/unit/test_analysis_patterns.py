@@ -212,7 +212,11 @@ def test_weekly_seasonality_detected():
 def test_seasonality_insufficient_cycles():
     result = compute_seasonality(make_events([5] * 5))
     assert result["status"] == STATUS_INSUFFICIENT
-    assert result["components"]["seasonal_line"] == []
+    # Vẫn trả 7 cột để FE so sánh; hệ số 0 = không có số liệu mùa vụ.
+    assert len(result["components"]["seasonal_line"]) == 7
+    assert all(
+        point["seasonal_factor"] == 0 for point in result["components"]["seasonal_line"]
+    )
     assert result["components"]["seasonality_strength"] is None
     assert "chưa xác định mùa vụ rõ" in result["components"]["interpretation"]
 
@@ -369,7 +373,11 @@ def test_seasonality_requires_two_complete_cycles_at_as_of():
     result = compute_seasonality(df, as_of=as_of)
 
     assert result["status"] == STATUS_INSUFFICIENT
-    assert result["components"]["seasonal_line"] == []
+    # Vẫn trả 7 cột để FE so sánh; hệ số 0 = không có số liệu mùa vụ.
+    assert len(result["components"]["seasonal_line"]) == 7
+    assert all(
+        point["seasonal_factor"] == 0 for point in result["components"]["seasonal_line"]
+    )
     assert result["components"]["seasonality_strength"] is None
 
 

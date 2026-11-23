@@ -211,8 +211,8 @@ Danh mục quốc gia do BE suy từ `place`, dùng để dựng bộ lọc toà
 {
   "success": true,
   "data": [
-    { "country": "USA", "count": 18 },
-    { "country": "Japan", "count": 4 }
+    { "country": "USA", "count": 18, "avg_magnitude": 1.62, "max_magnitude": 5.0 },
+    { "country": "Japan", "count": 4, "avg_magnitude": 2.1, "max_magnitude": 4.3 }
   ]
 }
 ```
@@ -227,11 +227,16 @@ Danh mục khu vực trong một quốc gia, cũng suy từ `place`.
 {
   "success": true,
   "data": [
-    { "region": "Anchorage", "count": 6 },
-    { "region": "Igiugig", "count": 2 }
+    { "region": "Anchorage", "count": 6, "avg_magnitude": 1.9, "max_magnitude": 4.1 },
+    { "region": "Igiugig", "count": 2, "avg_magnitude": 2.2, "max_magnitude": 3.4 }
   ]
 }
 ```
+
+#### `GET /api/v1/statistics/monthly-peaks`
+Số sự kiện theo tháng UTC (1..12) — biểu đồ cao điểm theo tháng trên trang Tổng quan. Nhận 2 query param tùy chọn `country`/`region` như `/statistics/earthquakes`. Dữ liệu đếm trực tiếp từ sự kiện thật, không phụ thuộc snapshot mùa vụ (`seasonal_decompose` cần ≥24 tháng).
+
+- **Response (200 OK):** `{ "success": true, "data": [{ "month": 1, "label": "Tháng 1", "count": 0 }, …] }`
 
 #### `GET /api/v1/statistics/earthquakes`
 Thống kê nhanh các chỉ số địa chấn tổng quan phục vụ thẻ Dashboard (KPI Cards).
@@ -241,8 +246,9 @@ Thống kê nhanh các chỉ số địa chấn tổng quan phục vụ thẻ Da
   | :--- | :--- | :--- | :--- |
   | `country` | string | - | Giới hạn KPI theo quốc gia do BE suy từ `place` |
   | `region` | string | - | Giới hạn tiếp theo khu vực (dùng cùng `country`) |
+  | `start_time` / `end_time` | string | - | Cửa sổ UTC cho bộ lọc Ngày/Tuần/Tháng trên Overview (bổ sung 2026-11-23) |
 
-  Không truyền → số liệu toàn cục y hệt trước đây.
+  Không truyền → số liệu toàn cục y hệt trước đây. `/analysis/trend` cũng nhận `start_time`/`end_time` và tính on-the-fly; `/analysis/seasonality` (chu kỳ tuần) và `/statistics/monthly-peaks` (12 tháng) **không** chịu cửa sổ này.
 
 - **Response (200 OK):**
 ```json
@@ -267,6 +273,8 @@ Thống kê nhanh các chỉ số địa chấn tổng quan phục vụ thẻ Da
 ---
 
 ### 3.3. Nhóm 6 Patterns Phân Tích Chuỗi Thời Gian (Time-Series Analysis)
+
+> **Chu kỳ mùa vụ (bổ sung 2026-11-23):** `GET /api/v1/analysis/seasonality` nhận thêm `interval=week|month` để ép chu kỳ 7 ngày hoặc 12 tháng thay vì tự chọn; khi có filter hoặc `interval`, BE tính on-the-fly. Với dữ liệu <24 tháng, `interval=month` trả `status=insufficient_data` — dùng `/statistics/monthly-peaks` để có số đếm ngay.
 
 > **Lọc phạm vi (bổ sung 2026-11-23):** `GET /api/v1/analysis/{temporal,trend,seasonality,correlation}`, `GET /api/v1/predictions` và `GET /api/v1/classifications` đều nhận 2 query param tùy chọn `country` và `region`. Khi có ít nhất một param, BE tính lại metrics/dự báo **on-the-fly từ sự kiện đã lọc** bằng chính hàm thuần của T3/T5 (`prepare_events` + `compute_*`, `build_series` + `forecast_next`/`classify_next`) — **không ghi snapshot, không đổi payload**. Không truyền → đúng đường cũ đọc bảng tổng hợp. Với P5/P6, artifact mô hình vẫn là bản huấn luyện toàn cầu; nếu phạm vi có ít hơn 10 ngày dữ liệu, BE trả Empty State `insufficient_data` (`success:false, data:null`) thay vì bịa số.
 
@@ -463,7 +471,7 @@ Nhãn phân loại mức độ hoạt động địa chấn dự kiến cho ngà
 ### 3.4. Nhóm Phân Cụm Sự Kiện (Clustering)
 
 #### `GET /api/v1/clusters`
-Lấy kết quả phân nhóm địa chấn (chu kỳ chạy 1 ngày/lần) phục vụ trực quan hóa các chùm động đất trên bản đồ.
+Lấy kết quả phân nhóm địa chấn (chu kỳ chạy 1 ngày/lần) phục vụ trực quan hóa các chùm động đất trên bản đồ. Nhận 2 query param tùy chọn `country`/`region` — lọc theo địa danh đại diện (`dominant_place`) của từng cụm; `clusters_count` phản ánh số cụm sau lọc (dùng cho KPI "Cụm địa chấn" trên Tổng quan).
 
 - **Response (200 OK):**
 ```json
