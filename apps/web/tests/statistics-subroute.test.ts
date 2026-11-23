@@ -48,6 +48,21 @@ test("TC-04: không đổi API/contract, filter vẫn được truyền", () => 
   assert.match(code, /getPredictions\(signal, filter\)/u);
 });
 
+test("TC-07: Temporal giữ chart mount khi refetch, không giật layout", () => {
+  const panel = read("components/charts/PatternPanel.tsx");
+  const page = read("features/statistics/patterns/TemporalPatternPage.tsx");
+  const css = read("features/statistics/StatisticsPage.css");
+  assert.match(panel, /keepMounted\?: boolean/u);
+  assert.match(panel, /hasData\?: boolean/u);
+  assert.match(panel, /stateMinHeight\?: number/u);
+  assert.match(panel, /stat-card__refetch/u);
+  assert.match(page, /keepMounted/u);
+  assert.match(page, /hasData=\{temporalData !== null\}/u);
+  assert.match(page, /stateMinHeight=\{1010\}/u);
+  assert.match(css, /\.stat-card__refetch\s*\{[^}]*position:\s*absolute/u);
+  assert.match(css, /max\(160px, var\(--stat-state-min-height, 0px\)\)/u);
+});
+
 test("TC-06: Statistics dùng chung filter header, không chọn quốc gia ở trang con", () => {
   const layout = read("features/statistics/StatisticsLayout.tsx");
   const css = read("features/statistics/StatisticsPage.css");
