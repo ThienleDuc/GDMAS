@@ -2,14 +2,14 @@
 
 ## Metadata
 - ID: 2026-11-23-page-phased-load-thien
-- Status: validation
+- Status: completed
 - Started: 2026-11-23
 - Last Updated: 2026-11-23
 - Owner: agent | thien
 
 ## Tiến độ
 Progress: 100%
-Current Phase: validation — chờ CHECKPOINT 1
+Current Phase: completed — PR #101 đã merge vào develop (merge SHA `f2d193e`)
 
 Completed:
 - Proposal §9 Approved; plan/status/testcase sinh đồng thời
@@ -41,7 +41,7 @@ Blocked: none
 - Giữ nguyên tên file/call trong `useOverviewData.ts` để không phá test khóa source; chỉ thêm flag/effect.
 
 ## Next Actions
-- CHECKPOINT 1: chờ `tiếp tục workflow`.
+- none — đã merge PR #101 vào develop, đồng bộ xong.
 
 ## Last Update
-2026-11-23 — Validation xanh, dừng CHECKPOINT 1.
+2026-11-23 — PR #101 merged vào develop (`f2d193e`); status → completed.
