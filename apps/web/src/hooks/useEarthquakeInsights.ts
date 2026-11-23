@@ -4,7 +4,7 @@ import type { StatisticsResponse } from "../contracts/earthquake.ts";
 import type { TemporalResponse } from "../contracts/analysis.ts";
 import type { ClustersResponse } from "../contracts/clusters.ts";
 import { ApiError } from "../lib/api-client.ts";
-import { geoQuery, type GeoFilter } from "../contracts/geo-filter.ts";
+import { geoQuery, type GeoFilter, type NumericFilter } from "../contracts/geo-filter.ts";
 import { getClustersOptional, getEarthquakeStatistics, getTemporalAnalysis } from "../services/earthquake-api.ts";
 
 export interface EarthquakeInsightsState {
@@ -38,6 +38,8 @@ export interface TimeWindow {
 export interface EarthquakeInsightsOptions {
   includeTemporal?: boolean;
   includeClusters?: boolean;
+  /** Lọc số cho KPI statistics (Danh mục) — không ảnh hưởng temporal/clusters. */
+  numeric?: NumericFilter;
 }
 
 export function useEarthquakeInsights(
@@ -49,6 +51,7 @@ export function useEarthquakeInsights(
 ): EarthquakeInsightsState {
   const includeTemporal = options?.includeTemporal !== false;
   const includeClusters = options?.includeClusters !== false;
+  const numeric = options?.numeric;
   const [state, setState] = useState<EarthquakeInsightsState>(INITIAL_STATE);
 
   useEffect(() => {
@@ -56,7 +59,7 @@ export function useEarthquakeInsights(
     setState((previous) => ({ ...previous, loading: true, error: null, unavailable: [] }));
 
     Promise.allSettled([
-      getEarthquakeStatistics(controller.signal, filter, window),
+      getEarthquakeStatistics(controller.signal, filter, window, numeric),
       includeTemporal
         ? getTemporalAnalysis({ interval, ...geoQuery(filter), ...window }, controller.signal)
         : Promise.resolve(null),
@@ -118,6 +121,10 @@ export function useEarthquakeInsights(
     filter?.region,
     window?.start_time,
     window?.end_time,
+    numeric?.min_magnitude,
+    numeric?.max_magnitude,
+    numeric?.min_depth,
+    numeric?.max_depth,
     includeTemporal,
     includeClusters,
   ]);

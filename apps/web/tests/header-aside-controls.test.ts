@@ -63,12 +63,13 @@ test("TC-08: nút áp dụng bộ lọc có nhãn 'Áp dụng'", () => {
   assert.match(filterBar, /onApply/u);
 });
 
-test("TC-09: histogram + KPI cùng nguồn dữ liệu đã lọc", () => {
+test("TC-09: histogram + KPI cùng nguồn statistics BE", () => {
   const page = read("features/earthquakes/EarthquakesPage.tsx");
-  assert.match(page, /buildCatalogStatistics/u);
+  assert.match(page, /statistics=\{insights\.statistics\}/u);
   assert.match(page, /chartFiltered/u);
-  assert.match(page, /statistics=\{chartLoaded \? catalogStats : insights\.statistics\}/u);
-  assert.match(page, /setChartTotal\(result\.total\)/u);
+  assert.match(page, /resolveWindow\(appliedForm\.range\)/u);
+  assert.match(page, /numeric: statisticsNumeric/u);
+  assert.doesNotMatch(page, /buildCatalogStatistics/u);
   const insightsFile = read("features/earthquakes/earthquake-insights.ts");
   assert.match(insightsFile, /export function buildCatalogStatistics/u);
 });

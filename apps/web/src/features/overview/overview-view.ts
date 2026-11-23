@@ -12,10 +12,11 @@ import type { PredictionsResponse } from "../../contracts/predictions.ts";
 import type { SSEEventPayload } from "../../contracts/sse.ts";
 import type { MonthlyPeaksResponse } from "../../contracts/monthly-peaks.ts";
 import type { CountryCatalogResponse, RegionCatalogResponse } from "../../contracts/geo-catalog.ts";
+import type { GeoFilter } from "../../contracts/geo-filter.ts";
 import { isFiniteNumber, normalizeRiskLabel, buildTrendSeries } from "../../lib/transforms/chart-data.ts";
 import { ALL_COUNTRIES } from "../earthquakes/country-filter.ts";
 import { countryFromPlace } from "../earthquakes/country-clusters.ts";
-import { regionFromPlace } from "../earthquakes/region-filter.ts";
+import { ALL_REGIONS, regionFromPlace } from "../earthquakes/region-filter.ts";
 import type { DateRangePreset } from "../earthquakes/earthquake-view.ts";
 import {
   DEPTH_BANDS,
@@ -378,12 +379,14 @@ export function buildSeasonalityBars(seasonality: SeasonalityResponse | null): S
 }
 
 /**
- * Đưa sự kiện SSE (`earthquake_detected`/`earthquake_alert`) vào đầu bảng 5 sự kiện.
+ * Đưa sự kiện SSE (`earthquake_detected`/`earthquake_alert`) vào đầu bảng 10 sự kiện.
  * Dùng đúng field marker của BE (`id`, `event_time`, WGS84); sai/thiếu → giữ nguyên danh sách.
+ * Khi đang lọc quốc gia/khu vực, sự kiện SSE không khớp bị bỏ qua (I3/I5).
  */
 export function applySseLatestEvent(
   rows: readonly LatestEventRow[],
   payload: SSEEventPayload | null | undefined,
+  filter?: GeoFilter | null,
 ): LatestEventRow[] {
   if (!payload || (payload.event !== "earthquake_detected" && payload.event !== "earthquake_alert")) {
     return [...rows];
@@ -405,16 +408,32 @@ export function applySseLatestEvent(
   ) {
     return [...rows];
   }
+  const place = typeof record.place === "string" && record.place.trim() ? record.place.trim() : "Khác";
+  const country =
+    typeof record.country === "string" && record.country.trim()
+      ? record.country.trim()
+      : countryFromPlace(place);
+  const region =
+    typeof record.region === "string" && record.region.trim()
+      ? record.region.trim()
+      : regionFromPlace(place, country);
+  if (filter?.country && filter.country !== ALL_COUNTRIES && country !== filter.country) {
+    return [...rows];
+  }
+  if (filter?.region && filter.region !== ALL_REGIONS && region !== filter.region) {
+    return [...rows];
+  }
+
   const row: LatestEventRow = {
     id,
     time,
-    place: typeof record.place === "string" && record.place.trim() ? record.place.trim() : "Khác",
+    place,
     magnitude,
     depth_km: Number.isFinite(Number(record.depth_km)) ? Number(record.depth_km) : null,
     latitude,
     longitude,
   };
-  return [row, ...rows.filter((item) => item.id !== row.id)].slice(0, 8);
+  return [row, ...rows.filter((item) => item.id !== row.id)].slice(0, 10);
 }
 
 /**
@@ -484,7 +503,7 @@ export function buildLatestEvents(items: readonly EarthquakeItem[] | null | unde
     .filter((item) => item && Number.isFinite(Date.parse(item.event_time)) && isFiniteNumber(item.magnitude))
     .slice()
     .sort((left, right) => Date.parse(right.event_time) - Date.parse(left.event_time))
-    .slice(0, 8)
+    .slice(0, 10)
     .map((item) => ({
       id: item.id,
       time: item.event_time,

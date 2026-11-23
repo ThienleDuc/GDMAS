@@ -79,8 +79,8 @@ export const OverviewPage: React.FC = () => {
     return fromCatalog.length > 0 ? fromCatalog : rankRegionsForCountry(data.clusters, country);
   }, [country, data.countryCatalog, data.regionCatalog, data.clusters]);
   const latest = useMemo(
-    () => applySseLatestEvent(buildLatestEvents(data.latestEvents), sse?.data ?? null),
-    [data.latestEvents, sse?.data],
+    () => applySseLatestEvent(buildLatestEvents(data.latestEvents), sse?.data ?? null, { country, region }),
+    [data.latestEvents, sse?.data, country, region],
   );
   const prediction = useMemo(
     () => formatPrediction(data.predictions, data.classifications),

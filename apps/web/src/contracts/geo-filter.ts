@@ -5,6 +5,14 @@ export interface GeoFilter {
   region?: string | null;
 }
 
+/** Bộ lọc số cho KPI statistics (Danh mục) — dùng chung với /statistics/earthquakes. */
+export interface NumericFilter {
+  min_magnitude?: number;
+  max_magnitude?: number;
+  min_depth?: number;
+  max_depth?: number;
+}
+
 /** Chuyển filter thành query param; bỏ sentinel "all" để giữ đường mặc định toàn cầu. */
 export function geoQuery(filter?: GeoFilter | null): { country?: string; region?: string } {
   const query: { country?: string; region?: string } = {};

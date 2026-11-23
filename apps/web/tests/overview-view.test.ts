@@ -10,6 +10,7 @@ import type { ClustersResponse } from "../src/contracts/clusters.ts";
 import type { EarthquakeItem, StatisticsResponse } from "../src/contracts/earthquake.ts";
 import {
   buildKpis,
+  applySseLatestEvent,
   buildLatestEvents,
   buildSeasonalityBars,
   buildSeverityMix,
@@ -270,4 +271,33 @@ test("TC-09: sự kiện mới nhất sort theo UTC, giữ WGS84", () => {
   assert.equal(rows[0].latitude, 38.29);
   assert.equal(rows[0].longitude, 142.38);
   assert.deepEqual(buildLatestEvents([]), []);
+});
+
+test("TC-27: Danh mục gần đây lấy tối đa 10 hàng, SSE tuân lọc country/region", () => {
+  const many = Array.from({ length: 12 }, (_, i) =>
+    event(i + 1, new Date(Date.UTC(2026, 10, 20 - i)).toISOString()),
+  );
+  const rows = buildLatestEvents(many);
+  assert.equal(rows.length, 10, "có hơn 10 thì lấy đúng 10");
+  assert.equal(rows[0].id, 1);
+
+  const few = buildLatestEvents(many.slice(0, 4));
+  assert.equal(few.length, 4, "không đủ 10 thì lấy dưới 10");
+
+  const payload = {
+    event: "earthquake_detected",
+    timestamp: "2026-11-24T00:00:00Z",
+    data: {
+      id: 99,
+      magnitude: 5.5,
+      latitude: 38.2,
+      longitude: 142.4,
+      event_time: "2026-11-24T00:00:00Z",
+      place: "Off the east coast of Honshu, Japan",
+    },
+  };
+  const withJapan = applySseLatestEvent(few, payload, { country: "Japan", region: "Honshu" });
+  assert.equal(withJapan[0].id, 99);
+  const withUsa = applySseLatestEvent(few, payload, { country: "USA" });
+  assert.equal(withUsa[0].id, few[0].id, "SSE lệch quốc gia bị bỏ qua");
 });

@@ -130,7 +130,7 @@ export function useOverviewData(
       ),
       getEarthquakes(
         {
-          limit: 8,
+          limit: 10,
           sort_by: "event_time",
           order: "desc",
           ...geoQuery(filter),
