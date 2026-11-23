@@ -498,6 +498,15 @@
   white-space: nowrap;
 }
 
+/* Badge mức độ chỉ rộng bằng chữ — không bị rule ép block ở trên kéo giãn full ô. */
+.ov-page .ds-table td > span.ds-badge,
+.ov-page .ds-table td > strong.ds-badge,
+.ov-page .ds-table td > button.ds-badge {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+}
+
 .ov-page .ds-table tbody tr:last-child td {
   border-bottom: 0;
 }
