@@ -48,6 +48,7 @@ const RegionPicker: React.FC = () => {
 
 /** Sublayout cho 6 nhóm phân tích: điều hướng con dọc + vùng nội dung riêng từng pattern. */
 export const StatisticsLayout: React.FC = () => {
+  const { withSelection } = useCatalogSelection();
   return (
     <StatisticsDataProvider>
       <section className="stat-page">
@@ -69,7 +70,7 @@ export const StatisticsLayout: React.FC = () => {
             {PATTERN_NAV.map((item) => (
               <NavLink
                 key={item.slug}
-                to={patternPath(item.slug)}
+                to={withSelection(patternPath(item.slug))}
                 className={({ isActive }) =>
                   `stat-subnav__item ${isActive ? "is-active" : ""}`
                 }

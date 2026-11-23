@@ -51,7 +51,7 @@ test("TC-03: error + database_cleared có wiring", () => {
 
 test("TC-04: ranking click sang bản đồ; KPI cụm ghi rõ toàn cục", () => {
   const page = read("features/overview/OverviewPage.tsx");
-  assert.match(page, /navigate\(APP_ROUTES\.MONITORING\)/u);
+  assert.match(page, /navigate\(pathWithSelection\(APP_ROUTES\.MONITORING/u);
   assert.match(page, /card\.key === "clusters" && isCountryMode/u);
 });
 

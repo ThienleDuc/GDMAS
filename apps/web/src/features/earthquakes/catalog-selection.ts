@@ -33,3 +33,19 @@ export function selectionToParams(
 
   return next;
 }
+
+/**
+ * Tạo link nội bộ mang selection hiện tại — giữ query/hash khác, không nhân đôi param (I2/I3).
+ * Dùng cho mọi điều hướng để combobox header không bị reset khi chuyển trang.
+ */
+export function pathWithSelection(to: string, selection: CatalogSelection): string {
+  const hashIndex = to.indexOf("#");
+  const beforeHash = hashIndex >= 0 ? to.slice(0, hashIndex) : to;
+  const hash = hashIndex >= 0 ? to.slice(hashIndex) : "";
+  const queryIndex = beforeHash.indexOf("?");
+  const pathname = queryIndex >= 0 ? beforeHash.slice(0, queryIndex) : beforeHash;
+  const base =
+    queryIndex >= 0 ? new URLSearchParams(beforeHash.slice(queryIndex + 1)) : new URLSearchParams();
+  const query = selectionToParams(selection, base).toString();
+  return `${pathname}${query ? `?${query}` : ""}${hash}`;
+}
