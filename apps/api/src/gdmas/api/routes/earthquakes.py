@@ -293,6 +293,66 @@ def list_earthquake_countries(
     )
 
 
+def _label_rank(label: str) -> tuple[int, str]:
+    """Ưu tiên biến thể chuẩn title-case, sau đó theo thứ tự từ điển (ổn định)."""
+    return (0 if label == label.title() else 1, label)
+
+
+def _merge_region_rows(rows) -> list[RegionCount]:
+    """Gộp các biến thể cùng một khu vực (trim + casefold) thành đúng 1 dòng.
+
+    `count` được cộng, `avg_magnitude` tính lại có trọng số qua `avg*count`,
+    `max_magnitude` lấy max. Nhãn đại diện là biến thể phổ biến nhất (tie → nhỏ nhất).
+    """
+    grouped: dict[str, dict] = {}
+    for region, count, avg, maximum in rows:
+        label = (region or "").strip()
+        key = label.casefold()
+        if not key:
+            continue
+        n = int(count)
+        entry = grouped.get(key)
+        if entry is None:
+            grouped[key] = {
+                "label": label,
+                "label_count": n,
+                "count": n,
+                "sum_mag": float(avg) * n if avg is not None else 0.0,
+                "mag_count": n if avg is not None else 0,
+                "max": float(maximum) if maximum is not None else None,
+            }
+            continue
+        entry["count"] += n
+        if avg is not None:
+            entry["sum_mag"] += float(avg) * n
+            entry["mag_count"] += n
+        if maximum is not None:
+            candidate = float(maximum)
+            entry["max"] = (
+                max(entry["max"], candidate) if entry["max"] is not None else candidate
+            )
+        if n > entry["label_count"] or (
+            n == entry["label_count"]
+            and _label_rank(label) < _label_rank(entry["label"])
+        ):
+            entry["label"] = label
+            entry["label_count"] = n
+
+    result = [
+        RegionCount(
+            region=entry["label"],
+            count=entry["count"],
+            avg_magnitude=round(entry["sum_mag"] / entry["mag_count"], 2)
+            if entry["mag_count"]
+            else None,
+            max_magnitude=round(entry["max"], 2) if entry["max"] is not None else None,
+        )
+        for entry in grouped.values()
+    ]
+    result.sort(key=lambda row: (-row.count, row.region))
+    return result
+
+
 @router.get("/regions", response_model=RegionListResponse)
 def list_earthquake_regions(
     country: str | None = Query(None, description="Chỉ lấy khu vực của quốc gia này"),
@@ -326,17 +386,7 @@ def list_earthquake_regions(
     except SQLAlchemyError as exc:
         return _db_error(exc)
 
-    return RegionListResponse(
-        data=[
-            RegionCount(
-                region=region,
-                count=count,
-                avg_magnitude=round(float(avg), 2) if avg is not None else None,
-                max_magnitude=round(float(maximum), 2) if maximum is not None else None,
-            )
-            for region, count, avg, maximum in rows
-        ]
-    )
+    return RegionListResponse(data=_merge_region_rows(rows))
 
 
 @router.get("/{event_id}", response_model=EarthquakeResponse)

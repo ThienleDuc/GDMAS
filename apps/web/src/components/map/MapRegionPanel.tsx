@@ -2,6 +2,7 @@ import { ALL_COUNTRIES } from "../../features/earthquakes/country-filter.ts";
 import { ALL_REGIONS } from "../../features/earthquakes/region-filter.ts";
 import { magnitudeToColor } from "../../lib/transforms/map-data.ts";
 import type { RegionClusterRow } from "../../features/monitoring/region-clusters.ts";
+import { regionKey } from "../../features/monitoring/region-catalog-view.ts";
 
 interface MapRegionPanelProps {
   /** Giữ optional để tương thích caller cũ — quốc gia giờ lấy từ header/URL (I2). */
@@ -25,13 +26,23 @@ export function MapRegionPanel({
   onRegionChange,
   onClusterSelect,
 }: MapRegionPanelProps) {
-  const visibleClusters = clusters.filter(
-    (item) => country === ALL_COUNTRIES || item.country === country,
-  );
-  // Khu vực BE trả thêm mà cụm chưa có — vẫn cho phép chọn lọc.
-  const extraRegions = regions.filter(
-    (name) => !visibleClusters.some((cluster) => cluster.region === name),
-  );
+  const seenClusterRegions = new Set<string>();
+  // Mỗi khu vực chỉ hiện 1 lần — gộp biến thể theo khoá normalize (trim + casefold).
+  const visibleClusters = clusters.filter((item) => {
+    if (country !== ALL_COUNTRIES && item.country !== country) return false;
+    const key = regionKey(item.region);
+    if (seenClusterRegions.has(key)) return false;
+    seenClusterRegions.add(key);
+    return true;
+  });
+  const seenExtraRegions = new Set<string>();
+  // Khu vực BE trả thêm mà cụm chưa có — vẫn cho phép chọn lọc, nhưng không nhân bản.
+  const extraRegions = regions.filter((name) => {
+    const key = regionKey(name);
+    if (seenExtraRegions.has(key)) return false;
+    seenExtraRegions.add(key);
+    return !visibleClusters.some((cluster) => regionKey(cluster.region) === key);
+  });
 
   return (
     <section className="gm-region-panel" aria-label="Lọc theo quốc gia và khu vực">

@@ -6,9 +6,12 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   buildMonitoringRegionRows,
   mergeRegionRows,
+  regionKey,
 } from "../src/features/monitoring/region-catalog-view.ts";
 import { DEFAULT_TILE_URL, resolveTileUrl } from "../src/components/map/tile-url.ts";
 import { toMapEarthquake } from "../src/lib/transforms/map-data.ts";
@@ -31,6 +34,31 @@ function event(input: EventInput = {}): MapEarthquake {
     ...input,
   };
 }
+
+test("TC-dedupe: regionKey gộp biến thể, mỗi khu vực chỉ 1 dòng", () => {
+  assert.equal(regionKey(" Honshu "), regionKey("honshu"));
+  assert.equal(regionKey("HONSHU"), regionKey("honshu"));
+
+  const rows = buildMonitoringRegionRows([
+    event({ country: "Japan", region: "Honshu", magnitude: 4 }),
+    event({ country: "Japan", region: " honshu ", magnitude: 6 }),
+    event({ country: "Japan", region: "HONSHU", magnitude: 5 }),
+  ]);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].region, "Honshu");
+  assert.equal(rows[0].eventCount, 3);
+  assert.equal(rows[0].maxMagnitude, 6);
+});
+
+test("TC-panel: MapRegionPanel dedupe danh sách khu vực", () => {
+  const source = readFileSync(
+    resolve(import.meta.dirname, "../src/components/map/MapRegionPanel.tsx"),
+    "utf8",
+  );
+  assert.match(source, /regionKey\(name\)/u);
+  assert.match(source, /seenExtraRegions/u);
+  assert.match(source, /seenClusterRegions/u);
+});
 
 test("TC-01: gom theo quốc gia & khu vực từ field BE, số đếm và magnitude thật", () => {
   const rows = buildMonitoringRegionRows([
