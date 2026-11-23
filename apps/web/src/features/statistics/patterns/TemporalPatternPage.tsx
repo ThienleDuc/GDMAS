@@ -12,6 +12,9 @@ export const TemporalPatternPage: React.FC = () => {
       title={`1. ${PATTERN_TITLES[0]}`}
       state={views.temporal}
       reason={panelReason(temporal.data?.message, "Chưa có dữ liệu phân tích thời gian.")}
+      keepMounted
+      hasData={temporalData !== null}
+      stateMinHeight={1010}
     >
       <div className="stat-layout stat-layout--stack">
         <TemporalPatternCharts data={temporalData} interval={interval} onIntervalChange={setInterval} timezone={timezone} />
