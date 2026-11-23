@@ -5,6 +5,7 @@
  */
 
 import { formatEventTime } from "../../lib/formatters.ts";
+import { useTimezone } from "../../contexts/timezone-context.tsx";
 import { magnitudeToColor } from "../../lib/transforms/map-data.ts";
 import type { MapEarthquake } from "../../lib/transforms/map-types.ts";
 
@@ -15,6 +16,8 @@ interface EventListPanelProps {
 }
 
 export function EventListPanel({ events, selectedId, onSelect }: EventListPanelProps) {
+  const { timezone } = useTimezone();
+
   return (
     <section className="gm-event-panel" aria-label="Danh sách sự kiện động đất">
       <h2 className="gm-event-panel__title">
@@ -42,7 +45,7 @@ export function EventListPanel({ events, selectedId, onSelect }: EventListPanelP
                     {event.place}
                   </span>
                   <span className="gm-event-item__time" title="Giờ quốc tế (UTC)">
-                    {formatEventTime(event.eventTime, "UTC")}
+                    {formatEventTime(event.eventTime, timezone)}
                   </span>
                 </span>
                 <span className="gm-event-item__depth">{event.depthKm.toFixed(1)} km</span>

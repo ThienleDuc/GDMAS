@@ -1,9 +1,11 @@
 import { popupFields } from "../../features/monitoring/monitoring-view.ts";
 import type { MapEarthquake } from "../../lib/transforms/map-types.ts";
+import { useTimezone } from "../../contexts/timezone-context.tsx";
 
 /** Popup chi tiết sự kiện — đủ 6 trường theo DoD T7.04. */
 export function MapPopupCard({ event }: { event: MapEarthquake }) {
-  const fields = popupFields(event);
+  const { timezone } = useTimezone();
+  const fields = popupFields(event, timezone);
 
   return (
     <div className="gm-popup">

@@ -9,6 +9,7 @@ import { CompactRefreshCountdown } from "./header/CompactRefreshCountdown.tsx";
 import { ThemeToggle } from "./header/ThemeToggle.tsx";
 import { dataRefreshKey } from "./header/header-data.ts";
 import { APP_ROUTES } from "../app/routes.tsx";
+import { TimezoneProvider } from "../contexts/timezone-context.tsx";
 import { useCatalogSelection } from "../features/earthquakes/useCatalogSelection.ts";
 
 interface NavItem extends NavMeta {
@@ -39,6 +40,8 @@ export const DashboardLayout: React.FC = () => {
   const sseRefreshKey = dataRefreshKey(sse.data);
 
   return (
+    // Provider phải bọc CẢ shell (kể cả header chứa RealtimeClock), không chỉ <Outlet>.
+    <TimezoneProvider>
     <div className="layout layout--dashboard app-layout">
       {/* Aside dạng rail cố định: luôn sẵn sàng, hover/focus hiện card mô tả. */}
       <aside className="layout__sidebar app-sidebar">
@@ -110,5 +113,6 @@ export const DashboardLayout: React.FC = () => {
         </main>
       </div>
     </div>
+    </TimezoneProvider>
   );
 };

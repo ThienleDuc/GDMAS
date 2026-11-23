@@ -4,7 +4,7 @@ import { useEarthquakeInsights } from "../../hooks/useEarthquakeInsights.ts";
 import { getEarthquakeDetail } from "../../services/earthquake-api.ts";
 import { ApiError } from "../../lib/api-client.ts";
 import { isNotFound } from "./earthquake-detail.ts";
-import { getStoredTimezone, type TimezoneMode } from "../../lib/formatters.ts";
+import { useTimezone } from "../../contexts/timezone-context.tsx";
 import {
   buildEarthquakeQuery,
   CHART_PAGE_SIZE,
@@ -50,7 +50,7 @@ export const EarthquakesPage: React.FC = () => {
   const [error, setError] = useState<ApiError | null>(null);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [timezone] = useState<TimezoneMode>(() => getStoredTimezone());
+  const { timezone } = useTimezone();
   const [refreshKey, setRefreshKey] = useState(0);
   // Nguồn sự thật là URL ?country=&region= — đồng bộ với header/bản đồ.
   const { country: selectedCountry, region: selectedRegion, setSelection } = useCatalogSelection();

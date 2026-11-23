@@ -72,7 +72,8 @@ export async function fetchApi<T>(path: string, init: RequestInit = {}): Promise
 
   let response: Response;
   try {
-    response = await fetch(buildUrl(path), { ...init, headers });
+    // Dữ liệu realtime: luôn lấy bản mới nhất, không dùng browser cache cho GET.
+    response = await fetch(buildUrl(path), { ...init, headers, cache: init.cache ?? "no-store" });
   } catch {
     throw new ApiError(`Không thể kết nối đến API (${API_BASE_URL}).`, 0);
   }

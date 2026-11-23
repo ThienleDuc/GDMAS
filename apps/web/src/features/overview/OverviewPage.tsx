@@ -18,7 +18,8 @@ import {
 } from "../earthquakes/earthquake-view.ts";
 import { useSseMarkers } from "../monitoring/sse-context.ts";
 import { useDatabaseResetFromEvent } from "../../hooks/useDatabaseReset.ts";
-import { formatEventTime, formatWgs84Point, getStoredTimezone } from "../../lib/formatters.ts";
+import { formatEventTime, formatWgs84Point } from "../../lib/formatters.ts";
+import { useTimezone } from "../../contexts/timezone-context.tsx";
 import {
   applySseLatestEvent,
   buildKpis,
@@ -60,7 +61,7 @@ export const OverviewPage: React.FC = () => {
     setSearchParams(next, { replace: true });
   };
   const data = useOverviewData({ country, region }, dbReset.refreshVersion, window);
-  const timezone = getStoredTimezone();
+  const { timezone } = useTimezone();
 
   const kpis = useMemo(() => buildKpis(data.statistics, data.clusters), [data.statistics, data.clusters]);
   const severity = useMemo(() => buildSeverityMix(data.statistics), [data.statistics]);

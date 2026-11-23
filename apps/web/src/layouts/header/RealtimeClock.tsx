@@ -1,15 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
-import {
-  formatClockTime,
-  getStoredTimezone,
-  setStoredTimezone,
-  type TimezoneMode,
-} from "../../utils/timezone.ts";
+import { useTimezone } from "../../contexts/timezone-context.tsx";
+import { formatClockTime, type TimezoneMode } from "../../utils/timezone.ts";
 
-/** Đồng hồ realtime dùng chung mọi trang; chế độ lưu ở localStorage. */
+/** Đồng hồ realtime dùng chung mọi trang; chế độ lấy/ghi qua context của shell. */
 export const RealtimeClock: React.FC = () => {
-  const [mode, setMode] = useState<TimezoneMode>(() => getStoredTimezone());
+  const { timezone: mode, setTimezone } = useTimezone();
   const [now, setNow] = useState<Date>(() => new Date());
 
   useEffect(() => {
@@ -19,8 +15,7 @@ export const RealtimeClock: React.FC = () => {
 
   const toggleMode = () => {
     const next: TimezoneMode = mode === "UTC" ? "UTC+7" : "UTC";
-    setMode(next);
-    setStoredTimezone(next);
+    setTimezone(next);
   };
 
   return (
