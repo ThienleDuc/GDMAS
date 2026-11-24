@@ -314,9 +314,15 @@ def compute_trend(
     *,
     as_of: datetime | None = None,
     metric: str = "count",
+    tz: str = "UTC",
 ) -> dict[str, Any]:
     if metric not in _TREND_AGGREGATIONS:
         raise ValueError(f"metric không hỗ trợ: {metric}")
+    # Bucket theo múi giờ hiển thị (UTC/UTC+7) như compute_temporal — nếu không,
+    # sự kiện 20:00 UTC hôm trước rơi nhầm vào ngày hôm đó (I3).
+    if tz != "UTC" and not df.empty:
+        df = df.copy()
+        df["event_time"] = df["event_time"].dt.tz_convert(tz)
     interval = interval or choose_trend_interval(df)
     actual = _trend_actual(df, interval, metric)
     moving_avg = actual.rolling(
@@ -387,6 +393,7 @@ def compute_trend_bundle(
     interval: str,
     *,
     as_of: datetime | None = None,
+    tz: str = "UTC",
 ) -> dict[str, Any]:
     """Pattern 2 cho một tần suất, đủ 3 metric của `GET /analysis/trend`.
 
@@ -394,7 +401,7 @@ def compute_trend_bundle(
     khóa `metrics` chứa kết quả riêng của từng metric trong `TREND_METRICS`.
     """
     metrics = {
-        metric: compute_trend(df, interval, as_of=as_of, metric=metric)
+        metric: compute_trend(df, interval, as_of=as_of, metric=metric, tz=tz)
         for metric in TREND_METRICS
     }
     return {**metrics["count"], "metrics": metrics}

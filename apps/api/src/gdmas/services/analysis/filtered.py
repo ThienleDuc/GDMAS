@@ -117,7 +117,12 @@ def compute_filtered_metrics(
         )
     if kind == "trend":
         mapped = FREQ_TO_INTERVAL.get(interval or "M", "month")
-        bundle = compute_trend_bundle(df, mapped, as_of=as_of)
+        bundle = compute_trend_bundle(
+            df,
+            mapped,
+            as_of=as_of,
+            tz=TZ_BY_MODE.get(timezone or "UTC", "UTC"),
+        )
         # build() của /analysis/trend đọc m["metrics"][metric]; đảm bảo có dù df rỗng.
         bundle.setdefault("metrics", {})
         for key in ("count", "avg_magnitude", "max_magnitude"):

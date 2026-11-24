@@ -9,6 +9,7 @@ import type { MonthlyPeaksResponse } from "../../contracts/monthly-peaks.ts";
 import { isApiEmptyEnvelope } from "../../contracts/common.ts";
 import { geoQuery, type GeoFilter } from "../../contracts/geo-filter.ts";
 import { ApiError } from "../../lib/api-client.ts";
+import { useTimezone } from "../../contexts/timezone-context.tsx";
 import {
   useEarthquakeInsights,
   type TimeWindow,
@@ -90,6 +91,8 @@ export function useOverviewData(
   refreshVersion = 0,
   window?: TimeWindow | null,
 ): OverviewData {
+  // Múi giờ từ header — BE bucket ngày trend theo UTC/UTC+7 để không lệch 1 ngày (I3).
+  const { timezone } = useTimezone();
   // Phase 1 cần statistics + clusters cho KPI; temporal không ai đọc → tắt.
   const insights = useEarthquakeInsights("day", 0, filter, window, {
     includeTemporal: false,
@@ -110,6 +113,7 @@ export function useOverviewData(
     filter?.region,
     window?.start_time,
     window?.end_time,
+    timezone,
   ]);
 
   // Phase 1 — critical: trend (above-fold) + 5 sự kiện mới nhất.
@@ -125,7 +129,7 @@ export function useOverviewData(
 
     Promise.allSettled([
       getTrendAnalysis(
-        { resample_freq: "D", ...geoQuery(filter), ...window },
+        { resample_freq: "D", ...geoQuery(filter), ...window, timezone },
         controller.signal,
       ),
       getEarthquakes(
@@ -197,6 +201,7 @@ export function useOverviewData(
     filter?.region,
     window?.start_time,
     window?.end_time,
+    timezone,
   ]);
 
   // Phase 2 — secondary: catalog, chu kỳ (1 tháng), forecast (dưới fold).

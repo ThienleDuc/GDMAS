@@ -197,6 +197,9 @@ def get_trend(
     region: str | None = Query(None, description="Lọc theo khu vực"),
     start_time: str | None = Query(None, description="ISO 8601 UTC"),
     end_time: str | None = Query(None, description="ISO 8601 UTC"),
+    timezone: str | None = Query(
+        None, pattern="^(UTC|UTC\\+7)$", description="Múi giờ hiển thị bucket ngày"
+    ),
     db: Session = Depends(get_db),
 ):
     """Pattern 2: xu hướng sau re-sampling."""
@@ -252,7 +255,7 @@ def get_trend(
         return data
 
     start, end = _utc(start_time), _utc(end_time)
-    if country or region or start or end:
+    if country or region or start or end or timezone is not None:
         metrics = compute_filtered_metrics(
             db,
             "trend",
@@ -262,6 +265,7 @@ def get_trend(
             metric=metric,
             start=start,
             end=end,
+            timezone=timezone,
         )
         return {"success": True, "data": build(metrics)}
     # Chỉ nhận bản đúng tần suất yêu cầu; không có thì Empty State thay vì trả tần suất khác

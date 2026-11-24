@@ -12,6 +12,8 @@ import pytest
 from gdmas.models.analysis import AnalysisResult
 from gdmas.services.analysis.patterns import build_analysis_snapshot, prepare_events
 
+from .conftest import add_event
+
 API = "/api/v1/analysis/trend"
 AS_OF = datetime(2026, 11, 20, tzinfo=UTC)
 
@@ -186,3 +188,30 @@ def test_trend_sample_size_fallback_and_status_default(client, db):
 
     assert data["sample_size"] == 9
     assert data["status"] == "computed"
+
+
+# 2026-11-24 — bucket ngày theo múi giờ hiển thị (lệch 1 ngày ở UTC+7)
+def test_trend_timezone_buckets_events_in_local_day(client, db):
+    add_event(
+        db, 1, event_time=datetime(2026, 11, 23, 20, 0, tzinfo=UTC), magnitude=5.0
+    )
+    add_event(db, 2, event_time=datetime(2026, 11, 24, 1, 0, tzinfo=UTC), magnitude=4.0)
+    params = {
+        "resample_freq": "D",
+        "metric": "count",
+        "start_time": "2026-11-23T00:00:00Z",
+        "end_time": "2026-11-24T23:59:59Z",
+    }
+
+    utc_periods = {
+        p["period"] for p in client.get(API, params=params).json()["data"]["series"]
+    }
+    local_periods = {
+        p["period"]
+        for p in client.get(API, params={**params, "timezone": "UTC+7"}).json()["data"][
+            "series"
+        ]
+    }
+
+    assert utc_periods == {"2026-11-23", "2026-11-24"}
+    assert local_periods == {"2026-11-24"}, "UTC+7: cả 2 trận đều ở ngày 24"

@@ -161,3 +161,33 @@ def test_unknown_metric_is_rejected():
 
     with pytest.raises(ValueError):
         compute_trend(df, "day", metric="median_magnitude")
+
+
+def test_trend_respects_timezone_for_daily_buckets():
+    """20:00 UTC hôm trước phải rơi vào ngày hôm sau khi bucket theo UTC+7."""
+    records = [
+        {
+            "id": n,
+            "event_time": pd.Timestamp(ts, tz="UTC"),
+            "magnitude": mag,
+            "depth_km": 10.0,
+            "latitude": 35.0,
+            "longitude": 139.0,
+        }
+        for n, (ts, mag) in enumerate(
+            [
+                ("2026-11-23T20:00:00Z", 5.0),
+                ("2026-11-23T21:00:00Z", 4.0),
+                ("2026-11-24T01:00:00Z", 3.0),
+            ],
+            start=1,
+        )
+    ]
+    df = prepare_events(records)
+
+    utc = compute_trend(df, "day", metric="count")
+    local = compute_trend(df, "day", metric="count", tz="Asia/Ho_Chi_Minh")
+
+    assert {p["period"] for p in utc["series"]} == {"2026-11-23", "2026-11-24"}
+    assert {p["period"] for p in local["series"]} == {"2026-11-24"}
+    assert local["series"][0]["actual_value"] == 3

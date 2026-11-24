@@ -258,6 +258,10 @@
 
   /* Đếm ngược rút gọn — nằm trên nút đổi Light/Dark ở footer aside. */
   .layout__refresh-compact {
+    margin: var(--space-1) 0;
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     color: var(--foreground);
     font-size: var(--text-xs);
     font-weight: var(--font-semibold);

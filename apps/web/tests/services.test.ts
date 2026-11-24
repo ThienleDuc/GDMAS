@@ -412,3 +412,21 @@ test("getEarthquakeStatistics gửi bộ lọc số cho KPI Danh mục", async (
     globalThis.fetch = originalFetch;
   }
 });
+
+test("getTrendAnalysis gửi timezone cho bucket ngày theo UTC+7", async () => {
+  const originalFetch = globalThis.fetch;
+  const urls: string[] = [];
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    urls.push(String(input));
+    return new Response(JSON.stringify({ success: true, data: { series: [] } }), { status: 200 });
+  };
+  try {
+    await getTrendAnalysis({ resample_freq: "D", metric: "count", timezone: "UTC+7" });
+    const url = new URL(urls[0]);
+    assert.equal(url.pathname, "/api/v1/analysis/trend");
+    assert.equal(url.searchParams.get("timezone"), "UTC+7");
+    assert.equal(url.searchParams.get("resample_freq"), "D");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

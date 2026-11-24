@@ -112,3 +112,17 @@ test("TC-05 — Overview không còn cửa sổ 14 ngày giả", () => {
   assert.match(source, /getSeasonalityAnalysis\(\{ \.\.\.geoQuery\(filter\), \.\.\.window \}/u);
   assert.doesNotMatch(source, /getMonthlyPeaks/u);
 });
+
+test("TC-06 — Overview forward timezone cho /analysis/trend (bucket ngày UTC+7)", () => {
+  const source = readFileSync(
+    resolve(import.meta.dirname, "../src/features/overview/useOverviewData.ts"),
+    "utf8",
+  );
+  assert.match(source, /useTimezone\(\)/u);
+  assert.match(source, /\{ resample_freq: "D", \.\.\.geoQuery\(filter\), \.\.\.window, timezone \}/u);
+  const service = readFileSync(
+    resolve(import.meta.dirname, "../src/services/earthquake-api.ts"),
+    "utf8",
+  );
+  assert.match(service, /timezone: params\.timezone/u);
+});
