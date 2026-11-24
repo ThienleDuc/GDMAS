@@ -1588,6 +1588,103 @@
           }
         }
       },
+      "/api/v1/ai/credentials": {
+        "post": {
+          "tags": [
+            "AI Settings"
+          ],
+          "summary": "Save Credentials",
+          "operationId": "save_credentials_api_v1_ai_credentials_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialsPayload"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/ai/credentials/status": {
+        "get": {
+          "tags": [
+            "AI Settings"
+          ],
+          "summary": "Credentials Status",
+          "operationId": "credentials_status_api_v1_ai_credentials_status_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/ai/generate": {
+        "post": {
+          "tags": [
+            "AI Settings"
+          ],
+          "summary": "Generate",
+          "operationId": "generate_api_v1_ai_generate_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratePayload"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "/": {
         "get": {
           "summary": "Root",
@@ -1683,6 +1780,28 @@
             "data"
           ],
           "title": "CountryListResponse"
+        },
+        "CredentialsPayload": {
+          "properties": {
+            "model": {
+              "type": "string",
+              "maxLength": 80,
+              "minLength": 1,
+              "title": "Model"
+            },
+            "api_key": {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Api Key"
+            }
+          },
+          "type": "object",
+          "required": [
+            "model",
+            "api_key"
+          ],
+          "title": "CredentialsPayload"
         },
         "EarthquakeListResponse": {
           "properties": {
@@ -1945,6 +2064,45 @@
             "max_magnitude"
           ],
           "title": "EarthquakeStatistics"
+        },
+        "GeneratePayload": {
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Prompt"
+            },
+            "system": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "System"
+            },
+            "model": {
+              "type": "string",
+              "maxLength": 80,
+              "minLength": 1,
+              "title": "Model"
+            },
+            "api_key": {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Api Key"
+            }
+          },
+          "type": "object",
+          "required": [
+            "prompt",
+            "model",
+            "api_key"
+          ],
+          "title": "GeneratePayload"
         },
         "HTTPValidationError": {
           "properties": {
@@ -2961,6 +3119,6 @@
       "StatisticsResponse"
     ]
   },
-  "config_defaults_sha256": "2abf0e9c89e7b11e0928e9d529467c6ee36240c9021af9969f90de80b7d1aed1",
+  "config_defaults_sha256": "bf381b544df90782948e042c01695ee0e0fb154d2e3636bc5cf3fc8659578b3e",
   "migration_sha256": "0be5da1e803e1ce26fb919f1d88932c5143ab79af03fc9949896c6bf0e1e973d"
 }

@@ -269,6 +269,173 @@
     letter-spacing: 0.02em;
   }
 
+  /* Nút SVG khoá Gemini — giữa đồng hồ đếm ngược và nút đổi theme. */
+  .layout__ai-key {
+    position: relative;
+    display: grid;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--foreground);
+    cursor: pointer;
+    transition: background var(--duration-fast) ease, border-color var(--duration-fast) ease,
+      color var(--duration-fast) ease, transform var(--duration-fast) ease;
+  }
+
+  .layout__ai-key:hover,
+  .layout__ai-key:focus-visible {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
+
+  .layout__ai-key:hover .layout__ai-key-dot,
+  .layout__ai-key:focus-visible .layout__ai-key-dot {
+    background: var(--primary-foreground);
+  }
+
+  .layout__ai-key-dot {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: var(--success);
+  }
+
+  .ai-key-dialog__backdrop {
+    position: fixed;
+    z-index: var(--z-modal);
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: var(--space-4);
+    background: rgb(0 0 0 / 55%);
+  }
+
+  .ai-key-dialog {
+    width: min(420px, 100%);
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--card);
+    color: var(--card-foreground);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .ai-key-dialog__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .ai-key-dialog__header h2 {
+    margin: 0;
+    font-size: var(--text-base);
+    font-weight: var(--font-bold);
+  }
+
+  .ai-key-dialog__close {
+    border: 0;
+    background: transparent;
+    color: var(--muted-foreground);
+    font-size: var(--text-lg);
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .ai-key-dialog__hint,
+  .ai-key-dialog__status {
+    margin: var(--space-3) 0 0;
+    color: var(--muted-foreground);
+    font-size: var(--text-xs);
+    line-height: 1.5;
+  }
+
+  .ai-key-dialog__status {
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-secondary);
+    color: var(--foreground);
+  }
+
+  .ai-key-dialog__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+
+  .ai-key-dialog__label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+  }
+
+  .ai-key-dialog__input {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--foreground);
+    font: inherit;
+  }
+
+  .ai-key-dialog__error {
+    margin: 0;
+    color: var(--destructive);
+    font-size: var(--text-xs);
+  }
+
+  .ai-key-dialog__success {
+    margin: 0;
+    color: var(--success);
+    font-size: var(--text-xs);
+  }
+
+  .ai-key-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+
+  .ai-key-dialog__cancel,
+  .ai-key-dialog__submit {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+  }
+
+  .ai-key-dialog__cancel {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--foreground);
+  }
+
+  .ai-key-dialog__submit {
+    border: 1px solid var(--primary);
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  .ai-key-dialog__submit:disabled {
+    cursor: progress;
+    opacity: 0.7;
+  }
+
   .layout__service-status {
     display: flex;
     flex-direction: column;

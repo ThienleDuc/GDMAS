@@ -530,6 +530,23 @@ không thay bằng dữ liệu mẫu.
 
 ---
 
+### 3.6. Nhóm Cấu hình AI Gemini (bổ sung 2026-11-24)
+
+Web mở không có auth: người dùng nhập model/key trên FE, key được lưu browser 24h rồi gửi lên
+BE. BE gọi Gemini để kiểm tra; hợp lệ thì ghi `GEMINI_MODEL`/`GEMINI_API_KEY` vào `.env` máy chủ
+(**không lưu database**). Chỉ nhận model dạng `gemini-*`.
+
+| Method | Path | Mô tả |
+| :--- | :--- | :--- |
+| `POST` | `/api/v1/ai/credentials` | `{model, api_key}` — validate với Gemini rồi upsert vào `.env` |
+| `GET` | `/api/v1/ai/credentials/status` | Trả `{configured, model, masked_key}` (key đã che) |
+| `POST` | `/api/v1/ai/generate` | `{prompt, system?, model, api_key}` — đối chiếu key browser với `.env`, gọi Gemini, trả `data.text` |
+
+Lỗi: `VALIDATION_ERROR` (400, sai định dạng model/key), `INVALID_API_KEY` (401),
+`AI_NOT_CONFIGURED` (503), `AI_UPSTREAM_ERROR` (502). Response không bao giờ trả key đầy đủ.
+
+---
+
 ## 4. Bảng mã lỗi chuẩn (Error Codes)
 
 | Mã lỗi (`code`) | HTTP Status | Diễn giải |
@@ -540,4 +557,7 @@ không thay bằng dữ liệu mẫu.
 | `DATABASE_ERROR` | 500 | Lỗi kết nối hoặc thực thi truy vấn PostgreSQL |
 | `SERVICE_UNAVAILABLE` | 503 | Dịch vụ phân tích chưa sẵn sàng hoặc đang khởi động lại |
 | `INTERNAL_SERVER_ERROR` | 500 | Lỗi ngoại lệ chưa được bắt trong Backend API |
+| `INVALID_API_KEY` | 401 | Key Gemini không hợp lệ hoặc không khớp cấu hình đã lưu |
+| `AI_NOT_CONFIGURED` | 503 | Chưa có model/key Gemini trong `.env` máy chủ |
+| `AI_UPSTREAM_ERROR` | 502 | Gemini không trả nội dung hợp lệ |
 

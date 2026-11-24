@@ -25,11 +25,17 @@ Bảng chỉ dùng 6 nguồn đã hiển thị trên sublayout (T3/T5 qua T6):
 
 ## 3. Cấu trúc báo cáo
 
-Báo cáo gồm 5 phần, hiển thị theo thứ tự sau trong bảng nổi:
+`buildExpertReport()` vẫn sinh đủ 5 phần làm dữ liệu cho prompt/AI, nhưng bảng nổi trên UI
+chỉ còn **1 hộp Tổng quan** chứa nội dung AI sinh ra (trống trước khi trích xuất).
+Các phần Triển vọng / Khuyến nghị / Lưu ý phương pháp không còn hiển thị riêng trên UI
+(đã gộp vào câu trả lời AI). Cấu trúc dữ liệu 5 phần như sau:
 
 ### 3.1 Tổng quan
-- `headline`: kết luận ngắn (ổn định / đáng theo dõi / cần chú ý) dựa trên mức cao nhất trong 6 nhận xét.
-- `summary`: 2–3 câu tóm tắt diễn biến chính, trích dẫn số liệu đã có.
+- Hộp tổng quan trên UI **để trống** cho đến khi người dùng bấm "Trích xuất nhận xét AI";
+  khi có kết quả, hộp này chứa nội dung do AI sinh ra (kèm ghi chú nguồn/thời hạn lưu).
+- `headline` / `summary` vẫn được tính trong `buildExpertReport()` nhưng chỉ dùng làm dữ liệu
+  đầu vào cho prompt, không hiển thị trực tiếp trong bảng.
+- Ngay dưới hộp này là khối **"Khuyến nghị an toàn (ngoài phân tích AI)"** — xem §5.9.
 
 ### 3.2 Nhận xét theo 6 nhóm
 Mỗi nhận xét gồm:
@@ -65,7 +71,24 @@ Mỗi nhận xét gồm:
 2. **Không suy diễn nhân quả**: ma trận tương quan chỉ mô tả mối liên hệ.
 3. **UTC & WGS84**: mọi mốc thời gian trong báo cáo theo UTC ISO 8601 `Z`; tọa độ (nếu trích dẫn) theo WGS84.
 4. **Tách biệt dữ liệu thật và dự báo**: Pattern 5/6 luôn gắn nhãn "ngày kế tiếp".
-5. **Offline**: báo cáo được sinh bằng quy tắc trong FE, không gọi mô hình AI hay dịch vụ ngoài.
+5. **Nguồn sự thật duy nhất**: báo cáo được sinh bằng quy tắc trong FE. Từ 2026-11-24,
+   nút "Trích xuất nhận xét AI" gọi **Gemini qua BE** để **diễn đạt lại** báo cáo này;
+   mô hình không được thêm/sửa số liệu. Không có key → luôn dùng báo cáo quy tắc (offline).
+6. **Lưu tạm 24h**: câu trả lời và API key chỉ nằm trong localStorage/session của trình
+   duyệt trong 24 giờ, không lưu database (web mở, không có auth). Hết hạn tự xoá.
+7. **Trích xuất lại**: nút luôn sẵn; khi đã có kết quả, nút đổi thành "Trích xuất lại" và
+   hiện xác nhận ghi đè trước khi chạy. Kết quả mới thay thế kết quả cũ theo cùng phạm vi.
+8. **Đúng phạm vi đang xem**: dữ liệu đưa cho AI lấy từ 6 endpoint với cùng tham số với
+   biểu đồ đang hiển thị — lọc quốc gia/khu vực (`geoQuery`) cho cả 6 nhóm và cửa sổ
+   Ngày/Tuần/Tháng (`intervalToParams`) cho chuỗi thời gian. Đổi bộ lọc → khoá cache đổi,
+   phải trích xuất lại.
+9. **Khuyến nghị an toàn tách biệt**: sau câu trả lời AI, hệ thống thêm một khối cố định
+   "Khuyến nghị an toàn (ngoài phân tích AI)" do `earthquake-safety.ts` sinh từ quy tắc trên
+   độ lớn quan sát (Pattern 1) và nhóm phân loại (Pattern 6). Khối này KHÔNG nằm trong prompt
+   gửi mô hình, không chứa số liệu và kèm nguồn tham khảo (USGS, Earthquake Country Alliance,
+   FEMA/ready.gov, American Red Cross, NOAA/tsunami.gov) và disclaimer không phải cảnh báo
+   chính thức. Mức `alert` khi độ lớn từ ngưỡng mạnh hoặc nhóm cao, `watch` khi độ lớn trung
+   bình, `info` khi thấp/chưa có.
 
 ## 6. Ánh xạ mã nguồn
 
@@ -76,3 +99,9 @@ Mỗi nhận xét gồm:
 | `features/statistics/ExpertInsightsPanel.tsx` | Render bảng nổi, nút mở/thu trên header |
 | `tests/ai-insights.test.ts` | Kiểm chứng quy tắc, mức độ và không bịa số |
 | `tests/insight-structure.test.ts` | Kiểm chứng tên phần trong code khớp tài liệu này |
+| `features/statistics/ai-config.ts` | Đọc `VITE_AI_MODEL`, cache key browser 24h, chỉ nhận `gemini-*` |
+| `features/statistics/ai-storage.ts` | Cache localStorage/session 24h (key + câu trả lời) |
+| `features/statistics/ai-extract.ts` | Bộ câu trả lời chuẩn, prompt, gọi BE `/ai/generate`, chặn số liệu bịa |
+| `layouts/header/AiKeyButton.tsx`, `AiKeyDialog.tsx` | Nút SVG khoá + dialog nhập model/key Gemini |
+| `api/routes/ai_settings.py` | Validate key với Gemini → ghi `.env` → sinh nội dung |
+| `tests/ai-extract.test.ts`, `tests/ai-key-dialog.test.ts` | Kiểm chứng offline: không bịa số, fallback, cache 24h, ẩn nút |
