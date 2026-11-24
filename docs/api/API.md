@@ -327,6 +327,7 @@ Biểu diễn xu hướng của dữ liệu sau khi thực hiện **Re-sampling*
 - **Query Parameters:**
   - `resample_freq`: `D` (Ngày) | `W` (Tuần) | `M` (Tháng) (Mặc định `M`)
   - `metric`: `count` | `avg_magnitude` | `max_magnitude` (Mặc định `count`)
+  - `timezone` (bổ sung 2026-11-24): `UTC` | `UTC+7` — bucket nhãn kỳ theo múi giờ hiển thị. Có param này → tính on-the-fly như `/analysis/temporal`; không truyền → giữ snapshot T3 bucket UTC.
 
 - **Response (200 OK):**
 ```json

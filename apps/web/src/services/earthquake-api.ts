@@ -251,6 +251,8 @@ export async function getTrendAnalysis(
     end_time?: string;
     country?: string;
     region?: string;
+    /** Múi giờ bucket ngày — BE tính on-the-fly theo UTC/UTC+7 (2026-11-24). */
+    timezone?: "UTC" | "UTC+7";
   } = {},
   signal?: AbortSignal,
 ): Promise<TrendResponse> {
@@ -259,6 +261,7 @@ export async function getTrendAnalysis(
     metric: params.metric,
     start_time: params.start_time,
     end_time: params.end_time,
+    timezone: params.timezone,
     ...geoQuery(params),
   });
   return fetchApi<TrendResponse>(`/api/v1/analysis/trend${qs}`, { signal });

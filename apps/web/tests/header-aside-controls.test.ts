@@ -81,3 +81,11 @@ test("TC-CSS: footer/countdown/region có style dùng design token", () => {
   assert.match(layoutCss, /\.layout__region-dropdown\s*\{/u);
   assert.doesNotMatch(layoutCss, /\.layout__region-[a-z-]+\s*\{[^}]*#[0-9a-f]{3,8}\b/iu);
 });
+
+test("TC-CSS-02: đồng hồ đếm ngược aside có viền + margin", () => {
+  const rule = /\.layout__refresh-compact\s*\{([\s\S]*?)\}/u.exec(layoutCss);
+  assert.ok(rule, "phải có rule .layout__refresh-compact");
+  assert.match(rule[1], /border:\s*1px solid var\(--border\)/u);
+  assert.match(rule[1], /margin:/u);
+  assert.match(rule[1], /border-radius:/u);
+});
