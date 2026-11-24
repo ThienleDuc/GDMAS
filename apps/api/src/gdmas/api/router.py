@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from gdmas.api.routes import (
+    ai_settings,
     analysis,
     clusters,
     earthquakes,
@@ -22,3 +23,4 @@ api_router.include_router(system.router)
 api_router.include_router(predictions.router)
 api_router.include_router(analysis.router)
 api_router.include_router(clusters.router)
+api_router.include_router(ai_settings.router)

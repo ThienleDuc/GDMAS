@@ -92,3 +92,14 @@ test("TC-05: Overview & Statistics truyền filter", () => {
   assert.match(statistics, /useCatalogSelection\(\)/u);
   assert.match(statistics, /getPredictions\(signal, filter\)/u);
 });
+
+test("TC-06: Statistics không còn select khu vực cục bộ — dùng chung header", () => {
+  const layout = read("features/statistics/StatisticsLayout.tsx");
+  assert.doesNotMatch(layout, /RegionPicker/u);
+  assert.doesNotMatch(layout, /Lọc biểu đồ theo khu vực/u);
+  assert.doesNotMatch(layout, /getRegionCatalog/u);
+  assert.match(layout, /useCatalogSelection\(\)/u);
+  assert.match(layout, /Bộ lọc dùng chung tại header/u);
+  const header = read("layouts/header/GlobalRegionFilter.tsx");
+  assert.match(header, /Lọc khu vực dùng chung toàn cục/u);
+});

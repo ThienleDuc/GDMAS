@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     BACKFILL_QUERY_URL: str = "https://earthquake.usgs.gov/fdsnws/event/1/query"
     PREDICTION_MIN_OBSERVED: int = 10
 
+    # AI trích xuất nhận xét (chỉ Gemini) — được ghi vào .env qua /ai/credentials.
+    GEMINI_MODEL: str = ""
+    GEMINI_API_KEY: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

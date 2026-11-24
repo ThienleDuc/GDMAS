@@ -149,7 +149,24 @@ VITE_SSE_ENDPOINT=/api/v1/events/stream
 # (tile miễn phí, KHÔNG cần API key — CARTO hiện trả ảnh "API KEY REQUIRED").
 # Chỉ đặt URL tuyệt đối khi môi trường không proxy được /tile.
 VITE_MAP_TILE_URL=
+
+# AI "Trích xuất nhận xét chuyên gia" (/statistics) — bổ sung 2026-11-24.
+# CHỈ Gemini. Model mặc định gợi ý trong dialog (người dùng có thể đổi).
+# API key KHÔNG đưa vào bundle: nhập qua nút khoá ở aside nav.
+VITE_AI_MODEL=gemini-2.0-flash
 ```
+
+> **AI hoạt động thế nào?** Nhấn nút SVG khoá ở footer aside (dưới đồng hồ đếm ngược,
+> trên nút đổi theme) → dialog nhập **model Gemini** (`gemini-*`) và **API key**.
+> FE lưu key vào localStorage/session **24 giờ** rồi gửi lên BE; BE gọi Gemini để
+> kiểm tra key, nếu hợp lệ thì ghi `GEMINI_MODEL`/`GEMINI_API_KEY` vào `.env` máy chủ
+> (không lưu database). Khi trích xuất, FE gửi lại key browser để BE đối chiếu với
+> `.env` rồi mới gọi Gemini. Báo cáo chuẩn 6 pattern (quy tắc, không bịa số) là nguồn
+> sự thật duy nhất; nếu AI trả số liệu ngoài nguồn thì dùng lại câu trả lời chuẩn.
+> Câu trả lời cũng chỉ lưu browser 24 giờ, hết hạn tự xoá và nút trích xuất hiện lại.
+> Đây là web mở, không có auth — dùng key Gemini có hạn mức/quyền hạn hẹp. BE ghi vào
+> `.env` ở gốc repo (biến `AI_ENV_FILE` có thể override đường dẫn; khi chạy Docker cần
+> mount file này nếu muốn cấu hình tồn tại sau khi restart container).
 
 ---
 
