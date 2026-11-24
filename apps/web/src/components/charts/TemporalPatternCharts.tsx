@@ -43,6 +43,14 @@ const INTERVALS: ReadonlyArray<{ value: AnalysisInterval; label: string }> = [
   { value: "month", label: "Tháng" },
 ];
 
+const SCATTER_MAGNITUDE_BANDS = [
+  { label: "< 3,0", min: -Infinity, max: 3, color: "#3b65b8" },
+  { label: "3,0–<4,0", min: 3, max: 4, color: "#42a5f5" },
+  { label: "4,0–<5,0", min: 4, max: 5, color: "#a78bfa" },
+  { label: "5,0–<6,0", min: 5, max: 6, color: "#fb923c" },
+  { label: "≥ 6,0", min: 6, max: Infinity, color: "#f87171" },
+];
+
 /** Pattern 1 — Line / Scatter / Histogram theo Ngày–Tuần–Tháng. */
 export function TemporalPatternCharts({
   data,
@@ -108,7 +116,31 @@ export function TemporalPatternCharts({
             <XAxis type="number" dataKey="magnitude" name="Độ lớn" {...CHART_AXIS} />
             <YAxis type="number" dataKey="depth_km" name="Độ sâu (km)" {...CHART_AXIS} reversed />
             <Tooltip {...CHART_TOOLTIP} />
-            <Scatter data={scatter} fill="#0891b2" fillOpacity={0.85} />
+            <Legend
+              {...CHART_LEGEND}
+              content={() => (
+                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[var(--muted-foreground)]">
+                  <strong>Độ lớn</strong>
+                  <ul className="flex flex-wrap justify-center gap-x-3 gap-y-1" aria-label="Các mức độ lớn">
+                    {[...SCATTER_MAGNITUDE_BANDS].reverse().map(({ label, color }) => (
+                      <li key={label} className="inline-flex items-center gap-1 whitespace-nowrap">
+                        <span className="size-2.5 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
+                        {label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            />
+            {SCATTER_MAGNITUDE_BANDS.map(({ label, min, max, color }) => (
+              <Scatter
+                key={label}
+                name={label}
+                data={scatter.filter(({ magnitude }) => min <= magnitude && magnitude < max)}
+                fill={color}
+                fillOpacity={0.85}
+              />
+            ))}
           </ScatterChart>
         </ResponsiveContainer>
       </div>
