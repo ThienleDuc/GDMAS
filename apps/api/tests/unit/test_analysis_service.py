@@ -131,6 +131,8 @@ def test_cycle_writes_snapshot_with_run_link(monkeypatch):
         ("time_series", "week"),
         ("time_series", "month"),
         ("trend", "week"),
+        ("trend", "day"),
+        ("trend", "month"),
         ("seasonality", "day"),
         ("correlation", "day"),
     ]

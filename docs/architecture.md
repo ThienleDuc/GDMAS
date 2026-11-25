@@ -1205,11 +1205,14 @@ GDMAS/
 │   │
 │   └── web/                              # Frontend Client Dashboard (React 18 + TypeScript + Vite)
 │       ├── src/
-│       │   ├── components/               # UI Components thẩm mỹ (map, charts 6 patterns, dashboard)
-│       │   ├── features/                 # Mô đun chức năng (earthquakes, monitoring, statistics)
-│       │   ├── contracts/ & types/       # TypeScript API Data Contracts
-│       │   ├── hooks/ & lib/             # Custom React Hooks & API Client, SSE EventSource
-│       │   └── app/                      # Cấu hình định tuyến và khởi tạo ứng dụng
+│       │   ├── app/                      # Định tuyến, một layout duy nhất + PlaceholderPage
+│       │   ├── layouts/                  # Một layout (aside điều hướng + Outlet) + layout.css
+│       │   ├── contracts/                # TypeScript API Data Contracts, tách theo schema + barrel
+│       │   ├── lib/                      # API client, SSE EventSource, formatters UTC/WGS84, transforms/
+│       │   ├── services/                 # Lớp gọi endpoint REST (re-export kiểu từ contracts)
+│       │   ├── hooks/                    # Custom React Hooks (useSSE dùng createSseSource từ lib/)
+│       │   ├── types/                    # Kiểu nội bộ FE
+│       │   └── utils/                    # Timezone (re-export qua lib/formatters)
 │       ├── package.json                  # Dependencies quản lý qua pnpm / npm
 │       └── Dockerfile                    # Containerization cho Frontend Web
 │

@@ -7,7 +7,7 @@
    - React
    - Tailwind CSS v4
    - shadcn/ui
-   - Inter
+   - Space Grotesk
 
    Design:
    - Modern Minimalist
@@ -22,10 +22,10 @@
    ============================================================ */
 
 /* ============================================================
-   2. DARK MODE VARIANT
+   2. LIGHT-FIRST + DARK MODE
    ============================================================ */
 
-@custom-variant dark (&:is(.dark *));
+/* Light mode là mặc định; dark mode bật bằng class `.dark` trên <html> (xem khối §4). */
 
 
 /* ============================================================
@@ -34,12 +34,14 @@
 
 :root {
 
+  color-scheme: light;
+
   /* ----------------------------------------------------------
      3.1. FONT FAMILY
      ---------------------------------------------------------- */
 
   --font-sans:
-    "Inter",
+    "Space Grotesk",
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -108,6 +110,21 @@
   --info: #2563eb;
   --info-light: #dbeafe;
   --info-dark: #1e40af;
+
+
+  /* ----------------------------------------------------------
+     3.4.1. PASTEL HIGHLIGHT TOKENS
+     Dùng để nhấn từ khóa trong hướng dẫn đọc biểu đồ — nền nhạt, chữ đủ tương phản.
+     ---------------------------------------------------------- */
+
+  --highlight-blue-bg: #eef2ff;
+  --highlight-blue-fg: #4338ca;
+
+  --highlight-orange-bg: #fff7ed;
+  --highlight-orange-fg: #9a3412;
+
+  --highlight-red-bg: #fff1f2;
+  --highlight-red-fg: #9f1239;
 
 
   /* ----------------------------------------------------------
@@ -347,110 +364,15 @@
   --z-popover: 500;
   --z-tooltip: 600;
   --z-toast: 700;
+  /* Header popup phải nằm trên mọi pane Leaflet (z-index tới ~1200 trong page bản đồ). */
+  --z-header: 1500;
+  --z-header-popover: 1600;
 
 }
 
 
 /* ============================================================
-   4. DARK THEME
-   ============================================================ */
-
-.dark {
-
-  color-scheme: dark;
-
-  --background: #0b1220;
-  --foreground: #f8fafc;
-
-  --card: #111827;
-  --card-foreground: #f8fafc;
-
-  --popover: #111827;
-  --popover-foreground: #f8fafc;
-
-  --primary: #818cf8;
-  --primary-foreground: #0f172a;
-
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-
-  --accent: #312e81;
-  --accent-foreground: #e0e7ff;
-
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-
-  --border: #334155;
-  --border-strong: #475569;
-
-  --input: #334155;
-
-  --ring: #a5b4fc;
-
-  --surface: #111827;
-  --surface-secondary: #1e293b;
-
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --text-disabled: #64748b;
-
-  --link: #a5b4fc;
-
-  --sidebar: #111827;
-  --sidebar-foreground: #cbd5e1;
-
-  --sidebar-primary: #818cf8;
-  --sidebar-primary-foreground: #0f172a;
-
-  --sidebar-accent: #312e81;
-  --sidebar-accent-foreground: #e0e7ff;
-
-  --sidebar-border: #334155;
-  --sidebar-ring: #a5b4fc;
-
-  --success: #4ade80;
-  --success-light: #14532d;
-  --success-dark: #bbf7d0;
-
-  --warning: #fbbf24;
-  --warning-light: #78350f;
-  --warning-dark: #fef3c7;
-
-  --error: #f87171;
-  --error-light: #7f1d1d;
-  --error-dark: #fecaca;
-
-  --info: #60a5fa;
-  --info-light: #1e3a8a;
-  --info-dark: #bfdbfe;
-
-  --chart-1: #818cf8;
-  --chart-2: #22d3ee;
-  --chart-3: #4ade80;
-  --chart-4: #fbbf24;
-  --chart-5: #f472b6;
-
-  --shadow-xs:
-    0 1px 2px rgb(0 0 0 / 0.12);
-
-  --shadow-sm:
-    0 2px 6px rgb(0 0 0 / 0.16);
-
-  --shadow-md:
-    0 6px 16px rgb(0 0 0 / 0.22);
-
-  --shadow-lg:
-    0 16px 32px rgb(0 0 0 / 0.3);
-
-}
-
-
-/* ============================================================
-   5. TAILWIND V4 THEME INTEGRATION
+   4. TAILWIND V4 THEME INTEGRATION
    ============================================================ */
 
 @theme inline {
@@ -515,7 +437,103 @@
 
 
 /* ============================================================
-   6. BASE STYLES
+   4. DARK THEME OVERRIDES
+   Bật bằng class `.dark` trên <html> (lib/theme.ts → applyTheme).
+   Chỉ override token ngữ nghĩa: mọi component/page dùng var(--...)
+   tự đổi màu — không hardcode màu sáng/tối ở từng file (I5).
+   ============================================================ */
+
+.dark {
+  color-scheme: dark;
+
+  /* Surface & text */
+  --background: #0b1120;
+  --foreground: #e2e8f0;
+  --card: #0f172a;
+  --card-foreground: #e2e8f0;
+  --popover: #0f172a;
+  --popover-foreground: #e2e8f0;
+  --surface: #0f172a;
+  --surface-secondary: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-disabled: #64748b;
+
+  /* Brand & states */
+  --primary: #818cf8;
+  --primary-foreground: #0b1120;
+  --secondary: #1e293b;
+  --secondary-foreground: #e2e8f0;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e1b4b;
+  --accent-foreground: #c7d2fe;
+  --destructive: #f87171;
+  --destructive-foreground: #0b1120;
+  --link: #a5b4fc;
+  --border: #334155;
+  --border-strong: #475569;
+  --input: #334155;
+  --ring: #818cf8;
+
+  /* Success / warning / error / info */
+  --success: #4ade80;
+  --success-light: #14532d;
+  --success-dark: #bbf7d0;
+  --warning: #fbbf24;
+  --warning-light: #78350f;
+  --warning-dark: #fde68a;
+  --error: #f87171;
+  --error-light: #7f1d1d;
+  --error-dark: #fecaca;
+  --info: #60a5fa;
+  --info-light: #1e3a8a;
+  --info-dark: #bfdbfe;
+
+  /* Pastel highlights — nền tối, chữ sáng */
+  --highlight-blue-bg: #1e1b4b;
+  --highlight-blue-fg: #c7d2fe;
+  --highlight-orange-bg: #431407;
+  --highlight-orange-fg: #fed7aa;
+  --highlight-red-bg: #4c0519;
+  --highlight-red-fg: #fecdd3;
+
+  /* Sidebar */
+  --sidebar: #0f172a;
+  --sidebar-foreground: #cbd5e1;
+  --sidebar-primary: #818cf8;
+  --sidebar-primary-foreground: #0b1120;
+  --sidebar-accent: #1e1b4b;
+  --sidebar-accent-foreground: #c7d2fe;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #818cf8;
+
+  /* Charts */
+  --chart-1: #818cf8;
+  --chart-2: #22d3ee;
+  --chart-3: #4ade80;
+  --chart-4: #fbbf24;
+  --chart-5: #f472b6;
+
+  /* Shadows đậm hơn trên nền tối */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.55), 0 2px 6px -2px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 12px 24px -6px rgb(0 0 0 / 0.6);
+}
+
+/* Chuyển mượt khi applyTheme thêm class theme-transition trên <html> */
+.theme-transition,
+.theme-transition body {
+  transition:
+    background-color var(--duration-moderate) ease,
+    color var(--duration-moderate) ease;
+}
+
+
+/* ============================================================
+   5. BASE STYLES
    ============================================================ */
 
 @layer base {
@@ -591,10 +609,6 @@
     color: var(--neutral-900);
   }
 
-  .dark ::selection {
-    background: var(--primary-800);
-    color: var(--neutral-0);
-  }
 
   :focus-visible {
     outline: 2px solid var(--ring);
@@ -605,7 +619,7 @@
 
 
 /* ============================================================
-   7. TYPOGRAPHY
+   6. TYPOGRAPHY
    ============================================================ */
 
 @layer components {
@@ -661,7 +675,7 @@
 
 
 /* ============================================================
-   8. APPLICATION LAYOUT
+   7. APPLICATION LAYOUT
    ============================================================ */
 
 @layer components {
@@ -746,7 +760,7 @@
 
 
 /* ============================================================
-   9. GRID SYSTEM
+   8. GRID SYSTEM
    ============================================================ */
 
 @layer components {
@@ -787,7 +801,7 @@
 
 
 /* ============================================================
-   10. CARD SYSTEM
+   9. CARD SYSTEM
    ============================================================ */
 
 @layer components {
@@ -858,7 +872,7 @@
 
 
 /* ============================================================
-   11. BUTTON SYSTEM
+   10. BUTTON SYSTEM
    Optional standalone classes.
    shadcn/ui Button variants remain the preferred approach.
    ============================================================ */
@@ -905,9 +919,6 @@
     background: var(--primary-700);
   }
 
-  .dark .ds-button-primary:hover:not(:disabled) {
-    background: var(--primary-300);
-  }
 
   .ds-button-secondary {
     background: var(--secondary);
@@ -957,7 +968,7 @@
 
 
 /* ============================================================
-   12. FORM SYSTEM
+   11. FORM SYSTEM
    Optional standalone classes.
    ============================================================ */
 
@@ -1041,7 +1052,7 @@
 
 
 /* ============================================================
-   13. DATA TABLE SYSTEM
+   12. DATA TABLE SYSTEM
    ============================================================ */
 
 @layer components {
@@ -1120,7 +1131,7 @@
 
 
 /* ============================================================
-   14. BADGE SYSTEM
+   13. BADGE SYSTEM
    ============================================================ */
 
 @layer components {
@@ -1171,7 +1182,7 @@
 
 
 /* ============================================================
-   15. SIDEBAR NAVIGATION
+   14. SIDEBAR NAVIGATION
    ============================================================ */
 
 @layer components {
@@ -1228,7 +1239,7 @@
 
 
 /* ============================================================
-   16. EMPTY & LOADING STATES
+   15. EMPTY & LOADING STATES
    ============================================================ */
 
 @layer components {
@@ -1282,7 +1293,7 @@
 
 
 /* ============================================================
-   17. SCROLLBAR
+   16. SCROLLBAR
    Firefox + Chromium/WebKit
    ============================================================ */
 
@@ -1317,7 +1328,7 @@
 
 
 /* ============================================================
-   18. RESPONSIVE SYSTEM
+   17. RESPONSIVE SYSTEM
    ============================================================ */
 
 @media (max-width: 1279px) {
@@ -1421,7 +1432,7 @@
 
 
 /* ============================================================
-   19. REDUCED MOTION
+   18. REDUCED MOTION
    ============================================================ */
 
 @media (prefers-reduced-motion: reduce) {
@@ -1441,7 +1452,7 @@
 
 
 /* ============================================================
-   20. PRINT STYLES
+   19. PRINT STYLES
    ============================================================ */
 
 @media print {

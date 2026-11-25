@@ -6,7 +6,7 @@ description: >-
   Phần A rẽ nhánh, ĐỒNG THỜI sinh cả .agents/notes/implemented/<id>/{plan.md,status.md} VÀ
   .agents/notes/testcase/<id>.md (phối hợp skill write-testcase), code theo RULE-03 & I1-I7,
   hoàn thiện unit/integration test offline, chạy validation nhẹ, đặt `Status: validation` rồi
-  TỰ ĐỘNG chuyển giao sang review-pr Phần B đẩy PR (cho phép merge khi kiểm tra không xung đột, không bắt buộc riêng ThienleDuc).
+  DỪNG ở CHECKPOINT 1 chờ người dùng quyết định commit/push; chỉ tiếp tục review-pr Phần B khi người dùng gõ `tiếp tục workflow`.
 ---
 
 # build-implementation
@@ -65,10 +65,15 @@ Nối giữa `write-proposal` (chờ thành viên xác nhận §9), `write-testc
    - Kiểm nhanh OCP working tree: `git status --porcelain` xác nhận không có xóa file (`D`) ngoài ý muốn và không sửa trái phép tệp lõi.
    - Cập nhật tài liệu trong `Architecture Impact`.
 
-7. **Đặt `Status: validation` và TỰ ĐỘNG chuyển giao sang `review-pr` (Phần B):**
-   - Đặt `Status: validation` trong `status.md` (chỉ đặt `completed` sau khi đã kiểm tra không xung đột và merge PR vào `develop`).
+7. **Đặt `Status: validation` rồi DỪNG ở CHECKPOINT 1 (không tự động commit/push):**
+   - Đặt `Status: validation` trong `status.md` (chỉ đặt `completed` sau khi đã merge PR vào `develop` ở CHECKPOINT 2).
    - Xuất báo cáo theo Agent Output Contract ([docs/agent-workflow.md](../../../docs/agent-workflow.md) §6, gồm mục `Test Files Created`).
-   - Chạy ngay **Phần B của skill `review-pr`** (`scope` → `project-review` → commit → `update` → `push` → tạo PR; khi người dùng yêu cầu merge hoặc nhánh không xung đột thì có thể gọi `./scripts/git-ship.sh merge`), trừ khi người dùng chủ động bảo dừng giữ ở working tree.
+   - **CHECKPOINT 1 — hỏi người dùng 1 câu duy nhất** (đánh số rõ tên checkpoint), kèm 3 lựa chọn:
+     1. `tiếp tục workflow` → commit + push + tạo PR (chuyển sang `review-pr` Phần B1, bước 3–10).
+     2. `dừng lại` → giữ working tree, không commit/push.
+     3. `sửa thêm` → quay lại implement/test, validation xong rồi lặp lại CHECKPOINT 1.
+   - Mỗi lần dừng phải in rõ: tên checkpoint + trạng thái hiện tại + cụm khởi động **`tiếp tục workflow`** (chấp nhận `continue workflow`) để người dùng chỉ cần copy.
+   - **Không** gọi `review-pr` Phần B khi chưa có xác nhận ở checkpoint này. Dừng cứng (`SCOPE MISMATCH`, `CRITICAL BUG`, thiếu testcase/file test, `CONFLICT DETECTED`) vẫn áp dụng trước checkpoint.
 
 ## Skill này không làm
 

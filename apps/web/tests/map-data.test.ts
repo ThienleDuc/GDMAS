@@ -8,6 +8,8 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import {
   depthToOpacity,
   filterEarthquakes,
@@ -16,12 +18,13 @@ import {
   haversineKm,
   magnitudeToColor,
   magnitudeToRadius,
+  markerStyleFor,
   normalizeClusters,
   shouldShowMarker,
   timeRangeBounds,
   toMapEarthquake,
   viewportToBbox,
-} from "../src/components/map/map-data.ts";
+} from "../src/lib/transforms/map-data.ts";
 
 test("TC-08: Bán kính & màu marker tăng đơn điệu theo magnitude", () => {
   // Bán kính kẹp trong [4, 9] px
@@ -172,4 +175,21 @@ test("TC-13: Lọc marker theo độ lớn và khoảng thời gian", () => {
     }),
     false
   );
+});
+
+test("TC-12 (bổ sung T7.04): marker sample khớp toạ độ WGS84 và style thuần", () => {
+  const samplePath = path.resolve(
+    import.meta.dirname,
+    "../../../contracts/examples/earthquake_sample.json",
+  );
+  const sample = JSON.parse(fs.readFileSync(samplePath, "utf-8"));
+  const event = toMapEarthquake(sample);
+
+  assert.equal(event.latitude, 37.7749);
+  assert.equal(event.longitude, -122.4194);
+  assert.equal(event.sourceEventId, "us7000m8v8");
+  assert.equal(formatCoordinate(event.latitude, event.longitude), "37.7749° N, 122.4194° W");
+  assert.equal(markerStyleFor(event).fillColor, magnitudeToColor(4.2));
+  assert.equal(markerStyleFor(event).radius, magnitudeToRadius(4.2));
+  assert.equal(markerStyleFor(event).fillOpacity, depthToOpacity(10.5));
 });

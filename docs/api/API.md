@@ -51,6 +51,27 @@ Tất cả các endpoint trả về dữ liệu đều được đóng gói theo
 }
 ```
 
+### Phản hồi rỗng hợp lệ (HTTP 200)
+Một số endpoint phân tích trả về trạng thái "không có dữ liệu" bằng **HTTP 200** với `success: false`,
+`data: null` và `message` giải thích lý do. Đây **không phải lỗi** — client phải hiển thị Empty State
+kèm nội dung `message`, không ném lỗi 4xx/5xx.
+
+```json
+{
+  "success": false,
+  "data": null,
+  "message": "Chưa có bản ghi pattern trong cơ sở dữ liệu."
+}
+```
+
+Áp dụng cho: `/analysis/*`, `/predictions`, `/classifications`, `/clusters`
+khi worker chưa chạy hoặc dữ liệu đã bị xóa rỗng.
+
+> **Ngoại lệ `GET /api/v1/patterns` (GAP-11):** endpoint tổng hợp trả rỗng bằng shape riêng
+> `{ "success": false, "total_patterns": 0, "patterns": [], "message": "..." }` (HTTP 200),
+> **không có khóa `data`**. Shape này khớp `contracts/schemas/patterns.json` (không định nghĩa
+> `data` ở root) và FE vẫn hiển thị Empty State; không sửa schema.
+
 ### Phản hồi thất bại (HTTP 4xx / 5xx)
 ```json
 {
@@ -98,13 +119,13 @@ Kiểm tra trạng thái hoạt động và thời điểm cập nhật gần nh
   "success": true,
   "data": {
     "services": {
-      "postgres": { "status": "running" },
-      "data_ingestion": { "status": "active", "last_run": "2026-11-06T11:00:00Z", "cycle": "5m" },
-      "data_analysis": { "status": "active", "last_run": "2026-11-06T11:00:00Z", "cycle": "5m" },
-      "clustering": { "status": "active", "last_run": "2026-11-06T00:00:00Z", "cycle": "1d" },
+      "postgres": { "status": "active", "last_run": "2026-11-06T11:00:00Z" },
+      "ingestion": { "status": "active", "last_run": "2026-11-06T11:00:00Z", "cycle": "5m" },
+      "analysis": { "status": "active", "last_run": "2026-11-06T11:00:00Z", "cycle": "5m" },
+      "clustering": { "status": "idle", "last_run": "2026-11-06T00:00:00Z", "cycle": "1d" },
       "prediction": { "status": "active", "last_run": "2026-11-06T11:00:00Z", "cycle": "5m" },
       "api": { "status": "active", "uptime_seconds": 86400 },
-      "frontend": { "status": "connected" }
+      "frontend": { "status": "active" }
     },
     "data_feed": {
       "source": "USGS",
@@ -114,6 +135,10 @@ Kiểm tra trạng thái hoạt động và thời điểm cập nhật gần nh
   }
 }
 ```
+
+> `status` của mỗi service nhận một trong các giá trị: `active`, `idle`, `error`, `unknown`, `running`.
+> (`running` là giá trị BE trả cho `postgres` — `system.py`; FE cũng chấp nhận alias `stopped`.)
+> Khi chưa có `last_run`, FE hiển thị trạng thái "không xác định" thay vì giả định đang chạy.
 
 ---
 
@@ -133,6 +158,9 @@ Truy vấn danh sách sự kiện động đất có phân trang và hỗ trợ 
   | `max_magnitude` | float | Không | - | Độ lớn tối đa |
   | `min_depth` | float | Không | - | Độ sâu tối thiểu (km) |
   | `max_depth` | float | Không | - | Độ sâu tối đa (km) |
+  | `search` | string | Không | - | Tìm theo khu vực (`place`) hoặc mã sự kiện (`source_event_id`), không phân biệt hoa thường |
+  | `country` | string | Không | - | Lọc theo quốc gia do BE suy từ `place` (vd. `Japan`); không truyền → không lọc |
+  | `region` | string | Không | - | Lọc theo khu vực do BE suy từ `place` (vd. `Honshu`); dùng cùng `country` |
   | `min_lat` / `max_lat` | float | Không | - | Phạm vi vĩ độ bounding box |
   | `min_lon` / `max_lon` | float | Không | - | Phạm vi kinh độ bounding box |
   | `sort_by` | string | Không | `event_time` | Trường sắp xếp (`event_time`, `magnitude`, `depth_km`) |
@@ -154,6 +182,8 @@ Truy vấn danh sách sự kiện động đất có phân trang và hỗ trợ 
       "magnitude": 5.8,
       "magnitude_type": "mww",
       "place": "82 km ENE of Tokyo, Japan",
+      "country": "Japan",
+      "region": "Tokyo",
       "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000m123",
       "ingested_at": "2026-11-06T10:50:00Z"
     }
@@ -172,31 +202,72 @@ Lấy thông tin chi tiết một sự kiện động đất theo ID nội bộ 
 
 - **Response (200 OK):** Trả về đối tượng sự kiện đầy đủ, bao gồm cả trường `raw_data` chứa GeoJSON gốc nếu có.
 
+#### `GET /api/v1/earthquakes/countries`
+Danh mục quốc gia do BE suy từ `place`, dùng để dựng bộ lọc toàn cục (không phải FE tự suy từ trang dữ liệu đang nạp). Sắp theo số sự kiện giảm dần, rồi tên chữ cái.
+
+- **Query Parameters:** không có.
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    { "country": "USA", "count": 18, "avg_magnitude": 1.62, "max_magnitude": 5.0 },
+    { "country": "Japan", "count": 4, "avg_magnitude": 2.1, "max_magnitude": 4.3 }
+  ]
+}
+```
+DB rỗng trả `data: []`.
+
+#### `GET /api/v1/earthquakes/regions`
+Danh mục khu vực trong một quốc gia, cũng suy từ `place`.
+
+- **Query Parameters:** `country` (string, không bắt buộc) — nếu truyền thì chỉ trả khu vực của quốc gia đó.
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    { "region": "Anchorage", "count": 6, "avg_magnitude": 1.9, "max_magnitude": 4.1 },
+    { "region": "Igiugig", "count": 2, "avg_magnitude": 2.2, "max_magnitude": 3.4 }
+  ]
+}
+```
+
+#### `GET /api/v1/statistics/monthly-peaks`
+Số sự kiện theo tháng UTC (1..12) — biểu đồ cao điểm theo tháng trên trang Tổng quan. Nhận 2 query param tùy chọn `country`/`region` như `/statistics/earthquakes`. Dữ liệu đếm trực tiếp từ sự kiện thật, không phụ thuộc snapshot mùa vụ (`seasonal_decompose` cần ≥24 tháng).
+
+- **Response (200 OK):** `{ "success": true, "data": [{ "month": 1, "label": "Tháng 1", "count": 0 }, …] }`
+
 #### `GET /api/v1/statistics/earthquakes`
 Thống kê nhanh các chỉ số địa chấn tổng quan phục vụ thẻ Dashboard (KPI Cards).
+
+- **Query Parameters (tùy chọn, bổ sung 2026-11-23):**
+  | Tên | Kiểu | Mặc định | Mô tả |
+  | :--- | :--- | :--- | :--- |
+  | `country` | string | - | Giới hạn KPI theo quốc gia do BE suy từ `place` |
+  | `region` | string | - | Giới hạn tiếp theo khu vực (dùng cùng `country`) |
+  | `start_time` / `end_time` | string | - | Cửa sổ UTC cho bộ lọc Ngày/Tuần/Tháng (Overview & Danh mục) |
+  | `min_magnitude` / `max_magnitude` | number | - | Giới hạn độ lớn cho KPI Danh mục (bổ sung 2026-11-24) |
+  | `min_depth` / `max_depth` | number | - | Giới hạn độ sâu km cho KPI Danh mục (bổ sung 2026-11-24) |
+
+  Không truyền → số liệu toàn cục y hệt trước đây. `/analysis/trend` cũng nhận `start_time`/`end_time` và tính on-the-fly; `/analysis/seasonality` (chu kỳ tuần) và `/statistics/monthly-peaks` (12 tháng) **không** chịu cửa sổ này.
 
 - **Response (200 OK):**
 ```json
 {
   "success": true,
   "data": {
-    "summary_24h": {
-      "total_count": 142,
-      "max_magnitude": 6.2,
-      "avg_magnitude": 3.4,
-      "significant_count": 3
-    },
-    "summary_7d": {
-      "total_count": 980,
-      "max_magnitude": 7.1,
-      "avg_magnitude": 3.1
-    },
-    "magnitude_distribution": {
-      "minor_below_3": 65,
-      "light_3_to_4": 45,
-      "moderate_4_to_5": 24,
-      "strong_above_5": 8
-    }
+    "total_events": 15420,
+    "strong_events_count": 312,
+    "moderate_events_count": 1240,
+    "minor_events_count": 12048,
+    "recent_24h_count": 142,
+    "avg_magnitude": 3.4,
+    "max_magnitude": 7.1,
+    "latest_event_time": "2026-11-06T10:58:12Z",
+    "time_series_preview": [
+      { "time": "2026-11-06T09:00:00Z", "count": 6, "avg_mag": 3.2 }
+    ]
   }
 }
 ```
@@ -204,6 +275,17 @@ Thống kê nhanh các chỉ số địa chấn tổng quan phục vụ thẻ Da
 ---
 
 ### 3.3. Nhóm 6 Patterns Phân Tích Chuỗi Thời Gian (Time-Series Analysis)
+
+> **Chu kỳ mùa vụ (bổ sung 2026-11-23):** `GET /api/v1/analysis/seasonality` nhận thêm `interval=week|month` để ép chu kỳ 7 ngày hoặc 12 tháng thay vì tự chọn; khi có filter hoặc `interval`, BE tính on-the-fly. Với dữ liệu <24 tháng, `interval=month` trả `status=insufficient_data` — dùng `/statistics/monthly-peaks` để có số đếm ngay.
+
+> **Lọc phạm vi (bổ sung 2026-11-23):** `GET /api/v1/analysis/{temporal,trend,seasonality,correlation}`, `GET /api/v1/predictions` và `GET /api/v1/classifications` đều nhận 2 query param tùy chọn `country` và `region`. Khi có ít nhất một param, BE tính lại metrics/dự báo **on-the-fly từ sự kiện đã lọc** bằng chính hàm thuần của T3/T5 (`prepare_events` + `compute_*`, `build_series` + `forecast_next`/`classify_next`) — **không ghi snapshot, không đổi payload**. Không truyền → đúng đường cũ đọc bảng tổng hợp. Với P5/P6, artifact mô hình vẫn là bản huấn luyện toàn cầu; nếu phạm vi có ít hơn 10 ngày dữ liệu, BE trả Empty State `insufficient_data` (`success:false, data:null`) thay vì bịa số.
+
+#### Tổng hợp: `GET /api/v1/patterns`
+Trả về cả 6 bản ghi pattern trong một phản hồi, dùng làm hợp đồng chính cho FE (`contracts/schemas/patterns.json`).
+Mỗi phần tử gồm `id` (`pattern_1` … `pattern_6`), `name`, `type`, `status` (`COMPUTED` / `PENDING`),
+`period`, `metrics` (dạng object theo từng pattern) và `total_patterns`, `clustering_summary`, `last_updated`.
+Khi chưa có bản ghi → `{ "success": false, "total_patterns": 0, "patterns": [], "message": "..." }`
+(HTTP 200, **không có khóa `data`** — xem ngoại lệ ở §2; FE vẫn hiển thị Empty State).
 
 #### Pattern 1: `GET /api/v1/analysis/temporal`
 Cung cấp dữ liệu vẽ 3 biểu đồ bắt buộc: Line chart, Scatter plot và Histogram.
@@ -228,7 +310,7 @@ Cung cấp dữ liệu vẽ 3 biểu đồ bắt buộc: Line chart, Scatter plo
     ],
     "histogram": {
       "magnitude_bins": [
-        { "bin": "1.0 - 2.0", "count": 120 },
+        { "bin": "< 2.0", "count": 120 },
         { "bin": "2.0 - 3.0", "count": 340 },
         { "bin": "3.0 - 4.0", "count": 210 },
         { "bin": "4.0 - 5.0", "count": 65 },
@@ -243,8 +325,9 @@ Cung cấp dữ liệu vẽ 3 biểu đồ bắt buộc: Line chart, Scatter plo
 Biểu diễn xu hướng của dữ liệu sau khi thực hiện **Re-sampling** (Moving Average / Decomposition).
 
 - **Query Parameters:**
-  - `resample_freq`: `W` (Tuần) | `M` (Tháng) (Mặc định `M`)
-  - `metric`: `count` | `avg_magnitude` | `max_magnitude`
+  - `resample_freq`: `D` (Ngày) | `W` (Tuần) | `M` (Tháng) (Mặc định `M`)
+  - `metric`: `count` | `avg_magnitude` | `max_magnitude` (Mặc định `count`)
+  - `timezone` (bổ sung 2026-11-24): `UTC` | `UTC+7` — bucket nhãn kỳ theo múi giờ hiển thị. Có param này → tính on-the-fly như `/analysis/temporal`; không truyền → giữ snapshot T3 bucket UTC.
 
 - **Response (200 OK):**
 ```json
@@ -254,14 +337,25 @@ Biểu diễn xu hướng của dữ liệu sau khi thực hiện **Re-sampling*
     "resample_freq": "M",
     "metric": "count",
     "series": [
-      { "period": "2026-05", "actual_value": 1120, "trend_value": 1105.4 },
-      { "period": "2026-06", "actual_value": 1240, "trend_value": 1180.2 }
+      { "period": "2026-05", "actual_value": 1120, "trend_value": 1105.4, "is_complete": true },
+      { "period": "2026-06", "actual_value": 1240, "trend_value": 1180.2, "is_complete": true }
     ],
     "slope": 0.045,
-    "trend_direction": "increasing"
+    "intercept": 1090.5,
+    "r_squared": 0.62,
+    "p_value": 0.031,
+    "sample_size": 6,
+    "trend_direction": "increasing",
+    "status": "computed"
   }
 }
 ```
+
+- **Ghi chú:**
+  - Terminal 3 ghi sẵn kết quả cho cả 3 tần suất (`day`/`week`/`month`) × 3 metric; route chỉ trả đúng tần suất và metric được yêu cầu.
+  - `series` của `avg_magnitude`/`max_magnitude` bỏ các kỳ không có sự kiện (không điền 0).
+  - `status: "insufficient_data"` khi chưa đủ ≥ 3 kỳ đầy đủ để hồi quy (khi đó `trend_direction` là `stable`).
+  - Chưa có kết quả đúng tần suất yêu cầu → Empty State (`success: false`, `data: null`), không trả tần suất khác thay thế.
 
 #### Pattern 3: `GET /api/v1/analysis/seasonality`
 Biểu diễn tính chu kỳ / mùa vụ (**Seasonal line**) sau khi thực hiện **Re-sampling**.
@@ -271,7 +365,9 @@ Biểu diễn tính chu kỳ / mùa vụ (**Seasonal line**) sau khi thực hi�
 {
   "success": true,
   "data": {
+    "status": "computed",
     "resample_freq": "M",
+    "period": 12,
     "components": {
       "seasonal_line": [
         { "cycle_index": 1, "period_label": "Tháng 1", "seasonal_factor": 1.05 },
@@ -280,7 +376,8 @@ Biểu diễn tính chu kỳ / mùa vụ (**Seasonal line**) sau khi thực hi�
       "residual_variance": 0.12,
       "seasonality_strength": 0.35,
       "interpretation": "Dữ liệu thể hiện tính chu kỳ yếu, không có bằng chứng mùa vụ rõ rệt theo tháng."
-    }
+    },
+    "data_points": 24
   }
 }
 ```
@@ -293,6 +390,7 @@ Cung cấp ma trận tương quan (**Correlation Matrix / Heatmap**) giữa các
 {
   "success": true,
   "data": {
+    "status": "computed",
     "variables": ["magnitude", "depth_km", "latitude", "longitude", "daily_event_count"],
     "matrix": [
       [1.00, -0.15, 0.02, 0.05, 0.28],
@@ -301,7 +399,9 @@ Cung cấp ma trận tương quan (**Correlation Matrix / Heatmap**) giữa các
       [0.05, -0.03, 0.12, 1.00, 0.04],
       [0.28, -0.05, 0.01, 0.04, 1.00]
     ],
-    "method": "pearson"
+    "method": "pearson",
+    "sample_size": 24,
+    "note": "Ma trận tương quan Pearson giữa 5 biến đo đạc — không suy diễn nhân quả."
   }
 }
 ```
@@ -333,6 +433,10 @@ Giá trị dự báo định lượng cho ngày tiếp theo ($t + 1$) kèm kho�
 }
 ```
 
+> **Hai dạng payload:** endpoint riêng `/predictions` trả `confidence_interval: {lower, upper}` lồng nhau
+> và `forecasted_metric`. Endpoint tổng hợp `/patterns` trả alias phẳng `lower_bound`/`upper_bound` và
+> `metric_name`. FE chuẩn hóa cả hai về một dạng trong `asPrediction()` — không thay thế giá trị thiếu.
+
 #### Pattern 6: `GET /api/v1/classifications`
 Nhãn phân loại mức độ hoạt động địa chấn dự kiến cho ngày tiếp theo ($t + 1$).
 
@@ -342,11 +446,12 @@ Nhãn phân loại mức độ hoạt động địa chấn dự kiến cho ngà
   "success": true,
   "data": {
     "target_date": "2026-11-07",
-    "predicted_label": "Normal Activity",
+    "predicted_label": "Moderate",
     "probabilities": {
-      "Low Activity": 0.15,
-      "Normal Activity": 0.72,
-      "High Activity": 0.13
+      "Low": 0.12,
+      "Moderate": 0.55,
+      "High": 0.27,
+      "Critical": 0.06
     },
     "model_name": "RandomForest-Seismic-Classifier",
     "model_version": "v1.0.0",
@@ -359,12 +464,17 @@ Nhãn phân loại mức độ hoạt động địa chấn dự kiến cho ngà
 }
 ```
 
+> **Hai dạng payload:** endpoint riêng `/classifications` trả `probabilities`; endpoint tổng hợp
+> `/patterns` trả alias `probability_scores`. FE chuẩn hóa trong `asClassification()`.
+> Nhãn canonical gồm 4 mức: `Low`, `Moderate`, `High`, `Critical` — FE cũng chấp nhận alias cũ
+> `Low Activity`, `Normal Activity`, `High Activity` nhưng không dùng trong dữ liệu mới.
+
 ---
 
 ### 3.4. Nhóm Phân Cụm Sự Kiện (Clustering)
 
 #### `GET /api/v1/clusters`
-Lấy kết quả phân nhóm địa chấn (chu kỳ chạy 1 ngày/lần) phục vụ trực quan hóa các chùm động đất trên bản đồ.
+Lấy kết quả phân nhóm địa chấn (chu kỳ chạy 1 ngày/lần) phục vụ trực quan hóa các chùm động đất trên bản đồ. Nhận 2 query param tùy chọn `country`/`region` — lọc theo địa danh đại diện (`dominant_place`) của từng cụm; `clusters_count` phản ánh số cụm sau lọc (dùng cho KPI "Cụm địa chấn" trên Tổng quan).
 
 - **Response (200 OK):**
 ```json
@@ -393,18 +503,47 @@ Lấy kết quả phân nhóm địa chấn (chu kỳ chạy 1 ngày/lần) ph�
 
 ### 3.5. Nhóm Sự kiện Thời gian thực (Real-time SSE)
 
-#### `GET /api/v1/events/stream`
-Luồng Server-Sent Events (SSE) đẩy thông báo sự kiện động đất mới đến client tức thì.
+Backend phục vụ **hai** route SSE (cùng cơ chế):
+
+- `GET /api/v1/stream/earthquakes` — route đang chạy, dùng mặc định.
+- `GET /api/v1/events/stream` — route theo đặc tả gốc, vẫn được giữ tương thích.
 
 - **Header:** `Accept: text/event-stream`
-- **Output:**
+- **Tên sự kiện:** `earthquake_detected`, `earthquake_alert`, `heartbeat`,
+  `ingestion_cycle_completed`, `database_cleared`, `alert`.
+- **Cấu trúc `data`:** luôn là một đối tượng bọc ba khóa `event`, `data`, `timestamp`; trong đó
+  `data` là nội dung riêng của từng sự kiện.
+
 ```text
-event: earthquake_alert
-data: {"id":1043,"magnitude":6.2,"place":"Tonga Region","event_time":"2026-11-06T11:08:00Z"}
+event: earthquake_detected
+data: {"event":"earthquake_detected","data":{"source_event_id":"us7000m123","magnitude":6.2,"place":"Tonga Region","event_time":"2026-11-06T11:08:00Z"},"timestamp":"2026-11-06T11:08:01Z"}
 
 event: heartbeat
-data: {"timestamp":"2026-11-06T11:10:00Z"}
+data: {"event":"heartbeat","data":{"timestamp":"2026-11-06T11:10:00Z"},"timestamp":"2026-11-06T11:10:00Z"}
+
+event: database_cleared
+data: {"event":"database_cleared","data":{},"timestamp":"2026-11-06T11:12:00Z"}
 ```
+
+FE parse đúng cấu trúc bọc này; sự kiện `database_cleared` chuyển toàn bộ trang sang Empty State,
+không thay bằng dữ liệu mẫu.
+
+---
+
+### 3.6. Nhóm Cấu hình AI Gemini (bổ sung 2026-11-24)
+
+Web mở không có auth: người dùng nhập model/key trên FE, key được lưu browser 24h rồi gửi lên
+BE. BE gọi Gemini để kiểm tra; hợp lệ thì ghi `GEMINI_MODEL`/`GEMINI_API_KEY` vào `.env` máy chủ
+(**không lưu database**). Chỉ nhận model dạng `gemini-*`.
+
+| Method | Path | Mô tả |
+| :--- | :--- | :--- |
+| `POST` | `/api/v1/ai/credentials` | `{model, api_key}` — validate với Gemini rồi upsert vào `.env` |
+| `GET` | `/api/v1/ai/credentials/status` | Trả `{configured, model, masked_key}` (key đã che) |
+| `POST` | `/api/v1/ai/generate` | `{prompt, system?, model, api_key}` — đối chiếu key browser với `.env`, gọi Gemini, trả `data.text` |
+
+Lỗi: `VALIDATION_ERROR` (400, sai định dạng model/key), `INVALID_API_KEY` (401),
+`AI_NOT_CONFIGURED` (503), `AI_UPSTREAM_ERROR` (502). Response không bao giờ trả key đầy đủ.
 
 ---
 
@@ -418,4 +557,7 @@ data: {"timestamp":"2026-11-06T11:10:00Z"}
 | `DATABASE_ERROR` | 500 | Lỗi kết nối hoặc thực thi truy vấn PostgreSQL |
 | `SERVICE_UNAVAILABLE` | 503 | Dịch vụ phân tích chưa sẵn sàng hoặc đang khởi động lại |
 | `INTERNAL_SERVER_ERROR` | 500 | Lỗi ngoại lệ chưa được bắt trong Backend API |
+| `INVALID_API_KEY` | 401 | Key Gemini không hợp lệ hoặc không khớp cấu hình đã lưu |
+| `AI_NOT_CONFIGURED` | 503 | Chưa có model/key Gemini trong `.env` máy chủ |
+| `AI_UPSTREAM_ERROR` | 502 | Gemini không trả nội dung hợp lệ |
 

@@ -74,7 +74,8 @@ Trước khi cấu hình, đảm bảo 3 cổng mạng sau trên `localhost` kh�
 > **Ghi chú Corepack (Frontend `apps/web/`):** `apps/web/package.json` khai báo `"packageManager": "pnpm@10.20.0"` để Corepack (có sẵn từ Node 16.10+) tự tải/ep đúng phiên bản, khớp `pnpm-lock.yaml` (`lockfileVersion: '9.0'`). Bản 10.20.0 yêu cầu Node $\ge 18.12$, nên chạy được ở cả ngưỡng tối thiểu $18.18.0$ lẫn Node $22+$. Corepack **chỉ nhận semver chính xác**, không nhận range như `pnpm@>=9`; do đó không ghi range vào `packageManager`. Ngưỡng tương thích được khai báo riêng qua `"engines": { "node": ">=18.18.0", "pnpm": ">=8.15.0" }`.
 >
 > - Kiểm tra đúng phiên bản FE dùng: `cd apps/web && corepack pnpm -v` → `10.20.0`. Lệnh `pnpm -v` ở trên có thể trả về pnpm cài global (khác bản) nên chỉ dùng để đối chiếu ngưỡng §1.4.
-> - Chạy riêng FE: `cd apps/web && corepack pnpm dev` (Vite cổng `3000`). Chạy không cần BE: `VITE_API_MOCKING=enabled corepack pnpm dev`. Không dùng `PUBLIC_*` — Vite chỉ expose biến `VITE_*`.
+> - Chạy riêng FE: `cd apps/web && corepack pnpm dev` (Vite cổng `3000`) — cần BE thật chạy cùng. Không dùng `PUBLIC_*` — Vite chỉ expose biến `VITE_*`.
+> - **Tránh lỗi CORS / `Status code: (null)`:** FE gọi BE qua `VITE_API_BASE_URL`. Với `docker compose`, cấu hình mặc định là `VITE_API_BASE_URL=/` + `VITE_API_PROXY_TARGET=http://api:8000`: mọi request `/api/...` (kể cả SSE) đi **cùng origin** qua Vite dev proxy, trình duyệt không cần truy cập trực tiếp `localhost:8000`. Khi chạy `pnpm dev` trên host, giữ `VITE_API_BASE_URL=http://localhost:8000`, để trống `VITE_API_PROXY_TARGET` và đảm bảo `CORS_ORIGINS` của BE chứa origin của FE (`http://localhost:3000`, `http://127.0.0.1:3000`).
 
 ### 1.5 Cấu hình Biến Môi trường Cục bộ (`.env` Configuration)
 
@@ -103,16 +104,30 @@ ENVIRONMENT=development
 DEBUG=True
 CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
+# --- Cấu hình dữ liệu & mô hình (docs/yeucaubatbuoc.md §6.4) ---
+# DATA_WINDOW_DAYS=365 → 1 năm; USGS không có feed all_year nên backfill dùng
+# FDSN ?starttime=&endtime= chia từng cửa sổ ~30 ngày (limit 20000/query).
+DATA_WINDOW_DAYS=365
+ANALYSIS_WINDOW_DAYS=365
+CLUSTERING_WINDOW_DAYS=365
+CLUSTERING_EPS_KM=150
+CLUSTERING_MIN_SAMPLES=5
+BACKFILL_MIN_MAGNITUDE=2.5
+BACKFILL_QUERY_URL=https://earthquake.usgs.gov/fdsnws/event/1/query
+PREDICTION_MIN_OBSERVED=10
+
 # ==============================================================================
 # CẤU HÌNH DỊCH VỤ NẠP DỮ LIỆU ĐỊA CHẤN (USGS INGESTION WORKER)
 # ==============================================================================
-USGS_API_BASE_URL=https://earthquake.usgs.gov/fdsnws/event/1/query
+USGS_FEED_URL=https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson
 INGESTION_INTERVAL_SECONDS=300
 INGESTION_MIN_MAGNITUDE=2.5
 INGESTION_TIMEOUT_SECONDS=30
 
 # ==============================================================================
 # CẤU HÌNH DỊCH VỤ PHÂN TÍCH & DỰ BÁO CHUỖI THỜI GIAN
+# Chu kỳ theo sơ đồ ASCII yeucaubatbuoc.md §1.2: Ingestion 5p, Analysis 5p,
+# Prediction 5p, Clustering 1 ngày. Cả 4 runner đều đọc biến này từ .env.
 # ==============================================================================
 ANALYSIS_INTERVAL_SECONDS=300
 CLUSTERING_INTERVAL_SECONDS=86400
@@ -123,12 +138,35 @@ PREDICTION_INTERVAL_SECONDS=300
 Dành cho ứng dụng Vite React Client:
 
 ```env
-# URL kết nối tới máy chủ API
-VITE_API_URL=http://localhost:8000/api/v1
+# Base URL máy chủ API — KHÔNG kèm /api/v1 (service đã tự nối prefix)
+VITE_API_BASE_URL=http://localhost:8000
 
-# URL kết nối tới kênh Server-Sent Events (SSE) thời gian thực
-VITE_SSE_URL=http://localhost:8000/api/v1/stream/earthquakes
+# Endpoint SSE chuẩn theo API.md §3.5 (legacy: /api/v1/stream/earthquakes)
+VITE_SSE_ENDPOINT=/api/v1/events/stream
+
+# Tile bản đồ (trang /monitoring): để trống → dùng /tile/{z}/{x}/{y}.png cùng origin.
+# Vite dev/preview proxy và nginx trong apps/web/Dockerfile chuyển /tile tới OSM DE
+# (tile miễn phí, KHÔNG cần API key — CARTO hiện trả ảnh "API KEY REQUIRED").
+# Chỉ đặt URL tuyệt đối khi môi trường không proxy được /tile.
+VITE_MAP_TILE_URL=
+
+# AI "Trích xuất nhận xét chuyên gia" (/statistics) — bổ sung 2026-11-24.
+# CHỈ Gemini. Model mặc định gợi ý trong dialog (người dùng có thể đổi).
+# API key KHÔNG đưa vào bundle: nhập qua nút khoá ở aside nav.
+VITE_AI_MODEL=gemini-2.0-flash
 ```
+
+> **AI hoạt động thế nào?** Nhấn nút SVG khoá ở footer aside (dưới đồng hồ đếm ngược,
+> trên nút đổi theme) → dialog nhập **model Gemini** (`gemini-*`) và **API key**.
+> FE lưu key vào localStorage/session **24 giờ** rồi gửi lên BE; BE gọi Gemini để
+> kiểm tra key, nếu hợp lệ thì ghi `GEMINI_MODEL`/`GEMINI_API_KEY` vào `.env` máy chủ
+> (không lưu database). Khi trích xuất, FE gửi lại key browser để BE đối chiếu với
+> `.env` rồi mới gọi Gemini. Báo cáo chuẩn 6 pattern (quy tắc, không bịa số) là nguồn
+> sự thật duy nhất; nếu AI trả số liệu ngoài nguồn thì dùng lại câu trả lời chuẩn.
+> Câu trả lời cũng chỉ lưu browser 24 giờ, hết hạn tự xoá và nút trích xuất hiện lại.
+> Đây là web mở, không có auth — dùng key Gemini có hạn mức/quyền hạn hẹp. BE ghi vào
+> `.env` ở gốc repo (biến `AI_ENV_FILE` có thể override đường dẫn; khi chạy Docker cần
+> mount file này nếu muốn cấu hình tồn tại sau khi restart container).
 
 ---
 
@@ -155,8 +193,8 @@ if (-not (Test-Path ".env")) {
 if (-not (Test-Path "apps\web\.env")) {
     Write-Host "[2/5] Đang tạo file apps\web\.env..." -ForegroundColor Yellow
     @"
-VITE_API_URL=http://localhost:8000/api/v1
-VITE_SSE_URL=http://localhost:8000/api/v1/stream/earthquakes
+VITE_API_BASE_URL=http://localhost:8000
+VITE_SSE_ENDPOINT=/api/v1/events/stream
 "@ | Out-File -FilePath "apps\web\.env" -Encoding utf8
 } else {
     Write-Host "[2/5] File apps\web\.env đã tồn tại." -ForegroundColor Green
@@ -206,7 +244,9 @@ echo "========================================================"
 # 1. Khởi tạo .env
 echo "--> [1/5] Thiết lập tệp cấu hình biến môi trường..."
 [ ! -f .env ] && cp .env.example .env
-[ ! -f apps/web/.env ] && echo "VITE_API_URL=http://localhost:8000/api/v1\nVITE_SSE_URL=http://localhost:8000/api/v1/stream/earthquakes" > apps/web/.env
+[ ! -f apps/web/.env ] && printf '%s\n' \
+  'VITE_API_BASE_URL=http://localhost:8000' \
+  'VITE_SSE_ENDPOINT=/api/v1/events/stream' > apps/web/.env
 
 # 2. Cấu hình Backend Python
 echo "--> [2/5] Cấu hình môi trường ảo Backend (uv)..."
@@ -339,13 +379,14 @@ cd ../..
    ```bash
    docker exec -it gdmas-postgres psql -U gdmas_user -d gdmas_db -c "\dt"
    ```
-   Kết quả kỳ vọng hiển thị danh sách 7 bảng:
-   - `earthquakes`
-   - `daily_aggregates`
-   - `earthquake_clusters`
-   - `disaster_predictions`
-   - `ingestion_logs`
-   - `analysis_runs`
+   Kết quả kỳ vọng hiển thị các bảng do Alembic `001_initial_gdmas_schema` tạo:
+   - `earthquake_events`
+   - `analysis_results`
+   - `clustering_results`
+   - `clustering_event_mapping`
+   - `prediction_results`
+   - `classification_results`
+   - `service_runs`
    - `alembic_version`
 
 ---
@@ -382,12 +423,17 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/v1/health"
 # Linux / macOS / Git Bash:
 curl -s http://localhost:8000/api/v1/health | jq .
 ```
-Phản hồi hợp lệ:
+Phản hồi hợp lệ (envelope chuẩn API.md §2):
 ```json
 {
-  "status": "healthy",
-  "database": "connected",
-  "version": "1.0.0"
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "database": "connected",
+    "version": "1.0.0",
+    "timestamp": "2026-11-22T12:00:00Z",
+    "uptime_seconds": 120
+  }
 }
 ```
 
@@ -398,7 +444,7 @@ Mở trình duyệt web truy cập địa chỉ: `http://localhost:3000`. Giao d
 ```bash
 bash scripts/test.sh
 ```
-Nếu toàn bộ kiểm tra hiển thị màu xanh và báo cáo đạt độ phủ mã nguồn $\ge 70\%$, hệ thống cấu hình hoàn toàn chuẩn xác.
+Script chạy lần lượt 3 bước offline: kiểm tra nhất quán notes (`notes_index.py --check`), toàn bộ test Backend (`uv run pytest -q`) và toàn bộ test Frontend (`pnpm test`). Script **không đo độ phủ mã nguồn** — dừng lại với exit code khác 0 ngay khi có bước nào fail. FE luôn dùng BE thật (không còn chế độ mock).
 
 ---
 

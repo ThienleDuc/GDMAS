@@ -1,12 +1,13 @@
-export { ChartPanel, MetricChip, MetricChipRow } from "./ChartPanel";
-export { EmptyChartState } from "./EmptyChartState";
-export { TemporalPatternCharts } from "./TemporalPatternCharts";
-export { TrendPatternChart } from "./TrendPatternChart";
-export { SeasonalityPatternChart } from "./SeasonalityPatternChart";
-export { CorrelationHeatmap } from "./CorrelationHeatmap";
-export { ForecastPatternChart } from "./ForecastPatternChart";
-export { ClassificationPatternChart } from "./ClassificationPatternChart";
-
-export * from "./chart-data";
-export * from "./theme";
-export type * from "./types";
+/** Barrel export cho lớp biểu đồ 6 Patterns (Terminal 7). */
+export { ChartReadingGuide } from "./ChartReadingGuide.tsx";
+export { PatternPanel } from "./PatternPanel.tsx";
+export { TemporalPatternCharts } from "./TemporalPatternCharts.tsx";
+export { TrendPatternChart } from "./TrendPatternChart.tsx";
+export { SeasonalityPatternChart } from "./SeasonalityPatternChart.tsx";
+export { CorrelationHeatmap } from "./CorrelationHeatmap.tsx";
+export { ForecastPatternChart } from "./ForecastPatternChart.tsx";
+export { ClassificationPatternChart } from "./ClassificationPatternChart.tsx";
+export { OverviewTrendChart } from "./OverviewTrendChart.tsx";
+export { OverviewSeverityChart } from "./OverviewSeverityChart.tsx";
+export { OverviewHotspotsChart } from "./OverviewHotspotsChart.tsx";
+export { OverviewSeasonalityChart } from "./OverviewSeasonalityChart.tsx";

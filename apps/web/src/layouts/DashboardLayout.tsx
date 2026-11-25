@@ -1,144 +1,59 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import {
-  Activity,
-  BarChart3,
-  Globe,
-  Map,
-  FileText,
-  Settings,
-  Radio,
-  Menu,
-  X,
-  Layers,
-  ChevronRight,
-} from "lucide-react";
+import { Activity, BarChart3, Globe, Map, Layers, ChevronRight } from "lucide-react";
 import { useSSE } from "../hooks/useSSE";
-import { ConnectionStatusBadge } from "../components/ui/ConnectionStatusBadge";
-import { IngestionToast, ToastData } from "../components/ui/IngestionToast";
-import { formatEventTime } from "../utils/timezone";
+import { SseMarkersProvider } from "../features/monitoring/sse-context.ts";
+import { NAV_META, routeLabel, type NavMeta } from "./navigation.ts";
+import { HeaderActions } from "./header/HeaderActions.tsx";
+import { CompactRefreshCountdown } from "./header/CompactRefreshCountdown.tsx";
+import { AiKeyButton } from "./header/AiKeyButton.tsx";
+import { ThemeToggle } from "./header/ThemeToggle.tsx";
+import { dataRefreshKey } from "./header/header-data.ts";
+import { APP_ROUTES } from "../app/routes.tsx";
+import { TimezoneProvider } from "../contexts/timezone-context.tsx";
+import { useCatalogSelection } from "../features/earthquakes/useCatalogSelection.ts";
 
-interface NavItem {
-  label: string;
-  path: string;
+interface NavItem extends NavMeta {
   icon: React.ComponentType<{ className?: string }>;
-  badge?: string;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { label: "Tổng quan", path: "/", icon: Layers },
-  { label: "Bản đồ Giám sát", path: "/monitoring", icon: Map, badge: "Live" },
-  { label: "Danh mục Động đất", path: "/earthquakes", icon: Activity },
-  { label: "6 Patterns Phân tích", path: "/statistics", icon: BarChart3 },
-  { label: "Báo cáo & Xuất bản", path: "/reports", icon: FileText },
-  { label: "Cấu hình Hệ thống", path: "/settings", icon: Settings },
+const NAV_ICONS: ReadonlyArray<React.ComponentType<{ className?: string }>> = [
+  Layers,
+  Map,
+  Activity,
+  BarChart3,
 ];
 
+/** NAV_ITEMS giữ nguyên tên để tương thích test/CSS cũ; giờ lấy nhãn từ navigation.ts. */
+const NAV_ITEMS: NavItem[] = NAV_META.map((meta, index) => ({
+  ...meta,
+  icon: NAV_ICONS[index],
+}));
+
 export const DashboardLayout: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [currentTimeUtc, setCurrentTimeUtc] = useState("");
-  const [toast, setToast] = useState<ToastData | null>(null);
   const location = useLocation();
+  const { withSelection } = useCatalogSelection();
 
-  const handleCloseToast = useCallback(() => {
-    setToast(null);
-  }, []);
-
-  // Kết nối SSE để nhận thông báo cào dữ liệu tự động 5 phút
-  const { data: sseData, status: sseStatus, reconnectAttempt } = useSSE("/api/v1/stream/earthquakes");
-
-  useEffect(() => {
-    if (!sseData) return;
-
-    if (sseData.event === "database_cleared") {
-      const payloadData = sseData.data as {
-        title?: string;
-        message?: string;
-      };
-
-      setToast({
-        id: `cleared-${Date.now()}`,
-        title: payloadData?.title || "⚠️ CSDL Đã Bị Xóa Trống (Demo Bước 2)",
-        message:
-          payloadData?.message ||
-          "Phát hiện CSDL đã được xóa trống bằng script demo. Hệ thống đã tự động chuyển giao diện sang trạng thái rỗng.",
-        records_processed: 0,
-        time: formatEventTime(sseData.timestamp, "UTC+7"),
-      });
-      return;
-    }
-
-    if (sseData.event === "ingestion_cycle_completed" || sseData.event === "earthquake_detected") {
-      const payloadData = sseData.data as {
-        title?: string;
-        message?: string;
-        records_processed?: number;
-      };
-
-      const title =
-        payloadData?.title ||
-        (sseData.event === "earthquake_detected"
-          ? "Phát Hiện Sự Kiện Địa Chấn Mới"
-          : "Cập Nhật Dữ Liệu Tự Động (Chu kỳ 5 phút)");
-
-      const message =
-        payloadData?.message ||
-        "Đã hoàn thành chu kỳ cào dữ liệu từ trạm địa chấn USGS.";
-
-      const time = formatEventTime(sseData.timestamp, "UTC+7");
-
-      setToast({
-        id: `${sseData.event}-${sseData.timestamp || Date.now()}`,
-        title,
-        message,
-        records_processed: payloadData?.records_processed,
-        time,
-      });
-    }
-  }, [sseData]);
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentTimeUtc(now.toISOString().replace("T", " ").substring(0, 19) + " UTC");
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  // Giữ một kết nối SSE duy nhất tại shell; page bản đồ chỉ đọc qua context.
+  // RD-17: dùng default chuẩn /api/v1/events/stream từ services/sse-api.ts (giữ 1 kết nối tại shell).
+  const sse = useSSE();
+  // GAP-13: toast bắn theo event SSE thật (worker T2, 5 phút) — không theo đồng hồ cục bộ.
+  const sseRefreshKey = dataRefreshKey(sse.data);
 
   return (
+    // Provider phải bọc CẢ shell (kể cả header chứa RealtimeClock), không chỉ <Outlet>.
+    <TimezoneProvider>
     <div className="layout layout--dashboard app-layout">
-      {/* Sidebar */}
-      <aside
-        className={`layout__sidebar app-sidebar ${sidebarOpen ? "" : "is-collapsed"}`}
-      >
-        {/* Brand / Logo */}
+      {/* Aside dạng rail cố định: luôn sẵn sàng, hover/focus hiện card mô tả. */}
+      <aside className="layout__sidebar app-sidebar">
         <div className="layout__brand">
           <div className="layout__brand-main">
             <div className="layout__brand-mark">
               <Globe className="h-6 w-6" />
             </div>
-            {sidebarOpen && (
-              <div className="layout__brand-copy">
-                <span className="layout__brand-name">GDMAS</span>
-                <span className="layout__brand-caption">
-                  Disaster Monitoring
-                </span>
-              </div>
-            )}
           </div>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="layout__icon-button"
-            title={sidebarOpen ? "Thu gọn sidebar" : "Mở rộng sidebar"}
-            aria-label="Toggle sidebar"
-          >
-            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
         </div>
 
-        {/* Navigation list */}
         <nav className="layout__nav sidebar-nav">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
@@ -150,84 +65,56 @@ export const DashboardLayout: React.FC = () => {
             return (
               <NavLink
                 key={item.path}
-                to={item.path}
-                className={`layout__nav-link sidebar-nav-item ${isActive ? "active" : ""}`}
-                title={!sidebarOpen ? item.label : undefined}
+                to={withSelection(item.path)}
+                className={`layout__nav-link layout__nav-link--rail group ${isActive ? "active" : ""}`}
+                aria-label={item.label}
               >
                 <Icon
                   className={`h-5 w-5 shrink-0 ${
-                    isActive ? "text-cyan-400" : "text-slate-400 group-hover:text-cyan-300"
+                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
                   }`}
                 />
-                {sidebarOpen && (
-                  <span className="layout__nav-label">{item.label}</span>
-                )}
-                {sidebarOpen && item.badge && (
-                  <span className="layout__nav-badge">
-                    {item.badge}
+                <span className="layout__nav-popover" role="tooltip">
+                  <span className="layout__nav-popover-head">
+                    <strong className="layout__nav-popover-label">{item.label}</strong>
+                    {item.badge && <em className="layout__nav-badge">{item.badge}</em>}
                   </span>
-                )}
+                </span>
               </NavLink>
             );
           })}
         </nav>
 
-        {/* Sidebar Footer: Service Status */}
         <div className="layout__sidebar-footer">
-          {sidebarOpen ? (
-            <div className="layout__service-status">
-              <div className="layout__service-status-line">
-                <span className="layout__service-dot" />
-                <span>7 Terminals Sẵn Sàng</span>
-              </div>
-              <p className="layout__service-status-caption">FastAPI, PostgreSQL & 4 Workers</p>
-            </div>
-          ) : (
-            <div className="layout__service-status-line" title="7 Terminals Sẵn Sàng">
-              <span className="layout__service-dot" />
-            </div>
-          )}
+          <CompactRefreshCountdown onRefresh={sse.reconnect} />
+          <AiKeyButton />
+          <ThemeToggle />
         </div>
       </aside>
 
       {/* Main Container */}
       <div className="layout__main app-main">
-        {/* Top Header */}
         <header className="layout__header app-header">
-          <div className="layout__breadcrumb">
-            <span className="layout__breadcrumb-current">GDMAS Console</span>
-            <ChevronRight className="h-4 w-4" />
-            <span className="layout__breadcrumb-current">
-              {location.pathname === "/" ? "Tổng quan" : location.pathname.replace("/", "")}
-            </span>
+          <div className="layout__breadcrumb" aria-label="Đường dẫn trang">
+            <span className="layout__breadcrumb-current">GDMAS</span>
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            <span className="layout__breadcrumb-current">{routeLabel(location.pathname)}</span>
           </div>
 
-          <div className="layout__header-actions">
-            <ConnectionStatusBadge status={sseStatus} reconnectAttempt={reconnectAttempt} />
-            <div className="layout__clock hidden sm:flex">
-              <Radio className="h-3.5 w-3.5 text-cyan-400 animate-pulse" />
-              <span>{currentTimeUtc || "UTC SYNC"}</span>
-            </div>
-            <div className="layout__database-state">
-              <span className="layout__service-dot"></span>
-              <span>PostgreSQL Connected</span>
-            </div>
-          </div>
+          <HeaderActions onRefresh={sse.reconnect} dataRefreshKey={sseRefreshKey} sseData={sse.data} />
         </header>
 
-        {/* Nested Content rendered via Outlet */}
-        <main className="layout__content app-content">
-          <Outlet />
+        <main
+          className={`layout__content app-content ${
+            location.pathname === APP_ROUTES.MONITORING ? "layout__content--map" : ""
+          }`}
+        >
+          <SseMarkersProvider value={sse}>
+            <Outlet />
+          </SseMarkersProvider>
         </main>
       </div>
-
-      {/* Toast thông báo cập nhật tự động 5 phút (Tự động tắt sau 5s hoặc bấm X tắt ngay) */}
-      <IngestionToast
-        toast={toast}
-        onClose={handleCloseToast}
-        durationMs={5000}
-      />
     </div>
+    </TimezoneProvider>
   );
 };
-

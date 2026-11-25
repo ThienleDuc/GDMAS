@@ -28,7 +28,7 @@ import {
   startOfIsoWeekUtc,
   toObservedFromLineChart,
   toObservedFromTrend,
-} from "../src/components/charts/chart-data.ts";
+} from "../src/lib/transforms/chart-data.ts";
 
 const samplePath = path.resolve(
   import.meta.dirname,
@@ -307,4 +307,36 @@ test("TC-12 lịch sử quan sát cho biểu đồ dự báo", () => {
 
   assert.deepEqual(toObservedFromTrend(undefined), []);
   assert.deepEqual(toObservedFromLineChart(undefined), []);
+});
+
+test("TC-13 (bổ sung T7.06–T7.09): transform đọc fixture analysis_sample.json", () => {
+  const analysisPath = path.resolve(
+    import.meta.dirname,
+    "../../../contracts/examples/analysis_sample.json",
+  );
+  const bundle = JSON.parse(readFileSync(analysisPath, "utf8"));
+
+  // Dữ liệu mẫu đủ dày để dựng chart: 24 scatter, 14 line, 8 bin, 12 kỳ trend/seasonal, matrix 5×5.
+  assert.equal(bundle.temporal.data.scatter_plot.length, 24);
+  assert.ok(bundle.temporal.data.scatter_plot.every((point) => point.timestamp.endsWith("Z")));
+  assert.equal(bundle.temporal.data.line_chart.length, 14);
+
+  const line = buildLineSeriesFromScatter(bundle.temporal.data.scatter_plot, "day");
+  assert.ok(line.length >= 10);
+  assert.ok(line.every((point) => /^\d{4}-\d{2}-\d{2}$/u.test(point.date)));
+
+  const bins = buildHistogramBins(bundle.temporal.data.histogram.magnitude_bins);
+  assert.equal(bins.length, 8);
+
+  const trend = buildTrendSeries(bundle.trend.data.series);
+  assert.equal(trend.length, 12);
+  assert.ok(trend.every((point) => Number.isFinite(point.actual_value)));
+  assert.equal(bundle.trend.data.series.filter((point) => point.trend_value === null).length, 1);
+
+  const seasonal = buildSeasonalSeries(bundle.seasonality.data.components);
+  assert.equal(seasonal.length, 12);
+  assert.ok(seasonal.every((point) => Number.isFinite(point.seasonal_factor)));
+
+  assert.equal(bundle.correlation.data.matrix.length, 5);
+  assert.ok(bundle.correlation.data.matrix.every((row) => row.length === 5));
 });

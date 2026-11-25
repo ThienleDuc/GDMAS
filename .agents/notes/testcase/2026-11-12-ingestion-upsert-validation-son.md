@@ -2,8 +2,8 @@
 
 ## Metadata
 - ID: 2026-11-12-ingestion-upsert-validation-son
-- Mode: proposal-paired
-- Proposal: .agents/notes/proposed/2026-11-12-ingestion-upsert-validation-son.md
+- Mode: single-file-test
+- Proposal: none
 - Target: apps/api/src/gdmas/services/ingestion/
 - Test File: apps/api/tests/unit/test_ingestion_parser.py, apps/api/tests/unit/test_ingestion_upsert.py, apps/api/tests/unit/test_ingestion_service.py
 - Author: agent | son

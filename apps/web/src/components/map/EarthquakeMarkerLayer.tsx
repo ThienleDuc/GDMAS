@@ -1,43 +1,26 @@
-import React from "react";
 import { CircleMarker, Popup, Tooltip } from "react-leaflet";
-import type { TimezoneMode } from "../../utils/timezone";
-import { formatMetric, markerStyleFor } from "./map-data";
-import { MapPopupCard } from "./MapPopupCard";
-import type { MapEarthquake } from "./types";
+import { formatMetric, markerStyleFor } from "../../lib/transforms/map-data.ts";
+import type { MapEarthquake } from "../../lib/transforms/map-types.ts";
+import { MapPopupCard } from "./MapPopupCard.tsx";
 
-interface EarthquakeMarkerLayerProps {
-  events: MapEarthquake[];
-  timezone?: TimezoneMode;
-}
-
-/**
- * Một `CircleMarker` cho mỗi sự kiện (ưu tiên canvas, phù hợp vài nghìn điểm):
- * kích thước theo `magnitude`, màu theo `magnitude`, độ mờ theo `depth_km`.
- */
-export const EarthquakeMarkerLayer: React.FC<EarthquakeMarkerLayerProps> = ({
-  events,
-  timezone = "UTC+7",
-}) => (
-  <>
-    {events.map((event) => {
-      const style = markerStyleFor(event);
-      return (
+/** Vẽ marker WGS84; kích thước/màu/độ mờ lấy từ hàm thuần map-data.ts. */
+export function EarthquakeMarkerLayer({ events }: { events: ReadonlyArray<MapEarthquake> }) {
+  return (
+    <>
+      {events.map((event) => (
         <CircleMarker
-          key={`eq-${event.id}-${event.eventTime}`}
+          key={event.sourceEventId || `event-${event.id}`}
           center={[event.latitude, event.longitude]}
-          radius={style.radius}
-          pathOptions={style}
+          pathOptions={markerStyleFor(event)}
         >
-          <Tooltip direction="top" offset={[0, -4]} opacity={1}>
-            <span className="text-[11px] font-medium">
-              M {formatMetric(event.magnitude, 1)} · {event.place}
-            </span>
+          <Tooltip direction="top" offset={[0, -6]} opacity={0.9}>
+            Độ lớn {formatMetric(event.magnitude, 1)} — {event.place}
           </Tooltip>
-          <Popup minWidth={260} maxWidth={300}>
-            <MapPopupCard earthquake={event} timezone={timezone} />
+          <Popup>
+            <MapPopupCard event={event} />
           </Popup>
         </CircleMarker>
-      );
-    })}
-  </>
-);
+      ))}
+    </>
+  );
+}

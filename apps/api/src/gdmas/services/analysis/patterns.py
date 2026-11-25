@@ -27,6 +27,8 @@ CORRELATION_VARIABLES = (
     "daily_event_count",
 )
 TEMPORAL_INTERVALS = ("day", "week", "month")
+TREND_INTERVALS = ("day", "week", "month")
+TREND_METRICS = ("count", "avg_magnitude", "max_magnitude")
 SCATTER_LIMIT = 2000
 TREND_MIN_PERIODS = 3
 TREND_SIGNIFICANCE = 0.05
@@ -51,6 +53,9 @@ _RESAMPLE_RULES: dict[str, dict[str, Any]] = {
     "month": {"rule": "MS"},
 }
 _INTERVAL_TO_FREQ_CODE = {"day": "D", "week": "W", "month": "M"}
+
+# Chế độ header → IANA timezone; mặc định UTC để caller cũ không đổi (I2/I3).
+TZ_BY_MODE: dict[str, str] = {"UTC": "UTC", "UTC+7": "Asia/Ho_Chi_Minh"}
 
 _WEEKDAY_LABELS = ("Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật")
 # (interval, chu kỳ, số kỳ tối thiểu, nhãn chu kỳ, mô tả cho FE)
@@ -209,7 +214,10 @@ def magnitude_histogram(df: pd.DataFrame) -> list[dict[str, Any]]:
 
 
 def compute_temporal(
-    df: pd.DataFrame, interval: str = "day", scatter_limit: int = SCATTER_LIMIT
+    df: pd.DataFrame,
+    interval: str = "day",
+    scatter_limit: int = SCATTER_LIMIT,
+    tz: str = "UTC",
 ) -> dict[str, Any]:
     if interval not in TEMPORAL_INTERVALS:
         raise ValueError(f"interval phải thuộc {TEMPORAL_INTERVALS}, nhận {interval!r}")
@@ -217,7 +225,9 @@ def compute_temporal(
     line_chart: list[dict[str, Any]] = []
     scatter_plot: list[dict[str, Any]] = []
     if not df.empty:
-        grouped = _resample(df, interval)["magnitude"].agg(["count", "max", "mean"])
+        local = df.copy()
+        local["event_time"] = local["event_time"].dt.tz_convert(tz)
+        grouped = _resample(local, interval)["magnitude"].agg(["count", "max", "mean"])
         line_chart = [
             {
                 "date": _period_label(ts, interval),
@@ -281,29 +291,58 @@ _DIRECTION_LABELS = {
 }
 
 
+_TREND_AGGREGATIONS = {
+    "count": "count",
+    "avg_magnitude": "mean",
+    "max_magnitude": "max",
+}
+
+
+def _trend_actual(df: pd.DataFrame, interval: str, metric: str) -> pd.Series:
+    """Chuỗi giá trị thực theo kỳ: số trận (kỳ rỗng = 0) hoặc độ lớn (kỳ rỗng bị loại)."""
+    if df.empty:
+        return pd.Series(dtype=float)
+    aggregated = _resample(df, interval)["magnitude"].agg(_TREND_AGGREGATIONS[metric])
+    actual = aggregated.astype(float)
+    # Không bịa độ lớn 0 cho kỳ không có sự kiện — bỏ kỳ đó khỏi chuỗi và hồi quy.
+    return actual if metric == "count" else actual.dropna()
+
+
 def compute_trend(
     df: pd.DataFrame,
     interval: str | None = None,
     *,
     as_of: datetime | None = None,
+    metric: str = "count",
+    tz: str = "UTC",
 ) -> dict[str, Any]:
+    if metric not in _TREND_AGGREGATIONS:
+        raise ValueError(f"metric không hỗ trợ: {metric}")
+    # Bucket theo múi giờ hiển thị (UTC/UTC+7) như compute_temporal — nếu không,
+    # sự kiện 20:00 UTC hôm trước rơi nhầm vào ngày hôm đó (I3).
+    if tz != "UTC" and not df.empty:
+        df = df.copy()
+        df["event_time"] = df["event_time"].dt.tz_convert(tz)
     interval = interval or choose_trend_interval(df)
-    counts = (
-        _resample(df, interval)["magnitude"].count()
-        if not df.empty
-        else pd.Series(dtype=float)
-    )
-    actual = counts.astype(float)
+    actual = _trend_actual(df, interval, metric)
     moving_avg = actual.rolling(
         MOVING_AVERAGE_WINDOW, center=True, min_periods=1
     ).mean()
 
     complete = complete_period_mask(actual.index, interval, df, as_of=as_of)
+    # Vị trí kỳ thật trên lưới re-sampling (giữ khoảng cách khi metric độ lớn bỏ kỳ rỗng).
+    positions = (
+        _resample(df, interval)["magnitude"].count().index.get_indexer(actual.index)
+        if not df.empty
+        else np.array([], dtype=int)
+    )
 
     series = [
         {
             "period": _period_label(ts, interval),
-            "actual_value": int(actual.loc[ts]),
+            "actual_value": int(actual.loc[ts])
+            if metric == "count"
+            else _round(actual.loc[ts], 3),
             "trend_value": _round(moving_avg.loc[ts], 3),
             "is_complete": bool(is_complete),
         }
@@ -316,7 +355,7 @@ def compute_trend(
     r_squared: float | None = None
     direction = "stable"
     # Hồi quy trên các kỳ đầy đủ; trục x là vị trí kỳ thật để giữ khoảng cách thời gian.
-    x = np.flatnonzero(complete).astype(float)
+    x = positions[complete].astype(float)
     y = actual.to_numpy()[complete]
     status = STATUS_INSUFFICIENT if len(y) < TREND_MIN_PERIODS else STATUS_COMPUTED
 
@@ -334,7 +373,7 @@ def compute_trend(
         "status": status,
         "resample_freq": _INTERVAL_TO_FREQ_CODE[interval],
         "interval": interval,
-        "metric": "count",
+        "metric": metric,
         "series": series,
         "moving_average_window": MOVING_AVERAGE_WINDOW,
         "slope": _round(slope, 6),
@@ -347,6 +386,25 @@ def compute_trend(
         "data_points": len(series),
         "complete_periods": len(y),
     }
+
+
+def compute_trend_bundle(
+    df: pd.DataFrame,
+    interval: str,
+    *,
+    as_of: datetime | None = None,
+    tz: str = "UTC",
+) -> dict[str, Any]:
+    """Pattern 2 cho một tần suất, đủ 3 metric của `GET /analysis/trend`.
+
+    Cấp cao nhất giữ kết quả metric `count` (định dạng cũ, `/patterns` vẫn đọc được);
+    khóa `metrics` chứa kết quả riêng của từng metric trong `TREND_METRICS`.
+    """
+    metrics = {
+        metric: compute_trend(df, interval, as_of=as_of, metric=metric, tz=tz)
+        for metric in TREND_METRICS
+    }
+    return {**metrics["count"], "metrics": metrics}
 
 
 # ---------------------------------------------------------------------------
@@ -381,16 +439,29 @@ def _interpret_strength(strength: float, cycle_label: str) -> str:
 
 
 def compute_seasonality(
-    df: pd.DataFrame, *, as_of: datetime | None = None
+    df: pd.DataFrame, *, as_of: datetime | None = None, interval: str | None = None
 ) -> dict[str, Any]:
-    """Tách thành phần mùa vụ bằng seasonal_decompose khi đủ ≥ 2 chu kỳ; không mặc định có mùa vụ (P-03)."""
+    """Tách thành phần mùa vụ bằng seasonal_decompose khi đủ ≥ 2 chu kỳ; không mặc định có mùa vụ (P-03).
+
+    `interval="month"`/`"week"` ép một chu kỳ cụ thể (tuần = candidate 7 ngày) thay vì
+    tự chọn candidate đầu tiên đủ dữ liệu.
+    """
     from statsmodels.tsa.seasonal import seasonal_decompose
 
-    for interval, period, min_points, cycle_label, cycle_hours in _SEASONAL_CANDIDATES:
+    forced = {"month": "month", "week": "day"}.get(interval or "") if interval else None
+    candidates = (
+        [item for item in _SEASONAL_CANDIDATES if item[0] == forced]
+        if forced
+        else _SEASONAL_CANDIDATES
+    )
+
+    for candidate_interval, period, min_points, cycle_label, cycle_hours in candidates:
         if df.empty:
             break
-        counts = _resample(df, interval)["magnitude"].count().astype(float)
-        counts = counts[complete_period_mask(counts.index, interval, df, as_of=as_of)]
+        counts = _resample(df, candidate_interval)["magnitude"].count().astype(float)
+        counts = counts[
+            complete_period_mask(counts.index, candidate_interval, df, as_of=as_of)
+        ]
         if len(counts) < min_points:
             continue
 
@@ -406,12 +477,12 @@ def compute_seasonality(
         )
         strength = min(strength, 1.0)
 
-        positions = _seasonal_position(seasonal.index, interval)
+        positions = _seasonal_position(seasonal.index, candidate_interval)
         effect_by_position = pd.Series(seasonal.to_numpy()).groupby(positions).mean()
         mean_level = float(counts.mean())
 
         seasonal_line = []
-        for position, label in _seasonal_labels(interval):
+        for position, label in _seasonal_labels(candidate_interval):
             effect = float(effect_by_position.get(position, 0.0))
             factor = 1.0 + effect / mean_level if mean_level > 0 else 1.0
             seasonal_line.append(
@@ -425,8 +496,8 @@ def compute_seasonality(
         effects = [p["seasonal_effect"] or 0.0 for p in seasonal_line]
         return {
             "status": STATUS_COMPUTED,
-            "resample_freq": _INTERVAL_TO_FREQ_CODE[interval],
-            "interval": interval,
+            "resample_freq": _INTERVAL_TO_FREQ_CODE[candidate_interval],
+            "interval": candidate_interval,
             "period": period,
             "components": {
                 "seasonal_line": seasonal_line,
@@ -445,7 +516,18 @@ def compute_seasonality(
         "interval": None,
         "period": None,
         "components": {
-            "seasonal_line": [],
+            # Giữ đủ 7 ngày / 12 tháng để FE luôn có cột so sánh; 0 = không có số liệu.
+            "seasonal_line": [
+                {
+                    "cycle_index": position,
+                    "period_label": label,
+                    "seasonal_factor": 0.0,
+                    "seasonal_effect": 0.0,
+                }
+                for position, label in _seasonal_labels(
+                    "month" if interval == "month" else "day"
+                )
+            ],
             "residual_variance": None,
             "seasonality_strength": None,
             "interpretation": SEASONALITY_INSUFFICIENT_TEXT,
@@ -572,8 +654,13 @@ def build_analysis_snapshot(
         item("time_series", interval, compute_temporal(df, interval))
         for interval in TEMPORAL_INTERVALS
     ]
-    trend = compute_trend(df, as_of=as_of)
-    snapshot.append(item("trend", trend["interval"], trend))
+    # Tần suất chính ghi trước: `/patterns` lấy bản `trend` đầu tiên; 2 tần suất còn lại
+    # phục vụ `GET /analysis/trend?resample_freq=D|W|M`.
+    primary = choose_trend_interval(df)
+    for interval in (primary, *(i for i in TREND_INTERVALS if i != primary)):
+        snapshot.append(
+            item("trend", interval, compute_trend_bundle(df, interval, as_of=as_of))
+        )
     seasonality = compute_seasonality(df, as_of=as_of)
     snapshot.append(item("seasonality", seasonality["interval"] or "day", seasonality))
     snapshot.append(item("correlation", "day", compute_correlation(df)))

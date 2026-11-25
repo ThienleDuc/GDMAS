@@ -1,220 +1,213 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, RotateCcw } from "lucide-react";
 import {
-  ClusterLayer,
-  DEFAULT_MAP_FILTERS,
   EarthquakeMarkerLayer,
-  formatCoordinate,
-  MapFilterPanel,
+  EventListPanel,
+  MapEmptyOverlay,
   MapLegend,
-  normalizeClusters,
+  MapViewportHud,
   SeismicMap,
-  timeRangeBounds,
-  toMapEarthquake,
-  type MapCluster,
+} from "../../components/map/index.ts";
+import { ALL_COUNTRIES } from "../earthquakes/country-filter.ts";
+import { ALL_REGIONS } from "../earthquakes/region-filter.ts";
+import { useCatalogSelection } from "../earthquakes/useCatalogSelection.ts";
+import { toMapEarthquake } from "../../lib/transforms/map-data.ts";
+import {
+  DEFAULT_MAP_FILTERS,
   type MapEarthquake,
   type MapFilters,
   type MapViewState,
-} from "../../components/map";
-import { EmptyState, ErrorState, LoadingState } from "../../components/ui/AsyncState";
-import { useDatabaseResetFromEvent } from "../../hooks/useDatabaseReset";
-import { useSSE } from "../../hooks/useSSE";
+} from "../../lib/transforms/map-types.ts";
+import { getEarthquakes } from "../../services/earthquake-api.ts";
 import {
-  getClustersOptional,
-  getEarthquakes,
-  getPatterns,
-} from "../../services/earthquake-api";
+  buildEarthquakeQuery,
+  deriveMapState,
+  filterMapEvents,
+  latestEventInRegion,
+  resolveMapMinMagnitude,
+  sseRefreshKey,
+} from "./monitoring-view.ts";
+import { useSseMarkers } from "./sse-context.ts";
 
-const VIETNAM_CENTER: [number, number] = [16.0544, 108.2022];
-const DEFAULT_ZOOM = 5;
+/** Mặc định hiển thị toàn thế giới; HUD luôn lấy toạ độ thật từ map qua `onViewportChange`. */
+const INITIAL_VIEW: MapViewState = { latitude: 15, longitude: 0, zoom: 2 };
+/** Ngưỡng độ lớn lấy từ BACKFILL_MIN_MAGNITUDE (docker-compose → VITE_MAP_MIN_MAGNITUDE). */
+const MAP_MIN_MAGNITUDE = resolveMapMinMagnitude(import.meta.env);
+/** Lưới an toàn: nếu SSE nhỡ event vẫn làm mới dữ liệu đúng chu kỳ 5 phút. */
+const REALTIME_REFRESH_MS = 5 * 60 * 1000;
 
 export const MonitoringMapPage: React.FC = () => {
-  const [filters, setFilters] = useState<MapFilters>(DEFAULT_MAP_FILTERS);
-  const [viewport, setViewport] = useState<MapViewState>({
-    latitude: VIETNAM_CENTER[0],
-    longitude: VIETNAM_CENTER[1],
-    zoom: DEFAULT_ZOOM,
+  const [filters] = useState<MapFilters>({
+    ...DEFAULT_MAP_FILTERS,
+    minMagnitude: MAP_MIN_MAGNITUDE,
+    maxMagnitude: undefined,
   });
+  const [view, setView] = useState<MapViewState>(INITIAL_VIEW);
+  const [focus, setFocus] = useState<[number, number] | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [events, setEvents] = useState<MapEarthquake[]>([]);
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+  const [tileError, setTileError] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  // Nguồn duy nhất của lựa chọn quốc gia/khu vực là combobox trên header (qua URL).
+  const { country, region } = useCatalogSelection();
+  const hasSelection = country !== ALL_COUNTRIES || region !== ALL_REGIONS;
 
-  const [earthquakes, setEarthquakes] = useState<MapEarthquake[]>([]);
-  const [clusters, setClusters] = useState<MapCluster[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  // Bản đồ realtime: không gửi start_time/end_time. country/region được đẩy xuống BE
+  // để lọc đúng toàn bộ dữ liệu (FE chỉ lọc lại như một lớp an toàn).
+  const params = useMemo(
+    () => buildEarthquakeQuery(filters, null, { country, region, realtime: true }),
+    [filters, country, region],
+  );
 
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  // Lắng nghe SSE và sự kiện xoá database
-  const sse = useSSE();
-  const resetInfo = useDatabaseResetFromEvent(sse.data);
-
-  const loadData = useCallback(async () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+  const load = useCallback(async (silent = false) => {
+    abortRef.current?.abort();
     const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    setLoading(true);
-    setError(null);
-
-    const bounds = timeRangeBounds(filters.timeRange);
-
+    abortRef.current = controller;
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
-      // 1. Tải danh sách động đất theo bộ lọc
-      const eqPromise = getEarthquakes(
-        {
-          limit: 500,
-          min_magnitude: filters.minMagnitude > 0 ? filters.minMagnitude : undefined,
-          start_time: bounds.start,
-          end_time: bounds.end,
-        },
-        controller.signal
-      );
-
-      // 2. Tải cụm DBSCAN (thử endpoint /clusters trước, nếu 404 fallback /patterns)
-      const clusterPromise = getClustersOptional(controller.signal).then(async (res) => {
-        if (!res.unavailable && res.data) {
-          return normalizeClusters(res.data);
-        }
-        // Fallback đọc clustering_summary từ /patterns
-        try {
-          const pat = await getPatterns(controller.signal);
-          return normalizeClusters(pat);
-        } catch {
-          return [];
-        }
-      });
-
-      const [eqRes, clusterList] = await Promise.all([eqPromise, clusterPromise]);
-
-      if (eqRes.success && Array.isArray(eqRes.data)) {
-        setEarthquakes(eqRes.data.map(toMapEarthquake));
-      } else {
-        setEarthquakes([]);
-      }
-
-      setClusters(clusterList);
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name === "AbortError") {
-        return;
-      }
-      setError(err instanceof Error ? err.message : "Không thể tải dữ liệu bản đồ");
+      const response = await getEarthquakes(params, controller.signal);
+      // Luôn thay thế marker bằng kết quả API đã lọc theo country/region hiện tại.
+      setEvents(response.data.map(toMapEarthquake));
+      setSelectedEventId(null);
+    } catch (err) {
+      if (!controller.signal.aborted) setError(err);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
-  }, [filters.minMagnitude, filters.timeRange]);
+  }, [params]);
 
-  // Nạp lại khi bộ lọc đổi hoặc có tín hiệu refresh sau database reset
+  // Một nguồn làm mới duy nhất: mọi dữ liệu mới đều fetch lại theo `params` (đã có country/region).
   useEffect(() => {
-    loadData();
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, [loadData, resetInfo.refreshVersion]);
+    void load(true);
+    return () => abortRef.current?.abort();
+  }, [load, refreshVersion]);
 
-  // CSDL vừa bị xoá (Demo Bước 2/3) -> reset state
+  // SSE dùng lại kết nối duy nhất của shell — không EventSource mới.
+  const sse = useSseMarkers();
+  const lastPayload = sse?.data ?? null;
+  const refreshKey = sseRefreshKey(lastPayload);
+  const lastRefreshKey = useRef<string | null>(null);
   useEffect(() => {
-    if (resetInfo.isCleared) {
-      setEarthquakes([]);
-      setClusters([]);
-    }
-  }, [resetInfo.isCleared]);
+    if (!refreshKey || refreshKey === lastRefreshKey.current) return;
+    lastRefreshKey.current = refreshKey;
+    setRefreshVersion((value) => value + 1);
+  }, [refreshKey]);
 
-  const handleViewportChange = useCallback((view: MapViewState) => {
-    setViewport(view);
+  // Lưới an toàn: định kỳ 5 phút làm mới ngay cả khi SSE nhỡ/mất event.
+  useEffect(() => {
+    const timer = window.setInterval(() => setRefreshVersion((value) => value + 1), REALTIME_REFRESH_MS);
+    return () => window.clearInterval(timer);
   }, []);
 
-  const visibleEarthquakes = useMemo(() => {
-    return earthquakes.filter((eq) => eq.magnitude >= filters.minMagnitude);
-  }, [earthquakes, filters.minMagnitude]);
+  const handleViewportChange = useCallback((next: MapViewState) => {
+    setView((prev) =>
+      prev.latitude === next.latitude && prev.longitude === next.longitude && prev.zoom === next.zoom
+        ? prev
+        : next,
+    );
+  }, []);
+
+  const handleEventSelect = useCallback((event: MapEarthquake) => {
+    setSelectedEventId(event.sourceEventId || String(event.id));
+    setFocus([event.latitude, event.longitude]);
+  }, []);
+
+  const visibleEvents = useMemo(
+    () => latestEventInRegion(filterMapEvents(events, filters), country, region),
+    [events, filters, country, region],
+  );
+  // Khi có lựa chọn, focus vào đúng trận mới nhất đã lọc (không phải response thô).
+  useEffect(() => {
+    if (!hasSelection || visibleEvents.length === 0) {
+      setFocus(null);
+      return;
+    }
+    setFocus([visibleEvents[0].latitude, visibleEvents[0].longitude]);
+  }, [hasSelection, visibleEvents]);
+  const phase = deriveMapState({ loading, error, events: visibleEvents });
+  const handleTileError = useCallback(() => setTileError(true), []);
+  const handleRetry = useCallback(() => void load(), [load]);
 
   return (
-    <div className="relative h-full w-full bg-slate-950 overflow-hidden" data-testid="monitoring-map-page">
-      {/* Banner thông báo CSDL bị xoá trống (Demo Bước 2) */}
-      {resetInfo.isCleared && (
-        <div className="absolute top-4 left-1/2 z-[1000] -translate-x-1/2 transform rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300 shadow-2xl backdrop-blur-md flex items-center gap-2">
-          <AlertCircle className="h-4 w-4" />
-          <span>CSDL đã bị xoá trống (Demo Bước 2). Bản đồ chuyển sang trạng thái trống.</span>
+    <section className="gm-page">
+      <header className="gm-page__heading">
+        <div>
+          <h1 className="gm-page__title">Bản đồ Giám sát</h1>
+          <p className="gm-page__subtitle">Sự kiện địa chấn thời gian thực · tọa độ địa lý · giờ quốc tế</p>
         </div>
-      )}
+      </header>
 
-      {/* Lớp bản đồ Leaflet */}
-      <SeismicMap
-        center={VIETNAM_CENTER}
-        zoom={DEFAULT_ZOOM}
-        onViewportChange={handleViewportChange}
-        className="h-full w-full"
-      >
-        <EarthquakeMarkerLayer events={visibleEarthquakes} />
-        <ClusterLayer clusters={clusters} visible={filters.showClusters} />
-      </SeismicMap>
+      <div className="gm-workspace">
+        <button
+          type="button"
+          className="gm-panels-toggle"
+          aria-expanded={panelOpen}
+          aria-controls="gm-filter-sidebar"
+          onClick={() => setPanelOpen((open) => !open)}
+        >
+          {panelOpen ? "Ẩn danh sách" : "Danh sách sự kiện"}
+        </button>
 
-      {/* Bảng điều khiển bộ lọc (Góc dưới bên trái) */}
-      <div className="absolute bottom-6 left-6 z-[900] w-80">
-        <MapFilterPanel
-          filters={filters}
-          onChange={setFilters}
-          earthquakeCount={visibleEarthquakes.length}
-          clusterCount={clusters.length}
-        />
-      </div>
+        <aside
+          id="gm-filter-sidebar"
+          className={`gm-sidebar ${panelOpen ? "is-open" : ""}`}
+        >
+          <button
+            type="button"
+            className="gm-sidebar__close"
+            aria-label="Đóng bộ lọc"
+            onClick={() => setPanelOpen(false)}
+          >
+            ×
+          </button>
+          <EventListPanel
+            events={visibleEvents}
+            selectedId={selectedEventId}
+            onSelect={handleEventSelect}
+          />
+        </aside>
 
-      {/* Chú giải bản đồ (Góc trên bên phải) */}
-      <div className="absolute top-6 right-6 z-[900] w-64">
-        <MapLegend defaultOpen={false} />
-      </div>
+        <div className="gm-map">
+          <SeismicMap
+            center={[view.latitude, view.longitude]}
+            zoom={view.zoom}
+            focus={focus}
+            onViewportChange={handleViewportChange}
+            onTileError={handleTileError}
+            tileFailed={tileError}
+          >
+            {visibleEvents.length > 0 && <EarthquakeMarkerLayer events={visibleEvents} />}
+          </SeismicMap>
+          <MapViewportHud view={view} />
+          <MapLegend />
 
-      {/* Trạng thái HUD Tọa độ & Zoom thật (Góc dưới bên phải) */}
-      <div className="absolute bottom-6 right-6 z-[900] hidden sm:flex items-center space-x-4 rounded-xl border border-slate-800 bg-slate-900/90 px-4 py-3 shadow-2xl backdrop-blur-md text-xs font-mono">
-        <div className="flex flex-col">
-          <span className="text-slate-500 text-[10px]">TỌA ĐỘ TÂM (WGS84)</span>
-          <span className="text-slate-200 font-semibold" data-testid="map-hud-coordinates">
-            {formatCoordinate(viewport.latitude, viewport.longitude)}
-          </span>
-        </div>
-        <div className="h-6 w-px bg-slate-800" />
-        <div className="flex flex-col">
-          <span className="text-slate-500 text-[10px]">MỨC ZOOM</span>
-          <span className="text-cyan-400 font-semibold" data-testid="map-hud-zoom">
-            Cấp {viewport.zoom}
-          </span>
-        </div>
-      </div>
-
-      {/* Overlay khi tải hoặc lỗi hoặc trống */}
-      {loading && earthquakes.length === 0 && (
-        <div className="absolute inset-0 z-[800] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm">
-          <LoadingState label="Đang nạp dữ liệu động đất & cụm…" />
-        </div>
-      )}
-
-      {error && (
-        <div className="absolute inset-0 z-[800] flex items-center justify-center bg-slate-950/70 p-4">
-          <ErrorState message={error} onRetry={loadData} />
-        </div>
-      )}
-
-      {!loading && !error && visibleEarthquakes.length === 0 && (
-        <div className="pointer-events-none absolute inset-0 z-[700] flex items-center justify-center">
-          <div className="pointer-events-auto rounded-xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl backdrop-blur-md max-w-sm text-center">
-            <EmptyState
-              title="Không có sự kiện động đất"
-              message="Không tìm thấy sự kiện nào khớp với bộ lọc độ lớn hoặc khoảng thời gian hiện tại."
-            >
-              <button
-                type="button"
-                onClick={() => setFilters(DEFAULT_MAP_FILTERS)}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-300 hover:bg-cyan-500/20"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                Đặt lại bộ lọc
+          {tileError && (
+            <div className="gm-map__tile-warning" role="status">
+              Không tải được tile — đang dùng bản đồ thế giới local, marker vẫn đúng vị trí.
+            </div>
+          )}
+          {phase === "loading" && (
+            <div className="gm-map__notice" role="status">
+              Đang nạp sự kiện…
+            </div>
+          )}
+          {phase === "error" && (
+            <div className="gm-map__notice gm-map__notice--error" role="alert">
+              Không nạp được dữ liệu.{" "}
+              <button type="button" onClick={handleRetry}>
+                Thử lại
               </button>
-            </EmptyState>
-          </div>
+            </div>
+          )}
+          {phase === "empty" && <MapEmptyOverlay hasEvents={events.length > 0} />}
         </div>
-      )}
-    </div>
+      </div>
+    </section>
   );
 };

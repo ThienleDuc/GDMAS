@@ -1,0 +1,133 @@
+import logging
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import desc
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+from gdmas.api.errors import error_response
+from gdmas.api.routes.system import _iso
+from gdmas.db.connection import get_db
+from gdmas.models.prediction import ClassificationResult, PredictionResult
+from gdmas.services.analysis.filtered import (
+    InsufficientDataError,
+    build_filtered_forecast,
+)
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(tags=["Predictions"])
+
+
+def _empty(message: str) -> dict:
+    """Bảng kết quả đang rỗng (chưa chạy hoặc đã bị xóa ở Demo Bước 2–3)."""
+    return {"success": False, "data": None, "message": message}
+
+
+@router.get("/predictions")
+def get_latest_prediction(
+    country: str | None = Query(None, description="Lọc theo quốc gia"),
+    region: str | None = Query(None, description="Lọc theo khu vực"),
+    db: Session = Depends(get_db),
+):
+    """Pattern 5: dự báo định lượng ngày kế tiếp (t+1) mới nhất."""
+    if country or region:
+        try:
+            return {
+                "success": True,
+                "data": build_filtered_forecast(db, country, region, datetime.now(UTC))[
+                    "prediction"
+                ],
+            }
+        except InsufficientDataError as exc:
+            return _empty(str(exc))
+    try:
+        row = (
+            db.query(PredictionResult)
+            .order_by(desc(PredictionResult.target_date), desc(PredictionResult.id))
+            .first()
+        )
+    except SQLAlchemyError as exc:
+        logger.error("Lỗi CSDL khi đọc prediction_results: %s", exc)
+        return error_response(
+            "DATABASE_ERROR",
+            "Không thể truy vấn cơ sở dữ liệu.",
+            500,
+            type(exc).__name__,
+        )
+    if row is None:
+        return _empty("Chưa có kết quả dự báo. Hãy chạy Terminal 5 (prediction).")
+    return {
+        "success": True,
+        "data": {
+            "target_date": row.target_date.isoformat(),
+            "forecasted_metric": (
+                "event_count"
+                if row.metric_name == "daily_earthquake_count"
+                else row.metric_name
+            ),
+            "predicted_value": row.predicted_value,
+            "confidence_interval": {
+                "lower": row.lower_bound,
+                "upper": row.upper_bound,
+            },
+            "model_name": row.model_name,
+            "model_version": row.model_version,
+            "evaluation_metrics": row.evaluation_metrics or {},
+            "generated_at": _iso(row.generated_at),
+            # GAP-08: field optional đã có trong predictions.json:30 — FE đọc trực tiếp.
+            "confidence_level": (row.evaluation_metrics or {}).get("confidence_level"),
+        },
+    }
+
+
+@router.get("/classifications")
+def get_latest_classification(
+    country: str | None = Query(None, description="Lọc theo quốc gia"),
+    region: str | None = Query(None, description="Lọc theo khu vực"),
+    db: Session = Depends(get_db),
+):
+    """Pattern 6: nhãn mức độ hoạt động địa chấn ngày kế tiếp (t+1) mới nhất."""
+    if country or region:
+        try:
+            return {
+                "success": True,
+                "data": build_filtered_forecast(db, country, region, datetime.now(UTC))[
+                    "classification"
+                ],
+            }
+        except InsufficientDataError as exc:
+            return _empty(str(exc))
+    try:
+        row = (
+            db.query(ClassificationResult)
+            .order_by(
+                desc(ClassificationResult.target_date), desc(ClassificationResult.id)
+            )
+            .first()
+        )
+    except SQLAlchemyError as exc:
+        logger.error("Lỗi CSDL khi đọc classification_results: %s", exc)
+        return error_response(
+            "DATABASE_ERROR",
+            "Không thể truy vấn cơ sở dữ liệu.",
+            500,
+            type(exc).__name__,
+        )
+    if row is None:
+        return _empty("Chưa có kết quả phân loại. Hãy chạy Terminal 5 (prediction).")
+    return {
+        "success": True,
+        "data": {
+            "target_date": row.target_date.isoformat(),
+            "predicted_label": row.predicted_label,
+            "probabilities": row.probability_scores or {},
+            # GAP-08: alias đã có trong classifications.json:27-31 (dùng trong payload /patterns).
+            "probability_scores": row.probability_scores or {},
+            "model_name": row.model_name,
+            "model_version": row.model_version,
+            "evaluation_metrics": row.evaluation_metrics or {},
+            "generated_at": _iso(row.generated_at),
+        },
+    }

@@ -17,18 +17,25 @@ qua `./scripts/git-ship.sh` và `.githooks/`.
 - **Nhánh tích hợp:** `develop` (PR luôn nhắm vào `develop`; `main` dành cho release / `hotfix/*`)
 - **Điều kiện Merge (Conflict-Free Gate):** **Không bắt buộc riêng `ThienleDuc`** — bất kỳ thành viên nào (hoặc `./scripts/git-ship.sh merge` khi được yêu cầu) đều được phép merge PR khi **đã kiểm tra không có xung đột (`0 conflicts`)**, `notes_index.py --check` và validation đạt chuẩn!
 
-## Khi nào chạy: tự động theo trạng thái công việc
+## Khi nào chạy: theo trạng thái công việc + 2 checkpoint
 
 **A. Bắt đầu việc có sửa file (Spec-Driven, kiểm thử 1 file `test/*`, hoặc sửa nhỏ Fast-Track):**
 Ngay khi nhận việc sửa code/test/docs/config (trước khi chỉnh sửa tệp đầu tiên), chạy bước 1–2 (`start`).
 *(Nếu chỉ đọc/hỏi đáp hoặc chạy `write-proposal` chưa sửa code thì chưa cần rẽ nhánh.)*
 
-**B. Kết thúc việc (tự động ngay sau khi qua validation):**
-- Tự động thực hiện liền mạch toàn bộ thao tác **sửa/thêm file, commit, push PR** mà **không hỏi xác nhận lặp lại từng bước** để người dùng không phải bấm submit nhiều lần.
-- **Luồng Spec-Driven:** Chạy bước 3–11 ngay khi `build-implementation` + `write-testcase` đã tạo đủ `implemented/<id>/`, `testcase/<id>.md`, unit test offline, pass validation và đặt `status.md` → `Status: validation`.
-- **Luồng kiểm thử 1 file (`write-testcase` nhánh `test/<id>`):** Chạy bước 3–11 ngay sau khi chạy xong unit test và (nếu có lỗi) đã ghi nhận vào `.agents/notes/bugs/`.
-- **Luồng sửa nhỏ / tài liệu (≤ 1 dòng hoặc ≤ 1 file không cần proposal):** Chạy bước 3–11 ngay khi sửa xong và kiểm tra xong.
-- Nếu người dùng chủ động bảo *"giữ lại ở working tree, đừng commit/push"*: dừng ở local. Nếu gặp **xóa file/folder** hoặc **conflict nguy hiểm**, hoàn tất các phần an toàn trước rồi gom hỏi 1 lần ở cuối phiên.
+**B1. Sau validation — chỉ khi CHECKPOINT 1 đã được xác nhận:**
+- `build-implementation` đã đặt `Status: validation` và **dừng CHECKPOINT 1**. Agent chỉ chạy bước 3–10 khi người dùng chọn `tiếp tục workflow` (commit + push + tạo PR). Chưa xác nhận → giữ working tree, không commit/push.
+- Áp dụng cho cả 3 luồng: Spec-Driven, `test/<id>`, Fast-Track (sửa xong + kiểm tra xong thì dừng CHECKPOINT 1 rồi mới vào B1).
+- Trong B1 tự động làm liền mạch các thao tác kỹ thuật (scope, project-review, commit, update, push, PR, dry-run) mà không hỏi từng lệnh.
+
+**CHECKPOINT 2 — sau bước 10, trước merge:**
+- Dừng lại, báo link PR + kết quả `merge --dry-run` (0 conflict) + **1 câu hỏi duy nhất**: (a) `tiếp tục workflow` → gửi yêu cầu merge / merge PR vào `develop` + `sync` + `completed`; (b) `dừng lại` → giữ PR mở, chưa merge.
+- Lý do: mỗi commit là một thay đổi nhỏ, người dùng chưa chắc công việc hoàn thành. Không merge khi chưa có xác nhận ở checkpoint này.
+- In rõ tên checkpoint + cụm khởi động **`tiếp tục workflow`** (chấp nhận `continue workflow`) để người dùng copy.
+
+**B2. Sau CHECKPOINT 2 được xác nhận:** chạy bước 11 (merge → `sync` → `status.md` completed, kể cả nhánh `chore/<id>-completed` nếu cần ghi SHA).
+
+- Conflict/Xóa file: nếu gặp **xóa file/folder** hoặc **conflict nguy hiểm**, hoàn tất phần an toàn trước rồi gom hỏi 1 lần ở cuối phiên. Dừng cứng Conflict-Free Gate vẫn áp dụng trước khi merge.
 
 ## Các bước
 
@@ -96,20 +103,25 @@ Ngay khi nhận việc sửa code/test/docs/config (trước khi chỉnh sửa t
 
 9. **Soạn mô tả PR:** lấy mẫu từ [.github/pull_request_template.md](../../../.github/pull_request_template.md), điền đầy đủ `Implementation Report` + `Test Files Created` + checklist, lưu vào `.artifacts/mr/<nhánh-thay-/-bằng-->.md` (gitignored).
 
-10. **Push & Kiểm tra sẵn sàng Merge:** `./scripts/git-ship.sh push` và chạy `./scripts/git-ship.sh merge --dry-run` để xác nhận **0 conflict**.
-    *(Nếu người dùng yêu cầu merge luôn hoặc luồng cho phép auto-merge khi không xung đột: chạy `./scripts/git-ship.sh merge` — không bắt buộc riêng `ThienleDuc`.)*
+10. **Push & Kiểm tra sẵn sàng Merge (kết thúc B1):** `./scripts/git-ship.sh push` và chạy `./scripts/git-ship.sh merge --dry-run` để xác nhận **0 conflict**.
 
-11. **Báo cáo ngắn gọn:**
+10b. **CHECKPOINT 2 — DỪNG trước merge:**
+    - Báo: nhánh đã push, link PR, kết quả dry-run (0 conflict), Implementation Report.
+    - Hỏi 1 câu duy nhất: (a) `tiếp tục workflow` → gửi yêu cầu merge / merge PR vào `develop`; (b) `dừng lại` → giữ PR mở.
+    - In rõ cụm khởi động **`tiếp tục workflow`**. **Không** gọi `./scripts/git-ship.sh merge` / `gh pr merge` khi chưa có xác nhận.
+
+11. **Báo cáo ngắn gọn (sau khi CHECKPOINT 2 xác nhận — B2):**
     ```text
-    Đã đẩy nhánh <nhánh> (<N> commit).
-    PR nhắm vào `develop` (đã kiểm tra không xung đột — bất kỳ thành viên nào đều có thể merge): <link PR hoặc link tạo PR>
+    CHECKPOINT 2 — đã xác nhận. Đang merge PR vào develop.
+    Đã push nhánh <nhánh> (<N> commit). PR: <link PR>.
+    Sau merge: ./scripts/git-ship.sh sync → status.md completed (<SHA merge>).
     <Implementation Report>
     ```
 
 ## Đồng bộ sau Merge
 
 - **Khi có góp ý sửa trên PR:** Người dùng dán comment → sửa bằng **commit mới** (không amend/rebase commit đã push) → `./scripts/git-ship.sh update` → `./scripts/git-ship.sh push`.
-- **Khi cần kiểm tra không xung đột & merge:** chạy `./scripts/git-ship.sh merge` (tự chạy `notes_index.py --check` + `git merge-tree --write-tree` / PR `mergeable` check — nếu `CONFLICT` thì chặn cứng; nếu **0 conflict** thì thực hiện merge).
+- **Khi cần kiểm tra không xung đột & merge (chỉ sau CHECKPOINT 2 xác nhận):** chạy `./scripts/git-ship.sh merge` (tự chạy `notes_index.py --check` + `git merge-tree --write-tree` / PR `mergeable` check — nếu `CONFLICT` thì chặn cứng; nếu **0 conflict** thì thực hiện merge). Trước checkpoint này chỉ chạy `merge --dry-run`.
 - **Sau khi đã merge:** chạy `./scripts/git-ship.sh sync` quay về `develop` mới nhất và dọn nhánh local đã merge. Đánh dấu `status.md` → `completed` qua nhánh nhỏ `chore/<id>-completed` nếu cần ghi SHA merge.
 
 ## Dừng cứng: KHÔNG BAO GIỜ

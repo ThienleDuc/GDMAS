@@ -9,6 +9,8 @@ from collections.abc import Iterable
 from datetime import UTC, datetime
 from typing import Any
 
+from gdmas.services.ingestion.geo import derive_place_fields
+
 logger = logging.getLogger("gdmas.services.ingestion.parser")
 
 SOURCE_USGS = "USGS"
@@ -108,6 +110,8 @@ def parse_feature(feat: Any) -> dict[str, Any] | None:
         _reject(event_id, "thiếu hoặc sai thời điểm sự kiện (time)")
         return None
 
+    place = props.get("place")
+    country, region = derive_place_fields(place)
     return {
         "source": SOURCE_USGS,
         "source_event_id": event_id,
@@ -118,7 +122,9 @@ def parse_feature(feat: Any) -> dict[str, Any] | None:
         "depth_km": depth_km,
         "magnitude": magnitude,
         "magnitude_type": props.get("magType"),
-        "place": props.get("place"),
+        "place": place,
+        "country": country,
+        "region": region,
         "source_url": props.get("url"),
         "raw_data": feat,
     }

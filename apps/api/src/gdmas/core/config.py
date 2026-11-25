@@ -37,6 +37,22 @@ class Settings(BaseSettings):
     PREDICTION_INTERVAL_SECONDS: int = 300
     CLUSTERING_INTERVAL_SECONDS: int = 86400
 
+    # --- Cấu hình dữ liệu & mô hình (docs/yeucaubatbuoc.md §6.4) — đưa vào .env để dễ chỉnh ---
+    # Cửa sổ lịch sử cho backfill/phân tích/cụm (ngày) — 30 = 1 tháng.
+    DATA_WINDOW_DAYS: int = 30
+    ANALYSIS_WINDOW_DAYS: int = 30
+    CLUSTERING_WINDOW_DAYS: int = 30
+    CLUSTERING_EPS_KM: float = 150.0
+    CLUSTERING_MIN_SAMPLES: int = 5
+    # Ngưỡng tối thiểu khi backfill 1 tháng qua FDSN (giới hạn 20000 kết quả/query).
+    BACKFILL_MIN_MAGNITUDE: float = 2.5
+    BACKFILL_QUERY_URL: str = "https://earthquake.usgs.gov/fdsnws/event/1/query"
+    PREDICTION_MIN_OBSERVED: int = 10
+
+    # AI trích xuất nhận xét (chỉ Gemini) — được ghi vào .env qua /ai/credentials.
+    GEMINI_MODEL: str = ""
+    GEMINI_API_KEY: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

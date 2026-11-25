@@ -71,6 +71,20 @@ def test_other_workers_still_stop_cleanly(monkeypatch, module):
         waits.append(seconds)
         raise KeyboardInterrupt
 
+    class FakeService:
+        def execute_cycle(self):
+            return {
+                "success": True,
+                "target_date": "2026-11-12",
+                "predicted": 1.0,
+                "lower": 0.0,
+                "upper": 2.0,
+                "label": "Low",
+                "probabilities": {"Low": 1.0},
+            }
+
+    if hasattr(module, "PredictionService"):
+        monkeypatch.setattr(module, "PredictionService", FakeService)
     monkeypatch.setattr(module.time, "sleep", interrupt)
     assert module.run() is None
     assert len(waits) == 1
