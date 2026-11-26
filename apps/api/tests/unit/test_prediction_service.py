@@ -191,7 +191,7 @@ def test_fill_actuals_with_empty_db_does_nothing(real_inference):
 
 # ---------- _predict (end-to-end với suy luận thật) ----------
 def test_predict_writes_valid_prediction_and_classification(real_inference):
-    db = FakeSession(first_ts=None)  # DB rỗng: chỉ dùng lịch sử huấn luyện
+    db = FakeSession(first_ts=datetime(2026, 11, 11, tzinfo=UTC))
     result = PredictionService()._predict(db, NOW)
 
     (pred,) = db.of_type(PredictionResult)
@@ -216,7 +216,7 @@ def test_predict_writes_valid_prediction_and_classification(real_inference):
 
 
 def test_predict_replaces_existing_rows_of_target_date(real_inference):
-    db = FakeSession(first_ts=None)
+    db = FakeSession(first_ts=datetime(2026, 11, 11, tzinfo=UTC))
     PredictionService()._predict(db, NOW)
     assert PredictionResult in db.deleted
     assert ClassificationResult in db.deleted
@@ -228,9 +228,10 @@ def test_predict_uses_db_counts_over_history(real_inference):
     real_inference["forecast"]["params"] = strong
     real_inference["classifier"]["params"] = strong
 
-    baseline = PredictionService()._predict(FakeSession(first_ts=None), NOW)
+    latest = datetime(2026, 11, 11, 5, 0, tzinfo=UTC)
+    baseline = PredictionService()._predict(FakeSession(first_ts=latest), NOW)
 
-    first = datetime(2026, 11, 1, 5, 0, tzinfo=UTC)
+    first = latest
     rows = [(date(2026, 11, d), 300) for d in range(2, 12)]
     db = FakeSession(first_ts=first, group_rows=rows)
     result = PredictionService()._predict(db, NOW)
@@ -244,7 +245,7 @@ def test_predict_truncates_long_model_names(real_inference, monkeypatch):
     monkeypatch.setattr(
         inference, "forecast_model_info", lambda: ("X" * 200, {"mae": 1.0})
     )
-    db = FakeSession(first_ts=None)
+    db = FakeSession(first_ts=datetime(2026, 11, 11, tzinfo=UTC))
     PredictionService()._predict(db, NOW)
     (pred,) = db.of_type(PredictionResult)
     assert len(pred.model_name) == 64
@@ -252,7 +253,7 @@ def test_predict_truncates_long_model_names(real_inference, monkeypatch):
 
 def test_predict_fails_cleanly_when_history_too_short(real_inference):
     real_inference["history"] = {"dates": ["2026-11-05"], "counts": [100]}
-    db = FakeSession(first_ts=None)
+    db = FakeSession(first_ts=datetime(2026, 11, 11, tzinfo=UTC))
     with pytest.raises(ValueError):
         PredictionService()._predict(db, NOW)
     assert db.of_type(PredictionResult) == []
@@ -261,7 +262,7 @@ def test_predict_fails_cleanly_when_history_too_short(real_inference):
 
 # ---------- execute_cycle ----------
 def test_execute_cycle_records_success_service_run(real_inference, monkeypatch):
-    db = FakeSession(first_ts=None)
+    db = FakeSession(first_ts=datetime(2026, 11, 11, tzinfo=UTC))
     monkeypatch.setattr(service, "SessionLocal", lambda: db)
     result = PredictionService().execute_cycle()
 

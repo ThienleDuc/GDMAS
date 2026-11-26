@@ -1,8 +1,8 @@
 """Dịch vụ dự báo t+1: đọc số trận theo ngày từ DB, chạy mô hình, ghi prediction_results và
 classification_results.
 
-Quy ước: "t" là ngày UTC cuối cùng đã đủ 24 giờ dữ liệu (hôm qua), ngày dự báo là ngày UTC kế tiếp
-(hôm nay). Kết quả cập nhật mỗi chu kỳ; sang ngày UTC mới thì ngày vừa qua được điền giá trị thực tế.
+Quy ước: "t" là ngày UTC của sự kiện cuối cùng trong DB; ngày dự báo là ngày UTC kế tiếp.
+Ngày t có thể chưa hoàn tất. Giá trị thực tế chỉ cập nhật cho các ngày đã kết thúc.
 """
 
 import logging
@@ -17,6 +17,7 @@ from gdmas.models.earthquake import EarthquakeEvent
 from gdmas.models.prediction import ClassificationResult, PredictionResult
 from gdmas.models.service_run import ServiceRun
 from gdmas.services.prediction import inference
+from gdmas.services.prediction.errors import InsufficientDataError
 
 logger = logging.getLogger("gdmas.services.prediction")
 METRIC_NAME = "daily_earthquake_count"
@@ -85,11 +86,16 @@ class PredictionService:
     # ---- chu kỳ chính ----
     def _predict(self, db: Session, now: datetime) -> dict:
         art = inference.load_artifacts()
-        today = now.date()
-        db_counts = self._complete_day_counts(db, today)
-        series = inference.build_series(
-            art["history"], db_counts, today - timedelta(days=1)
-        )
+        today = now.astimezone(UTC).date()
+        latest = db.scalar(select(func.max(EarthquakeEvent.event_time)))
+        if latest is None:
+            raise InsufficientDataError("Không có dữ liệu DB để dự báo")
+        last_day = latest.astimezone(UTC).date()
+        target_date = last_day + timedelta(days=1)
+        day = func.date(func.timezone("UTC", EarthquakeEvent.event_time)).label("day")
+        rows = db.execute(select(day, func.count()).group_by(day)).all()
+        db_counts = {row[0]: int(row[1]) for row in rows}
+        series = inference.build_series(art["history"], db_counts, last_day)
         observed = int(series.notna().sum())
 
         fc = inference.forecast_next(series)
@@ -97,15 +103,15 @@ class PredictionService:
         fc_name, fc_eval = inference.forecast_model_info()
         cl_name, cl_eval = inference.classifier_model_info()
 
-        db.query(PredictionResult).filter(PredictionResult.target_date == today).delete(
-            synchronize_session=False
-        )
+        db.query(PredictionResult).filter(
+            PredictionResult.target_date == target_date
+        ).delete(synchronize_session=False)
         db.query(ClassificationResult).filter(
-            ClassificationResult.target_date == today
+            ClassificationResult.target_date == target_date
         ).delete(synchronize_session=False)
         db.add(
             PredictionResult(
-                target_date=today,
+                target_date=target_date,
                 metric_name=METRIC_NAME,
                 predicted_value=round(fc["predicted"], 3),
                 lower_bound=round(fc["lower"], 3),
@@ -117,7 +123,7 @@ class PredictionService:
         )
         db.add(
             ClassificationResult(
-                target_date=today,
+                target_date=target_date,
                 predicted_label=cl["label"],
                 probability_scores=cl["probabilities"],
                 model_name=cl_name[:64],
@@ -130,7 +136,7 @@ class PredictionService:
         db.commit()
         logger.info(
             "Dự báo %s: %.1f [%.1f - %.1f] | rủi ro %s",
-            today,
+            target_date,
             fc["predicted"],
             fc["lower"],
             fc["upper"],
@@ -138,7 +144,7 @@ class PredictionService:
         )
         return {
             "success": True,
-            "target_date": today.isoformat(),
+            "target_date": target_date.isoformat(),
             "predicted": fc["predicted"],
             "lower": fc["lower"],
             "upper": fc["upper"],
