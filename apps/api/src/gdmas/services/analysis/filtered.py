@@ -26,6 +26,7 @@ from gdmas.services.analysis.patterns import (
     prepare_events,
 )
 from gdmas.services.prediction import inference
+from gdmas.services.prediction.errors import InsufficientDataError
 
 logger = logging.getLogger("gdmas.services.analysis.filtered")
 
@@ -45,10 +46,6 @@ def rounded_forecast(forecast: dict[str, Any]) -> dict[str, Any]:
 
 
 FREQ_TO_INTERVAL = {"D": "day", "W": "week", "M": "month"}
-
-
-class InsufficientDataError(RuntimeError):
-    """Phạm vi được lọc không đủ dữ liệu để tính chỉ số/dự báo."""
 
 
 def scope(query: Query, country: str | None, region: str | None) -> Query:
@@ -164,11 +161,16 @@ def build_filtered_forecast(
 ) -> dict[str, Any]:
     """Tính P5/P6 on-the-fly. Artifact vẫn là bản toàn cầu — ghi rõ trong UI."""
     art = inference.load_artifacts()
-    today = now.date()
-    counts = filtered_day_counts(db, country, region, today)
-    if not counts:
+    rows = scope(db.query(EarthquakeEvent.event_time), country, region).all()
+    if not rows:
         raise InsufficientDataError("Phạm vi này chưa có đủ ngày dữ liệu để dự báo.")
-    series = inference.build_series(art["history"], counts, today - timedelta(days=1))
+    timestamps = pd.to_datetime([row[0] for row in rows], utc=True)
+    days = pd.Series(timestamps.date)
+    counts = days.value_counts().to_dict()
+    if len(counts) < 2:
+        raise InsufficientDataError("Phạm vi này chưa có đủ ngày dữ liệu để dự báo.")
+    last_day = max(counts)
+    series = inference.build_series(art["history"], counts, last_day)
     try:
         forecast = rounded_forecast(inference.forecast_next(series))
         classification = inference.classify_next(series)
@@ -177,7 +179,7 @@ def build_filtered_forecast(
 
     forecast_name, forecast_eval = inference.forecast_model_info()
     classifier_name, classifier_eval = inference.classifier_model_info()
-    target_date = (today + timedelta(days=1)).isoformat()
+    target_date = (last_day + timedelta(days=1)).isoformat()
     generated_at = now.isoformat().replace("+00:00", "Z")
 
     return {
